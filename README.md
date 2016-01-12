@@ -1,5 +1,5 @@
 # docker-compose-gradle-plugin
-Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for integration testing in [Gradle](https://gradle.org/) environment. It starts the application before tests and stops the application after the tests are done.
+Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for integration testing in [Gradle](https://gradle.org/) environment. It starts the application before tests and stops the application after the tests are done. It also waits till all exported TCP ports are open (so till the application is ready).
 
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposses that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed. The plugin calls these tools simply via [Project.exec()](https://docs.gradle.org/current/dsl/org.gradle.api.Project.html#org.gradle.api.Project:exec(groovy.lang.Closure)) method.
 
