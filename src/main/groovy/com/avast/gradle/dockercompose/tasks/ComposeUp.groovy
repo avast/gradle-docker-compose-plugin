@@ -48,7 +48,7 @@ class ComposeUp extends DefaultTask {
             DockerHost host = getDockerHost(inspection)
             logger.info("Will use $host as host of $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-            services.add(new ServiceInfo(name: serviceName, host: host, ports: tcpPorts))
+            services.add(new ServiceInfo(name: serviceName, dockerHost: host, tcpPorts: tcpPorts))
         }
         services
     }
@@ -91,19 +91,19 @@ class ComposeUp extends DefaultTask {
             }
             int exposedPort = exposedPortAsString as int
             if (!forwardedPortsInfos || forwardedPortsInfos.isEmpty()) {
-                logger.debug("No forwarded port for $serviceName:$exposedPort")
+                logger.debug("No forwarded TCP port for $serviceName:$exposedPort")
             }
             else if (host.isRemote) {
                 if (forwardedPortsInfos.size() > 1) {
-                    logger.warn("More forwarded ports for $serviceName:$exposedPort $forwardedPortsInfos Will use the first one.")
+                    logger.warn("More forwarded TCP ports for $serviceName:$exposedPort $forwardedPortsInfos Will use the first one.")
                 }
                 def forwardedPortInfo = forwardedPortsInfos.first()
                 int forwardedPort = forwardedPortInfo.HostPort as int
-                logger.info("Exposed port $serviceName:$exposedPort will be available as $forwardedPort")
+                logger.info("Exposed TCP port $serviceName:$exposedPort will be available as $forwardedPort")
                 ports.put(exposedPort, forwardedPort)
             } else {
                 ports.put(exposedPort, exposedPort)
-                logger.info("Exposed port $serviceName:$exposedPort will be available as the same port because we connect to the container directly")
+                logger.info("Exposed TCP port $serviceName:$exposedPort will be available as the same port because we connect to the container directly")
             }
         }
         ports
@@ -112,16 +112,16 @@ class ComposeUp extends DefaultTask {
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         servicesInfos.forEach { service ->
             service.tcpPorts.forEach { exposedPort, forwardedPort ->
-                logger.lifecycle("Probing TCP socket on ${service.host.host}:${forwardedPort} of ${service.name}")
+                logger.lifecycle("Probing TCP socket on ${service.host}:${forwardedPort} of ${service.name}")
                 while (true) {
                     try {
-                        def s = new Socket(service.host.host, forwardedPort)
+                        def s = new Socket(service.host, forwardedPort)
                         s.close()
-                        logger.lifecycle("TCP socket on ${service.host.host}:${forwardedPort} of ${service.name} is ready")
+                        logger.lifecycle("TCP socket on ${service.host}:${forwardedPort} of ${service.name} is ready")
                         return
                     }
                     catch (Exception e) {
-                        logger.lifecycle("Waiting for TCP socket on ${service.host.host}:${forwardedPort} of ${service.name} (${e.message})")
+                        logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of ${service.name} (${e.message})")
                         sleep(extension.waitAfterTcpProbeFailure.toMillis())
                     }
                 }

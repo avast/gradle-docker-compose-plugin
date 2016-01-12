@@ -25,7 +25,7 @@ class ComposeExtension {
         this.upTask = upTask
     }
 
-    void isRequiredby(Task task) {
+    void isRequiredBy(Task task) {
         task.dependsOn upTask
         task.finalizedBy downTask
     }

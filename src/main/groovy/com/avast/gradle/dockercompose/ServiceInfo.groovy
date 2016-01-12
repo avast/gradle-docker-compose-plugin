@@ -5,7 +5,9 @@ import groovy.transform.Immutable
 @Immutable
 class ServiceInfo {
     String name
-    DockerHost host
+    DockerHost dockerHost
     /* Mapping from exposed to forwarded port. */
     Map<Integer, Integer> tcpPorts
+
+    String getHost() { dockerHost.host }
 }

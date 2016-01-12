@@ -14,6 +14,11 @@ repositories {
 dependencies {
     compile gradleApi()
     compile 'org.yaml:snakeyaml:1.16'
+    testCompile gradleTestKit()
+    testCompile ('org.spockframework:spock-core:1.0-groovy-2.4') {
+        // Conflicting module versions: 2.4.4 vs. 2.4.1
+        exclude group: 'org.codehaus.groovy'
+    }
 }
 
 task wrapper(type: Wrapper) {
