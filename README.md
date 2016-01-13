@@ -1,5 +1,6 @@
 # docker-compose-gradle-plugin
 [![Build Status](https://travis-ci.org/avast/docker-compose-gradle-plugin.svg?branch=master)](https://travis-ci.org/avast/docker-compose-gradle-plugin)
+
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
 `composeUp` task starts the application and wait till all exported TCP ports are open (so till the application is ready). Then it exposes assigned host and ports of particular containers in `servicesInfos` property. `composeDown` task stops the application and removes the containers. These tasks can be executed manually or before/after tests.
