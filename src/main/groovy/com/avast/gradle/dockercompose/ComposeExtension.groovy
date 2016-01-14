@@ -4,6 +4,8 @@ import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.process.JavaForkOptions
+import org.gradle.process.ProcessForkOptions
 
 import java.time.Duration
 
@@ -32,5 +34,23 @@ class ComposeExtension {
 
     Map<String, ServiceInfo> getServicesInfos() {
         upTask.servicesInfos
+    }
+
+    void exposeAsEnvironment(ProcessForkOptions task) {
+        servicesInfos.values().each { si ->
+            task.environment.put("${si.name.toUpperCase()}_HOST".toString(), si.host)
+            si.tcpPorts.each {
+                task.environment.put("${si.name.toUpperCase()}_TCP_${it.key}".toString(), it.value)
+            }
+        }
+    }
+
+    void exposeAsSystemProperties(JavaForkOptions task) {
+        servicesInfos.values().each { si ->
+            task.systemProperties.put("${si.name}.host".toString(), si.host)
+            si.tcpPorts.each {
+                task.systemProperties.put("${si.name}.tcp.${it.key}".toString(), it.value)
+            }
+        }
     }
 }
