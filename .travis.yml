@@ -1,7 +1,6 @@
-language: groovy
-
-jdk:
-  - oraclejdk8
+sudo: required
+services:
+  - docker
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -9,3 +8,10 @@ cache:
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
+    - $HOME/.m2
+
+before_install:
+  - docker build --tag=build-image .
+
+script:
+  - docker run -v ./:/build -v $HOME/.m2:/root/.m2 -v ./.gradle:/root/.gradle build-image
