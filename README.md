@@ -3,7 +3,7 @@
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
-`composeUp` task starts the application and wait till all exported TCP ports are open (so till the application is ready). Then it exposes assigned host and ports of particular containers in `servicesInfos` property. `composeDown` task stops the application and removes the containers. These tasks can be executed manually or before/after tests.
+`composeUp` task starts the application and wait till all exported TCP ports are open (so till the application is ready). Then it exposes assigned host and ports of particular containers in `dockerCompose.servicesInfos` property. `composeDown` task stops the application and removes the containers. These tasks can be executed manually or before/after tests.
 
 # Usage
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposses that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed. The plugin calls these tools simply using [Project.exec()](https://docs.gradle.org/current/dsl/org.gradle.api.Project.html#org.gradle.api.Project:exec(groovy.lang.Closure)) method.
@@ -25,7 +25,7 @@ apply plugin: 'docker-compose'
 dockerCompose.isRequiredBy(test)
 
 test.doFirst {
-    // read current host and assigned port of service named 'web' (declared in docker-compose.yml)
+    // get information about container of service 'web' (declared in docker-compose.yml)
     def webInfo = dockerCompose.servicesInfos.web
     // pass host and exposed TCP port 80 as Java System properties
     systemProperty 'web.host', webInfo.host
