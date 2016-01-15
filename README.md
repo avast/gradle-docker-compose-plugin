@@ -1,5 +1,5 @@
 # docker-compose-gradle-plugin
-[![Build Status](https://travis-ci.org/avast/docker-compose-gradle-plugin.svg?branch=master)](https://travis-ci.org/avast/docker-compose-gradle-plugin)
+[![Build Status](https://travis-ci.org/avast/docker-compose-gradle-plugin.svg?branch=master)](https://travis-ci.org/avast/docker-compose-gradle-plugin) [ ![Download](https://api.bintray.com/packages/avast/maven/docker-compose-gradle-plugin/images/download.svg) ](https://bintray.com/avast/maven/docker-compose-gradle-plugin/_latestVersion)
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
@@ -9,6 +9,7 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposses that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed. The plugin calls these tools simply using [Project.exec()](https://docs.gradle.org/current/dsl/org.gradle.api.Project.html#org.gradle.api.Project:exec(groovy.lang.Closure)) method.
 
 If you are using [Java Gradle plugin](https://docs.gradle.org/current/userguide/java_plugin.html) then you might hook Docker Compose to the standard `test` task.
+
 ```gradle
 buildscript {
     repositories {
