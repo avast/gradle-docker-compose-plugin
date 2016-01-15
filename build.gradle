@@ -44,7 +44,7 @@ bintray {
     configurations = ['archives']
     pkg {
         repo = 'maven'
-        name = 'docker-compose-gradle-plugin'
+        name = 'compose-gradle-plugin'
         userOrg = 'avast'
         licenses = ['MIT']
         vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin.git'
