@@ -4,6 +4,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Task
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
+import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
@@ -43,11 +44,41 @@ class DockerComposePluginTest extends Specification {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
         }
-        project.tasks.composeUp.up()
         when:
+        project.tasks.composeUp.up()
         project.tasks.integrationTest.execute()
         then:
         noExceptionThrown()
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch(ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
+    def "exposes environment variables and system properties"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'java'
+        project.plugins.apply 'docker-compose'
+        project.tasks.composeUp.up()
+        Test test = project.tasks.test as Test
+        when:
+        project.dockerCompose.exposeAsEnvironment(test)
+        project.dockerCompose.exposeAsSystemProperties(test)
+        then:
+        test.environment.containsKey('WEB_HOST')
+        test.environment.containsKey('WEB_TCP_80')
+        test.systemProperties.containsKey('web.host')
+        test.systemProperties.containsKey('web.tcp.80')
         cleanup:
         project.tasks.composeDown.down()
         try {
