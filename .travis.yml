@@ -17,3 +17,6 @@ before_install:
 
 script:
   - docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image
+
+after_success:
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image bintrayUpload -Pversion="$TRAVIS_JOB_NUMBER.$TRAVIS_BUILD_NUMBER"
