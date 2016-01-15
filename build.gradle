@@ -1,14 +1,26 @@
-group = 'com.avast.gradle'
-version = '0.1.0-SNAPSHOT'
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.5'
+    }
+}
+apply plugin: 'com.jfrog.bintray'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
+apply plugin: 'maven'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
+group = 'com.avast.gradle'
+archivesBaseName = 'docker-compose-gradle-plugin'
+version = '0.1.0-SNAPSHOT'
+
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -23,4 +35,26 @@ dependencies {
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.10'
+}
+
+
+bintray {
+    dryRun = true
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+    configurations = ['archives']
+    pkg {
+        repo = 'maven'
+        name = 'docker-compose-gradle-plugin'
+        userOrg = 'avast'
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin.git'
+        websiteUrl = 'https://github.com/avast/docker-compose-gradle-plugin'
+        issueTrackerUrl = 'https://github.com/avast/docker-compose-gradle-plugin/issues'
+        labels = ['docker', 'docker-compose', 'gradle']
+        version {
+            name = project.version
+            vcsTag = project.version
+        }
+    }
 }
