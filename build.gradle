@@ -42,6 +42,7 @@ bintray {
     user = System.getenv('BINTRAY_USER')
     key = System.getenv('BINTRAY_KEY')
     configurations = ['archives']
+    publish = true
     pkg {
         repo = 'maven'
         name = 'docker-compose-gradle-plugin'
