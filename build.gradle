@@ -54,6 +54,7 @@ bintray {
     pkg {
         repo = 'maven'
         name = 'docker-compose-gradle-plugin'
+        desc = 'Simplifies usage of Docker Compose for local development and integration testing in Gradle environment.'
         userOrg = 'avast'
         licenses = ['MIT']
         vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin.git'
