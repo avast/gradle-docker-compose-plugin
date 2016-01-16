@@ -10,4 +10,5 @@ class ServiceInfo {
     Map<Integer, Integer> tcpPorts
 
     String getHost() { dockerHost.host }
+    Map<Integer, Integer> getPorts() { tcpPorts }
 }
