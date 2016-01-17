@@ -7,11 +7,11 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeDown` task stops the application and removes the containers.
 
-# Why to use Docker Compose?
+## Why to use Docker Compose?
 1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done.
 2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker-compose up` before these tests.
 
-# Why this plugin?
+## Why this plugin?
 You could easily ensure that `docker-compose up` is called before your tests but there are few gotchas that this plugin solves:
 
 1. If you execute `docker-compose up -d` (_detached_) then this command returns immediately and your application is probably not able to serve requests at this time. This plugin waits till all exported TCP ports are open.
