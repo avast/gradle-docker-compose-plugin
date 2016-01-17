@@ -3,7 +3,7 @@
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
-`composeUp` task starts the application and waits till all exported TCP ports are open (so till the application is ready). Then it reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
+`composeUp` task starts the application and waits till all exposed TCP ports are open (so till the application is ready). Then it reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
 
 `composeDown` task stops the application and removes the containers.
 
