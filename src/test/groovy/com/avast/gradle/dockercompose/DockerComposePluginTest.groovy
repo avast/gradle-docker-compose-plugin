@@ -79,8 +79,10 @@ class DockerComposePluginTest extends Specification {
         project.dockerCompose.exposeAsSystemProperties(test)
         then:
         test.environment.containsKey('WEB_HOST')
+        test.environment.containsKey('WEB_CONTAINER_HOSTNAME')
         test.environment.containsKey('WEB_TCP_80')
         test.systemProperties.containsKey('web.host')
+        test.systemProperties.containsKey('web.containerHostname')
         test.systemProperties.containsKey('web.tcp.80')
         cleanup:
         project.tasks.composeDown.down()
