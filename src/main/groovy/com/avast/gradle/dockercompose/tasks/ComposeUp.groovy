@@ -48,7 +48,7 @@ class ComposeUp extends DefaultTask {
             DockerHost host = getDockerHost(inspection)
             logger.info("Will use $host as host of $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-            services.add(new ServiceInfo(name: serviceName, dockerHost: host, tcpPorts: tcpPorts))
+            services.add(new ServiceInfo(name: serviceName, dockerHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection))
         }
         services
     }
@@ -76,9 +76,9 @@ class ComposeUp extends DefaultTask {
     DockerHost getDockerHost(Map<String, Object> inspection) {
         String dockerHost = System.getenv('DOCKER_HOST')
         if (dockerHost) {
-            new DockerHost(host: dockerHost.toURI().host, isRemote: true, containerHostname: inspection.Config.Hostname, inspection: inspection)
+            new DockerHost(host: dockerHost.toURI().host, isRemote: true)
         } else {
-            new DockerHost(host: inspection.NetworkSettings.IPAddress, isRemote: false, containerHostname: inspection.Config.Hostname, inspection: inspection)
+            new DockerHost(host: inspection.NetworkSettings.IPAddress, isRemote: false)
         }
     }
 
