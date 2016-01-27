@@ -39,6 +39,7 @@ class ComposeExtension {
     void exposeAsEnvironment(ProcessForkOptions task) {
         servicesInfos.values().each { si ->
             task.environment.put("${si.name.toUpperCase()}_HOST".toString(), si.host)
+            task.environment.put("${si.name.toUpperCase()}_CONTAINER_HOSTNAME".toString(), si.containerHostname)
             si.tcpPorts.each {
                 task.environment.put("${si.name.toUpperCase()}_TCP_${it.key}".toString(), it.value)
             }
@@ -48,6 +49,7 @@ class ComposeExtension {
     void exposeAsSystemProperties(JavaForkOptions task) {
         servicesInfos.values().each { si ->
             task.systemProperties.put("${si.name}.host".toString(), si.host)
+            task.systemProperties.put("${si.name}.containerHostname".toString(), si.containerHostname)
             si.tcpPorts.each {
                 task.systemProperties.put("${si.name}.tcp.${it.key}".toString(), it.value)
             }

@@ -44,8 +44,8 @@ class DockerComposePluginTest extends Specification {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
             assert webInfo.ports == webInfo.tcpPorts
-            assert !webInfo.dockerHost.containerHostname.isEmpty()
-            assert webInfo.dockerHost.inspection.size() > 0
+            assert !webInfo.containerHostname.isEmpty()
+            assert webInfo.inspection.size() > 0
         }
         when:
         project.tasks.composeUp.up()
@@ -79,8 +79,10 @@ class DockerComposePluginTest extends Specification {
         project.dockerCompose.exposeAsSystemProperties(test)
         then:
         test.environment.containsKey('WEB_HOST')
+        test.environment.containsKey('WEB_CONTAINER_HOSTNAME')
         test.environment.containsKey('WEB_TCP_80')
         test.systemProperties.containsKey('web.host')
+        test.systemProperties.containsKey('web.containerHostname')
         test.systemProperties.containsKey('web.tcp.80')
         cleanup:
         project.tasks.composeDown.down()
