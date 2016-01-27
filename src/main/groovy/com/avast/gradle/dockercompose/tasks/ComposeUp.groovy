@@ -76,9 +76,9 @@ class ComposeUp extends DefaultTask {
     DockerHost getDockerHost(Map<String, Object> inspection) {
         String dockerHost = System.getenv('DOCKER_HOST')
         if (dockerHost) {
-            new DockerHost(host: dockerHost.toURI().host, isRemote: true)
+            new DockerHost(host: dockerHost.toURI().host, isRemote: true, containerHostname: inspection.Config.Hostname, inspection: inspection)
         } else {
-            new DockerHost(host: inspection.NetworkSettings.IPAddress, isRemote: false)
+            new DockerHost(host: inspection.NetworkSettings.IPAddress, isRemote: false, containerHostname: inspection.Config.Hostname, inspection: inspection)
         }
     }
 

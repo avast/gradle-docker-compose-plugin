@@ -6,4 +6,6 @@ import groovy.transform.Immutable
 class DockerHost {
     String host
     boolean isRemote
+    String containerHostname
+    Map<String, Object> inspection
 }

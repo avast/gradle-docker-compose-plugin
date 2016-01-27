@@ -43,6 +43,9 @@ class DockerComposePluginTest extends Specification {
         project.tasks.create('integrationTest').doLast {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
+            assert webInfo.ports == webInfo.tcpPorts
+            assert !webInfo.dockerHost.containerHostname.isEmpty()
+            assert webInfo.dockerHost.inspection.size() > 0
         }
         when:
         project.tasks.composeUp.up()
