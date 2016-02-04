@@ -47,7 +47,7 @@ test.doFirst {
     systemProperty 'myweb.port', webInfo.ports[80]
     // exposes "WEB_HOST" and "WEB_TCP_80" environment variables
     dockerCompose.exposeAsEnvironment(test)
-    // exposes "web.host" and "web.host.80" system properties
+    // exposes "web.host" and "web.tcp.80" system properties
     dockerCompose.exposeAsSystemProperties(test)
 }
 ```
