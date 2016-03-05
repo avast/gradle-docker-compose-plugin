@@ -13,6 +13,8 @@ cache:
     - $HOME/.m2
 
 before_install:
+    # ensure specific Docker version
+  - sudo apt-get install docker-engine=1.10.2
   - docker build --tag=build-image .
 
 script:
