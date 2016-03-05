@@ -1,8 +1,6 @@
 language: generic
 
 sudo: required
-services:
-  - docker
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -13,10 +11,14 @@ cache:
     - $HOME/.m2
 
 before_install:
-  - docker build --tag=build-image .
+  # ensure Docker 1.10.2
+  - curl -sSL https://get.docker.com/ | sh
+  - sudo apt-get -y install docker-engine=1.10.2-0~precise
+  # Build image with building environment
+  - sudo docker build --tag=build-image .
 
 script:
-  - docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image --info
+  - sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image test --info
 
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" build-image bintrayUpload -Pversion="${TRAVIS_JOB_NUMBER}.$TRAVIS_BUILD_NUMBER" --info
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" build-image bintrayUpload -Pversion="${TRAVIS_JOB_NUMBER}.$TRAVIS_BUILD_NUMBER" --info
