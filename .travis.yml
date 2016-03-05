@@ -1,8 +1,6 @@
 language: generic
 
 sudo: required
-services:
-  - docker
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -13,8 +11,9 @@ cache:
     - $HOME/.m2
 
 before_install:
-    # ensure 1.10.2 Docker version
-  - yes | sudo apt-get -y install docker-engine=1.10.2-0~trusty
+    # ensure Docker 1.10.2
+  - curl -sSL https://get.docker.com/ | sh
+  - sudo apt-get -y install docker-engine=1.10.2-0~trusty
   - docker build --tag=build-image .
 
 script:
