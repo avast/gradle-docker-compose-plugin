@@ -41,7 +41,8 @@ class ComposeUp extends DefaultTask {
     protected Iterable<ServiceInfo> loadServicesInfo() {
         def services = new ArrayList<ServiceInfo>()
         def compose = (Map<String, Object>)(new Yaml().load(project.file('docker-compose.yml').text))
-        compose.keySet().forEach { serviceName ->
+        Iterable<String> servicesNames = '2'.equals(compose.get('version')) ? ((Map)compose.get('services')).keySet() : compose.keySet()
+        servicesNames.forEach { serviceName ->
             String containerId = getContainerId(serviceName)
             logger.info("Container ID of $serviceName is $containerId")
             def inspection = getDockerInspection(containerId)
