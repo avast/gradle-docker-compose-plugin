@@ -11,9 +11,11 @@ cache:
     - $HOME/.m2
 
 before_install:
-    # ensure Docker 1.10.2
+  # ensure Docker 1.10.2
   - curl -sSL https://get.docker.com/ | sh
   - sudo apt-get -y install docker-engine=1.10.2-0~precise
+  - sudo service docker start
+  # Build image with building environment
   - docker build --tag=build-image .
 
 script:
