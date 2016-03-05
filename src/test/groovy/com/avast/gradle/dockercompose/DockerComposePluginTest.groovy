@@ -91,7 +91,7 @@ class DockerComposePluginTest extends Specification {
             projectDir.deleteOnExit()
         }
         where:
-        // test it for both
+        // test it for both compose file version 1 and 2
         composeFileContent << ['''
             web:
                 image: nginx
