@@ -14,7 +14,7 @@ cache:
 
 before_install:
     # ensure 1.10.2 Docker version
-  - sudo apt-get -y install docker-engine=1.10.2-0~trusty
+  - yes | sudo apt-get -y install docker-engine=1.10.2-0~trusty
   - docker build --tag=build-image .
 
 script:
