@@ -105,4 +105,26 @@ class DockerComposePluginTest extends Specification {
                       - 80
         ''']
     }
+
+    def "reads logs of service"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            hello:
+                image: hello-world
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'docker-compose'
+        project.tasks.composeUp.up()
+        when:
+        String output = project.tasks.composeUp.getServiceLogs('hello')
+        then:
+        output.contains('Hello from Docker')
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch(ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
 }

@@ -9,6 +9,8 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 import org.yaml.snakeyaml.Yaml
 
+import java.time.Instant
+
 class ComposeUp extends DefaultTask {
 
     private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
@@ -130,6 +132,7 @@ class ComposeUp extends DefaultTask {
         servicesInfos.forEach { service ->
             service.tcpPorts.forEach { exposedPort, forwardedPort ->
                 logger.lifecycle("Probing TCP socket on ${service.host}:${forwardedPort} of ${service.name}")
+                def start = Instant.now()
                 while (true) {
                     try {
                         def s = new Socket(service.host, forwardedPort)
@@ -138,11 +141,25 @@ class ComposeUp extends DefaultTask {
                         return
                     }
                     catch (Exception e) {
+                        if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
+                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of ${service.name} is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
+                        }
                         logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of ${service.name} (${e.message})")
                         sleep(extension.waitAfterTcpProbeFailure.toMillis())
                     }
                 }
             }
+        }
+    }
+
+    String getServiceLogs(String serviceName) {
+        def containerId = getContainerId(serviceName)
+        new ByteArrayOutputStream().withStream { os ->
+            project.exec { ExecSpec e ->
+                e.commandLine 'docker', 'logs', '--follow=false', containerId
+                e.standardOutput = os
+            }
+            os.toString().trim()
         }
     }
 }
