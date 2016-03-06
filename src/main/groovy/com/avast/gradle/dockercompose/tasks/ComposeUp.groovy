@@ -84,20 +84,19 @@ class ComposeUp extends DefaultTask {
             logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.Remote)
         } else {
-            // read IP address of container from inspection
-            // ServiceHostType influences port mapping
+            // read gateway of containers network
             Map<String, Object> networkSettings = inspection.NetworkSettings
-            String ipAddress = networkSettings.IPAddress
-            if (ipAddress) {
-                logger.debug("Will use $ipAddress as host of $serviceName")
-                new ServiceHost(host: ipAddress, type: ServiceHostType.Bridge)
+            String gateway = networkSettings.Gateway
+            if (gateway) {
+                logger.debug("Will use $gateway as host of $serviceName")
+                new ServiceHost(host: gateway, type: ServiceHostType.DefaultNetwork)
             } else {
-                // read IPAddress of first network
+                // read gateway of first network
                 Map<String, Object> networks = networkSettings.Networks
                 Map<String, Object> firstNetwork = networks.values().head()
-                ipAddress = firstNetwork.Gateway
-                logger.debug("Will use $ipAddress (network ${networks.keySet().head()}) as host of $serviceName")
-                new ServiceHost(host: ipAddress, type: ServiceHostType.CustomNetwork)
+                gateway = firstNetwork.Gateway
+                logger.debug("Will use $gateway (network ${networks.keySet().head()}) as host of $serviceName")
+                new ServiceHost(host: gateway, type: ServiceHostType.CustomNetwork)
             }
         }
     }
@@ -115,10 +114,7 @@ class ComposeUp extends DefaultTask {
             }
             else {
                 switch (host.type) {
-                    case ServiceHostType.Bridge:
-                        ports.put(exposedPort, exposedPort)
-                        logger.info("Exposed TCP port $serviceName:$exposedPort will be available as the same port because we connect to the container directly")
-                        break
+                    case ServiceHostType.DefaultNetwork:
                     case ServiceHostType.CustomNetwork:
                     case ServiceHostType.Remote:
                         if (forwardedPortsInfos.size() > 1) {

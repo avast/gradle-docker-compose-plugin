@@ -9,7 +9,7 @@ class ServiceHost {
 }
 
 enum ServiceHostType {
-    Bridge,
+    DefaultNetwork,
     CustomNetwork,
     Remote
 }
