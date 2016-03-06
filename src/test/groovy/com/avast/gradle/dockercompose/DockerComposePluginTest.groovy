@@ -61,7 +61,6 @@ class DockerComposePluginTest extends Specification {
         } catch(ignored) {
             projectDir.deleteOnExit()
         }
-
     }
 
 
