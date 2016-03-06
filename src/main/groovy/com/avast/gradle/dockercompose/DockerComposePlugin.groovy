@@ -12,6 +12,7 @@ class DockerComposePlugin implements Plugin<Project> {
         ComposeDown downTask = project.tasks.create('composeDown', ComposeDown)
         ComposeExtension extension = project.extensions.create('dockerCompose', ComposeExtension, project, upTask, downTask)
         upTask.extension = extension
+        upTask.downTask = downTask
         downTask.extension = extension
     }
 }

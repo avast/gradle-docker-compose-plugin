@@ -15,6 +15,7 @@ class ComposeUp extends DefaultTask {
 
     private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
     ComposeExtension extension
+    ComposeDown downTask
 
     Map<String, ServiceInfo> getServicesInfos() {
         servicesInfos
@@ -35,9 +36,15 @@ class ComposeUp extends DefaultTask {
         project.exec { ExecSpec e ->
             e.commandLine 'docker-compose', 'up', '-d'
         }
-        servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
-        if (extension.waitForTcpPorts) {
-            waitForOpenTcpPorts(servicesInfos.values())
+        try {
+            servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
+            if (extension.waitForTcpPorts) {
+                waitForOpenTcpPorts(servicesInfos.values())
+            }
+        }
+        catch (Exception e) {
+            downTask.down()
+            throw e
         }
     }
 
