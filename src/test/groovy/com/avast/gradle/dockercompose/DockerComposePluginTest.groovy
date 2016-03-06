@@ -19,6 +19,7 @@ class DockerComposePluginTest extends Specification {
         project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
+
     def "dockerCompose.isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
@@ -29,6 +30,7 @@ class DockerComposePluginTest extends Specification {
         task.dependsOn.contains(project.tasks.composeUp)
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
+
 
     def "allows usage from integration test"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
@@ -61,14 +63,10 @@ class DockerComposePluginTest extends Specification {
         }
     }
 
+
     def "exposes environment variables and system properties"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                ports:
-                  - 80
-        '''
+        new File(projectDir, 'docker-compose.yml') << composeFileContent
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'java'
         project.plugins.apply 'docker-compose'
@@ -91,5 +89,20 @@ class DockerComposePluginTest extends Specification {
         } catch(ignored) {
             projectDir.deleteOnExit()
         }
+        where:
+        // test it for both compose file version 1 and 2
+        composeFileContent << ['''
+            web:
+                image: nginx
+                ports:
+                  - 80
+        ''', '''
+            version: '2'
+            services:
+                web:
+                    image: nginx
+                    ports:
+                      - 80
+        ''']
     }
 }
