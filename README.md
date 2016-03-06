@@ -40,15 +40,16 @@ dockerCompose {
 }
 
 test.doFirst {
-    // get information about container of service 'web' (declared in docker-compose.yml)
-    def webInfo = dockerCompose.servicesInfos.web
-    // pass host and exposed TCP port 80 as Java System properties
-    systemProperty 'myweb.host', webInfo.host
-    systemProperty 'myweb.port', webInfo.ports[80]
     // exposes "WEB_HOST" and "WEB_TCP_80" environment variables
     dockerCompose.exposeAsEnvironment(test)
     // exposes "web.host" and "web.tcp.80" system properties
     dockerCompose.exposeAsSystemProperties(test)
+    // get information about container of service 'web' (declared in docker-compose.yml)
+    def webInfo = dockerCompose.servicesInfos.web
+    // pass host and exposed TCP port 80 as custom Java System properties
+    systemProperty 'myweb.host', webInfo.host
+    systemProperty 'myweb.port', webInfo.ports[80]
+    
 }
 ```
 
