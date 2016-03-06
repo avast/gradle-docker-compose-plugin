@@ -9,7 +9,6 @@ class ServiceHost {
 }
 
 enum ServiceHostType {
-    DefaultNetwork,
-    CustomNetwork,
-    Remote
+    NetworkGateway,
+    RemoteDockerHost
 }

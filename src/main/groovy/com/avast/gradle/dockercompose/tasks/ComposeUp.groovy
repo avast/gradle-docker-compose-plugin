@@ -82,22 +82,15 @@ class ComposeUp extends DefaultTask {
         String dockerHost = System.getenv('DOCKER_HOST')
         if (dockerHost) {
             logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of $serviceName'")
-            new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.Remote)
+            new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
         } else {
-            // read gateway of containers network
+            // read gateway of first containers network
             Map<String, Object> networkSettings = inspection.NetworkSettings
-            String gateway = networkSettings.Gateway
-            if (gateway) {
-                logger.debug("Will use $gateway as host of $serviceName")
-                new ServiceHost(host: gateway, type: ServiceHostType.DefaultNetwork)
-            } else {
-                // read gateway of first network
-                Map<String, Object> networks = networkSettings.Networks
-                Map<String, Object> firstNetwork = networks.values().head()
-                gateway = firstNetwork.Gateway
-                logger.debug("Will use $gateway (network ${networks.keySet().head()}) as host of $serviceName")
-                new ServiceHost(host: gateway, type: ServiceHostType.CustomNetwork)
-            }
+            Map<String, Object> networks = networkSettings.Networks
+            Map<String, Object> firstNetwork = networks.values().head()
+            String gateway = firstNetwork.Gateway
+            logger.debug("Will use $gateway (network ${networks.keySet().head()}) as host of $serviceName")
+            new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
     }
 
@@ -114,9 +107,8 @@ class ComposeUp extends DefaultTask {
             }
             else {
                 switch (host.type) {
-                    case ServiceHostType.DefaultNetwork:
-                    case ServiceHostType.CustomNetwork:
-                    case ServiceHostType.Remote:
+                    case ServiceHostType.NetworkGateway:
+                    case ServiceHostType.RemoteDockerHost:
                         if (forwardedPortsInfos.size() > 1) {
                             logger.warn("More forwarded TCP ports for $serviceName:$exposedPort $forwardedPortsInfos Will use the first one.")
                         }
