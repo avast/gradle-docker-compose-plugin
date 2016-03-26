@@ -14,6 +14,8 @@ import java.time.Instant
 class ComposeUp extends DefaultTask {
 
     private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
+    private List<String> composeFiles
+    private boolean filesSpecified
     ComposeExtension extension
     ComposeDown downTask
 
@@ -28,15 +30,17 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
+        initializeComposeFilesInfo()
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
-                e.commandLine 'docker-compose', 'build'
+                e.commandLine prepareCommand(['docker-compose', 'build'])
             }
         }
         project.exec { ExecSpec e ->
-            e.commandLine 'docker-compose', 'up', '-d'
+            e.commandLine prepareCommand(['docker-compose', 'up', '-d'])
         }
         try {
+            honourComposeFileOverride()
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             if (extension.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
@@ -48,11 +52,28 @@ class ComposeUp extends DefaultTask {
         }
     }
 
+    protected void initializeComposeFilesInfo() {
+        composeFiles = extension.useComposeFiles
+        filesSpecified = composeFiles && composeFiles.size() > 0
+    }
+
+    protected void honourComposeFileOverride() {
+        // Override must also be ignored when 'docker-compose.yml' is explicitly configured, to match command-line behaviour when '-f' is present.
+        if (!filesSpecified && project.file('docker-compose.override.yml').exists()) {
+            composeFiles = ['docker-compose.yml', 'docker-compose.override.yml']
+            filesSpecified = true
+        }
+    }
+
+    protected Iterable<String> prepareCommand(List<String> baseCommand) {
+        if (filesSpecified) {
+            baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
+        }
+        baseCommand
+    }
+
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        def compose = (Map<String, Object>)(new Yaml().load(project.file('docker-compose.yml').text))
-        // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
-        Iterable<String> servicesNames = '2'.equals(compose.get('version')) ? ((Map)compose.get('services')).keySet() : compose.keySet()
-        servicesNames.collect { createServiceInfo(it) }
+        return getServiceNames().collect { createServiceInfo(it) }
     }
 
     protected ServiceInfo createServiceInfo(String serviceName) {
@@ -65,10 +86,19 @@ class ComposeUp extends DefaultTask {
         new ServiceInfo(name: serviceName, serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
     }
 
+    Iterable<String> getServiceNames() {
+        String[] composeFiles = filesSpecified ? composeFiles : ['docker-compose.yml'];
+        composeFiles.collectMany { composeFile ->
+            def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
+            // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
+            '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
+        }.unique()
+    }
+
     String getContainerId(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine 'docker-compose', 'ps', '-q', serviceName
+                e.commandLine prepareCommand(['docker-compose', 'ps', '-q', serviceName])
                 e.standardOutput = os
             }
             os.toString().trim()
