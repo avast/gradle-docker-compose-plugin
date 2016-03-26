@@ -40,7 +40,6 @@ class ComposeUp extends DefaultTask {
             e.commandLine prepareCommand(['docker-compose', 'up', '-d'])
         }
         try {
-            honourComposeFileOverride()
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             if (extension.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
@@ -57,14 +56,6 @@ class ComposeUp extends DefaultTask {
         filesSpecified = composeFiles && composeFiles.size() > 0
     }
 
-    protected void honourComposeFileOverride() {
-        // Override must also be ignored when 'docker-compose.yml' is explicitly configured, to match command-line behaviour when '-f' is present.
-        if (!filesSpecified && project.file('docker-compose.override.yml').exists()) {
-            composeFiles = ['docker-compose.yml', 'docker-compose.override.yml']
-            filesSpecified = true
-        }
-    }
-
     protected Iterable<String> prepareCommand(List<String> baseCommand) {
         if (filesSpecified) {
             baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
@@ -73,7 +64,12 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        return getServiceNames().collect { createServiceInfo(it) }
+        // Override must also be ignored when 'docker-compose.yml' is explicitly configured, to match command-line behaviour when '-f' is present.
+        if (!filesSpecified && project.file('docker-compose.override.yml').exists()) {
+            composeFiles = ['docker-compose.yml', 'docker-compose.override.yml']
+            filesSpecified = true
+        }
+        getServiceNames().collect { createServiceInfo(it) }
     }
 
     protected ServiceInfo createServiceInfo(String serviceName) {
