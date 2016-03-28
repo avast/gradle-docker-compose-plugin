@@ -119,8 +119,8 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         project.tasks.create('integrationTest').doLast {
-            ServiceInfo webInfo = project.dockerCompose.servicesInfos.devweb
-            assert webInfo.ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos.web.ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos.devweb.ports.containsKey(80)
         }
         when:
         project.tasks.composeUp.up()
