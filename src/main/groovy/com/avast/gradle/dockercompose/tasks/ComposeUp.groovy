@@ -17,7 +17,6 @@ class ComposeUp extends DefaultTask {
     ComposeDown downTask
 
     private Map<String, ServiceInfo> servicesInfos = [:]
-    private List<String> composeFiles = []
 
     Map<String, ServiceInfo> getServicesInfos() {
         servicesInfos
@@ -30,7 +29,6 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
-        composeFiles = extension.useComposeFiles
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
                 e.commandLine prepareCommand(['docker-compose', 'build'])
@@ -52,15 +50,11 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
+        baseCommand.addAll(1, extension.useComposeFiles.collectMany { ['-f', it] })
         baseCommand
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        // Override must also be ignored when 'docker-compose.yml' is explicitly configured, to match command-line behaviour when '-f' is present.
-        if (composeFiles.empty && project.file('docker-compose.override.yml').exists()) {
-            composeFiles = ['docker-compose.yml', 'docker-compose.override.yml']
-        }
         getServiceNames().collect { createServiceInfo(it) }
     }
 
@@ -75,12 +69,14 @@ class ComposeUp extends DefaultTask {
     }
 
     Iterable<String> getServiceNames() {
-        String[] composeFiles = composeFiles.empty ? ['docker-compose.yml'] : composeFiles
-        composeFiles.collectMany { composeFile ->
-            def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
-            // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
-            '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
-        }.unique()
+        String[] composeFiles = extension.useComposeFiles.empty ? ['docker-compose.yml', 'docker-compose.override.yml'] : extension.useComposeFiles
+        composeFiles
+            .findAll { project.file(it).exists() }
+            .collectMany { composeFile ->
+                def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
+                // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
+                '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
+            }.unique()
     }
 
     String getContainerId(String serviceName) {
