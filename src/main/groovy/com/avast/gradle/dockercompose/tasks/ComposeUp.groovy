@@ -16,7 +16,7 @@ class ComposeUp extends DefaultTask {
     ComposeExtension extension
     ComposeDown downTask
 
-    private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
+    private Map<String, ServiceInfo> servicesInfos = [:]
     private List<String> composeFiles = []
 
     Map<String, ServiceInfo> getServicesInfos() {

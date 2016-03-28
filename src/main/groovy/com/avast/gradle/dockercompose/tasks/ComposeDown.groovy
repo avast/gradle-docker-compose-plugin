@@ -45,7 +45,7 @@ class ComposeDown extends DefaultTask {
     }
 
     protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        if (extension.useComposeFiles && extension.useComposeFiles.size() > 0) {
+        if (!extension.useComposeFiles.empty) {
             baseCommand.addAll(1, extension.useComposeFiles.collectMany { ['-f', it] })
         }
         baseCommand
