@@ -13,11 +13,11 @@ import java.time.Instant
 
 class ComposeUp extends DefaultTask {
 
-    private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
-    private List<String> composeFiles
-    private boolean filesSpecified
     ComposeExtension extension
     ComposeDown downTask
+
+    private Map<String, ServiceInfo> servicesInfos = new HashMap<>()
+    private List<String> composeFiles = []
 
     Map<String, ServiceInfo> getServicesInfos() {
         servicesInfos
@@ -30,7 +30,7 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
-        initializeComposeFilesInfo()
+        composeFiles = extension.useComposeFiles
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
                 e.commandLine prepareCommand(['docker-compose', 'build'])
@@ -51,13 +51,8 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    protected void initializeComposeFilesInfo() {
-        composeFiles = extension.useComposeFiles
-        filesSpecified = composeFiles && composeFiles.size() > 0
-    }
-
     protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        if (filesSpecified) {
+        if (!composeFiles.empty) {
             baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
         }
         baseCommand
@@ -65,9 +60,8 @@ class ComposeUp extends DefaultTask {
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
         // Override must also be ignored when 'docker-compose.yml' is explicitly configured, to match command-line behaviour when '-f' is present.
-        if (!filesSpecified && project.file('docker-compose.override.yml').exists()) {
+        if (composeFiles.empty && project.file('docker-compose.override.yml').exists()) {
             composeFiles = ['docker-compose.yml', 'docker-compose.override.yml']
-            filesSpecified = true
         }
         getServiceNames().collect { createServiceInfo(it) }
     }
@@ -83,7 +77,7 @@ class ComposeUp extends DefaultTask {
     }
 
     Iterable<String> getServiceNames() {
-        String[] composeFiles = filesSpecified ? composeFiles : ['docker-compose.yml'];
+        String[] composeFiles = composeFiles.empty ? ['docker-compose.yml'] : composeFiles
         composeFiles.collectMany { composeFile ->
             def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
             // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
