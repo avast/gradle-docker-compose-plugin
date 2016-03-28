@@ -52,9 +52,7 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        if (!composeFiles.empty) {
-            baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
-        }
+        baseCommand.addAll(1, composeFiles.collectMany { ['-f', it] })
         baseCommand
     }
 
