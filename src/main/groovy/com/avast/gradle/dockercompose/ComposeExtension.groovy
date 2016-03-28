@@ -2,6 +2,7 @@ package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeUp
+import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.process.JavaForkOptions
@@ -56,5 +57,16 @@ class ComposeExtension {
                 task.systemProperties.put("${si.name}.tcp.${it.key}".toString(), it.value)
             }
         }
+    }
+
+    /**
+     * Composes docker-compose command, mainly adds '-f' options when `useComposeFiles` is set.
+     */
+    @PackageScope
+    Iterable<String> composeCommand(String... args) {
+        def res = ['docker-compose']
+        res.addAll(useComposeFiles.collectMany { ['-f', it] })
+        res.addAll(args)
+        res
     }
 }

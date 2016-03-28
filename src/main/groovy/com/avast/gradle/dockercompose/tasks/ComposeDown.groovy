@@ -18,16 +18,16 @@ class ComposeDown extends DefaultTask {
     void down() {
         if (extension.stopContainers) {
             project.exec { ExecSpec e ->
-                e.commandLine prepareCommand(['docker-compose', 'stop'])
+                e.commandLine extension.composeCommand('stop')
             }
             if (extension.removeContainers) {
                 if (getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
                     project.exec { ExecSpec e ->
-                        e.commandLine prepareCommand(['docker-compose', 'down'])
+                        e.commandLine extension.composeCommand('down')
                     }
                 } else {
                     project.exec { ExecSpec e ->
-                        e.commandLine prepareCommand(['docker-compose', 'rm', '-f'])
+                        e.commandLine extension.composeCommand('rm', '-f')
                     }
                 }
             }
@@ -37,15 +37,10 @@ class ComposeDown extends DefaultTask {
     VersionNumber getDockerComposeVersion() {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine prepareCommand(['docker-compose', '--version'])
+                e.commandLine extension.composeCommand('--version')
                 e.standardOutput = os
             }
             VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
         }
-    }
-
-    protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        baseCommand.addAll(1, extension.useComposeFiles.collectMany { ['-f', it] })
-        baseCommand
     }
 }

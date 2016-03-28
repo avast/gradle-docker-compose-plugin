@@ -31,11 +31,11 @@ class ComposeUp extends DefaultTask {
     void up() {
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
-                e.commandLine prepareCommand(['docker-compose', 'build'])
+                e.commandLine extension.composeCommand('build')
             }
         }
         project.exec { ExecSpec e ->
-            e.commandLine prepareCommand(['docker-compose', 'up', '-d'])
+            e.commandLine extension.composeCommand('up', '-d')
         }
         try {
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
@@ -47,11 +47,6 @@ class ComposeUp extends DefaultTask {
             downTask.down()
             throw e
         }
-    }
-
-    protected Iterable<String> prepareCommand(List<String> baseCommand) {
-        baseCommand.addAll(1, extension.useComposeFiles.collectMany { ['-f', it] })
-        baseCommand
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
@@ -82,7 +77,7 @@ class ComposeUp extends DefaultTask {
     String getContainerId(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine prepareCommand(['docker-compose', 'ps', '-q', serviceName])
+                e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os
             }
             os.toString().trim()
