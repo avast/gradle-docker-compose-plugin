@@ -81,8 +81,8 @@ class DockerComposePluginTest extends Specification {
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.create('integrationTest').doLast {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
-            assert webInfo.ports.containsKey(8080);
-            assert webInfo.ports.containsKey(80);
+            assert webInfo.ports.containsKey(8080)
+            assert webInfo.ports.containsKey(80)
         }
         when:
         extension.waitForTcpPorts = false // port 8080 is a fake
@@ -120,7 +120,7 @@ class DockerComposePluginTest extends Specification {
         project.plugins.apply 'docker-compose'
         project.tasks.create('integrationTest').doLast {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.devweb
-            assert webInfo.ports.containsKey(80);
+            assert webInfo.ports.containsKey(80)
         }
         when:
         project.tasks.composeUp.up()
@@ -161,7 +161,7 @@ class DockerComposePluginTest extends Specification {
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.create('integrationTest').doLast {
             ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
-            assert webInfo.ports.containsKey(8080);
+            assert webInfo.ports.containsKey(8080)
             assert !webInfo.ports.containsKey(80)
             assert !project.dockerCompose.servicesInfos.devweb
         }
