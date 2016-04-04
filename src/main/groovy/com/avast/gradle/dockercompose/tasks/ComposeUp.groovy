@@ -55,10 +55,10 @@ class ComposeUp extends DefaultTask {
 
     protected ServiceInfo createServiceInfo(String serviceName) {
         String containerId = getContainerId(serviceName)
-        logger.info("Container ID of $serviceName is $containerId")
+        logger.info("Container ID of service $serviceName is $containerId")
         def inspection = getDockerInspection(containerId)
         ServiceHost host = getServiceHost(serviceName, inspection)
-        logger.info("Will use $host as host of $serviceName")
+        logger.info("Will use $host as host of service $serviceName")
         def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
         new ServiceInfo(name: serviceName, serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
     }
@@ -99,7 +99,7 @@ class ComposeUp extends DefaultTask {
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
         String dockerHost = System.getenv('DOCKER_HOST')
         if (dockerHost) {
-            logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of $serviceName'")
+            logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
         } else {
             // read gateway of first containers network
@@ -121,22 +121,22 @@ class ComposeUp extends DefaultTask {
             }
             int exposedPort = exposedPortAsString as int
             if (!forwardedPortsInfos || forwardedPortsInfos.isEmpty()) {
-                logger.debug("No forwarded TCP port for $serviceName:$exposedPort")
+                logger.debug("No forwarded TCP port for service '$serviceName:$exposedPort'")
             }
             else {
                 switch (host.type) {
                     case ServiceHostType.NetworkGateway:
                     case ServiceHostType.RemoteDockerHost:
                         if (forwardedPortsInfos.size() > 1) {
-                            logger.warn("More forwarded TCP ports for $serviceName:$exposedPort $forwardedPortsInfos Will use the first one.")
+                            logger.warn("More forwarded TCP ports for service '$serviceName:$exposedPort $forwardedPortsInfos'. Will use the first one.")
                         }
                         def forwardedPortInfo = forwardedPortsInfos.first()
                         int forwardedPort = forwardedPortInfo.HostPort as int
-                        logger.info("Exposed TCP port $serviceName:$exposedPort will be available as $forwardedPort")
+                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $forwardedPort")
                         ports.put(exposedPort, forwardedPort)
                         break
                     default:
-                        throw new IllegalArgumentException("Unknown ServiceHostType '${host.type}' for service $serviceName")
+                        throw new IllegalArgumentException("Unknown ServiceHostType '${host.type}' for service '$serviceName'")
                         break
                 }
             }
@@ -147,20 +147,20 @@ class ComposeUp extends DefaultTask {
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         servicesInfos.forEach { service ->
             service.tcpPorts.forEach { exposedPort, forwardedPort ->
-                logger.lifecycle("Probing TCP socket on ${service.host}:${forwardedPort} of ${service.name}")
+                logger.lifecycle("Probing TCP socket on ${service.host}:${forwardedPort} of service '${service.name}'")
                 def start = Instant.now()
                 while (true) {
                     try {
                         def s = new Socket(service.host, forwardedPort)
                         s.close()
-                        logger.lifecycle("TCP socket on ${service.host}:${forwardedPort} of ${service.name} is ready")
+                        logger.lifecycle("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is ready")
                         return
                     }
                     catch (Exception e) {
                         if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
-                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of ${service.name} is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
+                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
                         }
-                        logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of ${service.name} (${e.message})")
+                        logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' (${e.message})")
                         sleep(extension.waitAfterTcpProbeFailure.toMillis())
                     }
                 }
