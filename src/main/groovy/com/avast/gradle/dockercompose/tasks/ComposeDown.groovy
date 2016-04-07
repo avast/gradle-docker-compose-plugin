@@ -23,7 +23,7 @@ class ComposeDown extends DefaultTask {
             if (extension.removeContainers) {
                 if (getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
                     project.exec { ExecSpec e ->
-                        e.commandLine extension.composeCommand('down')
+                        e.commandLine extension.composeCommand('down', '--rmi', 'local', '--volumes')
                     }
                 } else {
                     project.exec { ExecSpec e ->
