@@ -24,7 +24,7 @@ class ComposeDown extends DefaultTask {
                 if (getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
                     if(extension.removeImages) {
-                        args += ['--rmi', 'all', '--volumes']
+                        args += ['--rmi', 'all']
                     }
                     if(extension.removeVolumes) {
                         args += ['--volumes']
