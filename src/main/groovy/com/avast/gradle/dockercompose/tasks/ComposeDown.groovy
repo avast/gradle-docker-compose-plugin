@@ -26,6 +26,9 @@ class ComposeDown extends DefaultTask {
                     if(extension.removeImages) {
                         args += ['--rmi', 'all', '--volumes']
                     }
+					if(extension.removeVolumes) {
+						args += ['--volumes']
+					}
                     project.exec { ExecSpec e ->
                         e.commandLine extension.composeCommand(args)
                     }
