@@ -23,6 +23,8 @@ class ComposeExtension {
 
     boolean stopContainers = true
     boolean removeContainers = true
+    boolean removeImages = true
+    boolean removeVolumes = true
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
