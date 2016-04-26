@@ -103,11 +103,17 @@ class ComposeUp extends DefaultTask {
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
         } else {
             // read gateway of first containers network
+            String gateway
             Map<String, Object> networkSettings = inspection.NetworkSettings
             Map<String, Object> networks = networkSettings.Networks
-            Map<String, Object> firstNetwork = networks.values().head()
-            String gateway = firstNetwork.Gateway
-            logger.debug("Will use $gateway (network ${networks.keySet().head()}) as host of $serviceName")
+            if (networks) {
+                Map.Entry<String, Object> firstNetworkPair = networks.find()
+                gateway = firstNetworkPair.value.Gateway
+                logger.debug("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
+            } else { // networks not specified (older Docker versions)
+                gateway = networkSettings.Gateway
+                logger.debug("Will use $gateway as host of $serviceName")
+            }
             new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
     }
