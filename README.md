@@ -39,6 +39,9 @@ dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
     // stopContainers = false                                              // useful for debugging
+    // removeContainers = false
+    // removeImages = true
+    // removeVolumes = false
 }
 
 test.doFirst {
