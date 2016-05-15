@@ -21,5 +21,4 @@ script:
   - sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image test --info
 
 after_success:
-  - export
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && test $TRAVIS_TAG && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" build-image bintrayUpload -Pversion="$TRAVIS_TAG" --info
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_TAG && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" build-image bintrayUpload -Pversion="$TRAVIS_TAG" --info
