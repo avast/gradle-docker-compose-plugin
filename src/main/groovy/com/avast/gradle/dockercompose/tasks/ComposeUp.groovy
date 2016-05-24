@@ -101,7 +101,12 @@ class ComposeUp extends DefaultTask {
         if (dockerHost) {
             logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
-        } else if (extension.useNetworkGateway) {
+        } else if (isMac()) {
+            // If running on Mac OS and DOCKER_HOST is not set, we can assume that
+            // we are using Docker for Mac, in which case we should connect to localhost
+            logger.debug("Will use localhost as host of $serviceName")
+            new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
+        } else {
             // read gateway of first containers network
             String gateway
             Map<String, Object> networkSettings = inspection.NetworkSettings
@@ -115,9 +120,6 @@ class ComposeUp extends DefaultTask {
                 logger.debug("Will use $gateway as host of $serviceName")
             }
             new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
-        } else {
-            logger.debug("Will use localhost as host of $serviceName")
-            new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
         }
     }
 
@@ -187,5 +189,9 @@ class ComposeUp extends DefaultTask {
             }
             os.toString().trim()
         }
+    }
+
+    private static boolean isMac() {
+        System.getProperty("os.name").startsWith("Mac")
     }
 }

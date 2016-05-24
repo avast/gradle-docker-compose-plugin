@@ -42,7 +42,6 @@ dockerCompose {
     // removeContainers = false
     // removeImages = true
     // removeVolumes = false
-    // useNetworkGateway = false  // Connect to localhost instead of gateway. Useful for Docker for Mac.
 }
 
 test.doFirst {
