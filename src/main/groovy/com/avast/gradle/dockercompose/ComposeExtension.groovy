@@ -25,6 +25,7 @@ class ComposeExtension {
     boolean removeContainers = true
     boolean removeImages = false
     boolean removeVolumes = true
+    boolean useNetworkGateway = true
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
