@@ -192,6 +192,6 @@ class ComposeUp extends DefaultTask {
     }
 
     private static boolean isMac() {
-        System.getProperty("os.name").startsWith("Mac")
+        System.getProperty("os.name").toLowerCase().startsWith("mac")
     }
 }
