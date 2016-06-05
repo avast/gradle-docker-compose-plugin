@@ -40,7 +40,7 @@ dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
     // stopContainers = false                                              // useful for debugging
     // removeContainers = false
-    // removeImages = true
+    // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
 }
 

@@ -23,7 +23,7 @@ class ComposeExtension {
 
     boolean stopContainers = true
     boolean removeContainers = true
-    boolean removeImages = false
+    RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
@@ -71,4 +71,10 @@ class ComposeExtension {
         res.addAll(args)
         res
     }
+}
+
+enum RemoveImages {
+    None,
+    Local, // images that don't have a custom name set by the `image` field
+    All
 }

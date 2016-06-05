@@ -56,3 +56,8 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 
+# Eclipse
+.settings/
+.classpath
+.project
+/bin/
