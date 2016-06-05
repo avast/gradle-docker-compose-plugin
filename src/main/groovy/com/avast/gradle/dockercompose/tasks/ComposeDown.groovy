@@ -1,6 +1,7 @@
 package com.avast.gradle.dockercompose.tasks
 
 import com.avast.gradle.dockercompose.ComposeExtension
+import com.avast.gradle.dockercompose.RemoveImages
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
@@ -23,8 +24,13 @@ class ComposeDown extends DefaultTask {
             if (extension.removeContainers) {
                 if (getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
-                    if(extension.removeImages) {
-                        args += ['--rmi', 'all']
+                    switch (extension.removeImages) {
+                        case RemoveImages.All:
+                        case RemoveImages.Local:
+                            args += ['--rmi', "${extension.removeImages}".toLowerCase()]
+                            break
+                        default:
+                            break
                     }
                     if(extension.removeVolumes) {
                         args += ['--volumes']
