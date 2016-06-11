@@ -111,7 +111,7 @@ class ComposeUp extends DefaultTask {
             String gateway
             Map<String, Object> networkSettings = inspection.NetworkSettings
             Map<String, Object> networks = networkSettings.Networks
-            if (networks.every { it.key.toLowerCase().equals("host") }) {
+            if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
             } else if (networks) {
                 Map.Entry<String, Object> firstNetworkPair = networks.find()
