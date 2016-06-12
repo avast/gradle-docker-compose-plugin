@@ -223,6 +223,37 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
+    def "expose localhost as a host for container with HOST networking"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            version: '2'
+            services:
+                web:
+                    image: nginx
+                    network_mode: host
+                    ports:
+                      - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'java'
+        project.plugins.apply 'docker-compose'
+        project.tasks.composeUp.up()
+        Test test = project.tasks.test as Test
+        when:
+        project.dockerCompose.exposeAsEnvironment(test)
+        project.dockerCompose.exposeAsSystemProperties(test)
+        then:
+        test.environment.get('WEB_HOST') == 'localhost'
+        test.systemProperties.get('web.host') == 'localhost'
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch(ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
     def "reads logs of service"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
