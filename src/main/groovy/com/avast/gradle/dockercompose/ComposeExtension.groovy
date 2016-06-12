@@ -26,6 +26,8 @@ class ComposeExtension {
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
 
+    Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
+
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
         this.downTask = downTask

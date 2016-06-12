@@ -42,6 +42,7 @@ dockerCompose {
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
+    // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 
 test.doFirst {
