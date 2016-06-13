@@ -275,4 +275,37 @@ class DockerComposePluginTest extends Specification {
             projectDir.deleteOnExit()
         }
     }
+
+    def "docker-compose substitutes environment variables"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                ports:
+                  - $MY_WEB_PORT
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+        project.tasks.create('integrationTest').doLast {
+            ServiceInfo webInfo = project.dockerCompose.servicesInfos.web
+            assert webInfo.ports.containsKey(80)
+        }
+        when:
+        extension.useComposeFiles = ['docker-compose.yml']
+        extension.environment.put 'MY_WEB_PORT', 80
+        extension.waitForTcpPorts = false  // checked in assert
+        project.tasks.composeUp.up()
+        project.tasks.integrationTest.execute()
+        then:
+        noExceptionThrown()
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch(ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
 }

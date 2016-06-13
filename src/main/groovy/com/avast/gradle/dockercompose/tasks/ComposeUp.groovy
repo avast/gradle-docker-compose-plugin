@@ -31,10 +31,12 @@ class ComposeUp extends DefaultTask {
     void up() {
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
+                e.environment = extension.environment
                 e.commandLine extension.composeCommand('build')
             }
         }
         project.exec { ExecSpec e ->
+            e.environment = extension.environment
             e.commandLine extension.composeCommand('up', '-d')
         }
         try {
