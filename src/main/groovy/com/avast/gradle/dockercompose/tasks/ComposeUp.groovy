@@ -79,6 +79,7 @@ class ComposeUp extends DefaultTask {
     String getContainerId(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
+                e.environment = extension.environment
                 e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os
             }
