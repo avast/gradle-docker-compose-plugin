@@ -19,6 +19,7 @@ class ComposeDown extends DefaultTask {
     void down() {
         if (extension.stopContainers) {
             project.exec { ExecSpec e ->
+                e.environment = extension.environment
                 e.commandLine extension.composeCommand('stop')
             }
             if (extension.removeContainers) {
@@ -36,10 +37,12 @@ class ComposeDown extends DefaultTask {
                         args += ['--volumes']
                     }
                     project.exec { ExecSpec e ->
+                        e.environment = extension.environment
                         e.commandLine extension.composeCommand(args)
                     }
                 } else {
                     project.exec { ExecSpec e ->
+                        e.environment = extension.environment
                         e.commandLine extension.composeCommand('rm', '-f')
                     }
                 }
@@ -50,6 +53,7 @@ class ComposeDown extends DefaultTask {
     VersionNumber getDockerComposeVersion() {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
+                e.environment = extension.environment
                 e.commandLine extension.composeCommand('--version')
                 e.standardOutput = os
             }
