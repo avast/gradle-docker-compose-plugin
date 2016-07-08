@@ -179,7 +179,7 @@ class ComposeUp extends DefaultTask {
                     return
                 }
                 if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
-                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'")
+                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
                 }
                 logger.lifecycle("Waiting for ${service.name} to become healthy")
                 sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
