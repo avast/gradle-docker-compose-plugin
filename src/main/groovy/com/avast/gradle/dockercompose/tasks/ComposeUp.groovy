@@ -41,6 +41,7 @@ class ComposeUp extends DefaultTask {
         }
         try {
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
+            waitForHealthyContainers(servicesInfos.values())
             if (extension.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
             }
@@ -160,6 +161,30 @@ class ComposeUp extends DefaultTask {
             }
         }
         ports
+    }
+
+    void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
+        servicesInfos.forEach { service ->
+            def start = Instant.now()
+            while (true) {
+                Map<String, Object> inspectionState = getDockerInspection(service.getContainerId()).State
+                if (inspectionState.containsKey('Health')) {
+                    String healthStatus = inspectionState.Health.Status
+                    if (!"starting".equalsIgnoreCase(healthStatus)) {
+                        logger.lifecycle("${service.name} healh state reported as '$healthStatus' - continuing...")
+                        return
+                    }
+                } else {
+                    logger.debug("Service ${service.name} or this version of Docker doesn't support healtchecks")
+                    return
+                }
+                if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
+                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'")
+                }
+                logger.lifecycle("Waiting for ${service.name} to become healthy")
+                sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
+            }
+        }
     }
 
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {

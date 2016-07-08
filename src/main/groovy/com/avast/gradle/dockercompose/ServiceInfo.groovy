@@ -11,6 +11,7 @@ class ServiceInfo {
     String containerHostname
     /* Docker inspection */
     Map<String, Object> inspection
+    String getContainerId() { inspection.Id }
 
     String getHost() { serviceHost.host }
     Map<Integer, Integer> getPorts() { tcpPorts }
