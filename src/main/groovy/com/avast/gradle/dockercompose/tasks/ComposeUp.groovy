@@ -105,9 +105,9 @@ class ComposeUp extends DefaultTask {
         if (dockerHost) {
             logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isMac()) {
-            // If running on Mac OS and DOCKER_HOST is not set, we can assume that
-            // we are using Docker for Mac, in which case we should connect to localhost
+        } else if (isMac() || isWindows()) {
+            // If running on Mac OS or Windows, and DOCKER_HOST is not set, we can assume that
+            // we are using Docker for Mac/Windows, in which case we should connect to localhost
             logger.debug("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
         } else {
@@ -224,5 +224,9 @@ class ComposeUp extends DefaultTask {
 
     private static boolean isMac() {
         System.getProperty("os.name").toLowerCase().startsWith("mac")
+    }
+
+    private static boolean isWindows() {
+        System.getProperty("os.name").toLowerCase().startsWith("win")
     }
 }
