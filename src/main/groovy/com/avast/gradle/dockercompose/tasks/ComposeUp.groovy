@@ -103,13 +103,20 @@ class ComposeUp extends DefaultTask {
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
         String dockerHost = System.getenv('DOCKER_HOST')
         if (dockerHost) {
-            logger.debug("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
+            logger.lifecycle("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isMac() || isWindows()) {
-            // If running on Mac OS or Windows, and DOCKER_HOST is not set, we can assume that
-            // we are using Docker for Mac/Windows, in which case we should connect to localhost
-            logger.debug("Will use localhost as host of $serviceName")
+        } else if (isMac()) {
+            logger.lifecycle("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
+        } else if (isWindows()) {
+            String ifaceAddress = getWindowsDockerNATAddress()
+            if (ifaceAddress) {
+                logger.lifecycle("Will use $ifaceAddress as host of $serviceName because it's address of DockerNAT network interface")
+                new ServiceHost(host: ifaceAddress, type: ServiceHostType.RemoteDockerHost)
+            } else {
+                logger.lifecycle("Will use localhost as host of $serviceName because DockerNAT network interface is not present")
+                new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
+            }
         } else {
             // read gateway of first containers network
             String gateway
@@ -117,17 +124,35 @@ class ComposeUp extends DefaultTask {
             Map<String, Object> networks = networkSettings.Networks
             if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
-                logger.debug("Will use $gateway as host of $serviceName because it is using HOST network")
+                logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
             } else if (networks) {
                 Map.Entry<String, Object> firstNetworkPair = networks.find()
                 gateway = firstNetworkPair.value.Gateway
-                logger.debug("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
+                logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
             } else { // networks not specified (older Docker versions)
                 gateway = networkSettings.Gateway
-                logger.debug("Will use $gateway as host of $serviceName")
+                logger.lifecycle("Will use $gateway as host of $serviceName")
             }
             new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
+    }
+
+    String getWindowsDockerNATAddress() {
+        // parse output of netsh - find DockerNAT interface and read its index
+        new ByteArrayOutputStream().withStream { os ->
+            project.exec { ExecSpec e ->
+                e.commandLine 'netsh', 'interface', 'ip', 'show', 'interfaces'
+                e.standardOutput = os
+            }
+            os.toString().trim()
+        }.readLines()
+            .findAll { it.toLowerCase().contains('dockernat') }
+            .collect { it.split().first() }
+            .flatten()
+            .collect { NetworkInterface.getByIndex(Integer.parseInt(it)) }
+            .findAll { it.up && it.getInterfaceAddresses().any() }
+            .collect { it.getInterfaceAddresses().first().address.hostAddress }
+            .find()
     }
 
     Map<Integer, Integer> getTcpPortsMapping(String serviceName, Map<String, Object> inspection, ServiceHost host) {
