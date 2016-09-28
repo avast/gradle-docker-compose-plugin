@@ -6,6 +6,7 @@ import org.gradle.api.Task
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 class DockerComposePluginTest extends Specification {
@@ -19,7 +20,6 @@ class DockerComposePluginTest extends Specification {
         project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
-
     def "dockerCompose.isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
@@ -31,6 +31,14 @@ class DockerComposePluginTest extends Specification {
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
 
+    @IgnoreIf({ !System.properties["os.name"].toString().toLowerCase().startsWith('windows') })
+    def "returns any DockerNAT network interface"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        then:
+        project.tasks.composeUp.getWindowsDockerNATAddress()
+    }
 
     def "allows usage from integration test"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
@@ -223,6 +231,7 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
+    @IgnoreIf({ !System.properties['os.name'].toString().toLowerCase().startsWith('windows') && !System.properties['os.name'].toString().toLowerCase().startsWith('macos') })
     def "expose localhost as a host for container with HOST networking"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
@@ -307,5 +316,4 @@ class DockerComposePluginTest extends Specification {
             projectDir.deleteOnExit()
         }
     }
-
 }
