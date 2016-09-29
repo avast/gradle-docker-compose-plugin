@@ -193,12 +193,11 @@ class ComposeUp extends DefaultTask {
                 while (true) {
                     try {
                         def s = new Socket(service.host, forwardedPort)
-                        s.setSoTimeout(1)
+                        s.setSoTimeout(extension.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
                         try {
                             // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
                             // if the socket is closed then it returns -1
-                            // if the socket is not closed then returns a data or timeouts (the timeout is set to 1ms)
-                            Thread.sleep(extension.waitForTcpPortsDisconnection.toMillis())
+                            // if the socket is not closed then returns a data or timeouts
                             boolean disconnected = false
                             try {
                                 disconnected = s.inputStream.read() == -1
