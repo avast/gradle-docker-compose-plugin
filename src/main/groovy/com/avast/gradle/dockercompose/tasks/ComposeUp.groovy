@@ -105,18 +105,9 @@ class ComposeUp extends DefaultTask {
         if (dockerHost) {
             logger.lifecycle("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
             new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isMac()) {
+        } else if (isMac() || isWindows()) {
             logger.lifecycle("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
-        } else if (isWindows()) {
-            String ifaceAddress = getWindowsDockerNATAddress()
-            if (ifaceAddress) {
-                logger.lifecycle("Will use $ifaceAddress as host of $serviceName because it's address of DockerNAT network interface")
-                new ServiceHost(host: ifaceAddress, type: ServiceHostType.RemoteDockerHost)
-            } else {
-                logger.lifecycle("Will use localhost as host of $serviceName because DockerNAT network interface is not present")
-                new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
-            }
         } else {
             // read gateway of first containers network
             String gateway
@@ -135,24 +126,6 @@ class ComposeUp extends DefaultTask {
             }
             new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
-    }
-
-    String getWindowsDockerNATAddress() {
-        // parse output of netsh - find DockerNAT interface and read its index
-        new ByteArrayOutputStream().withStream { os ->
-            project.exec { ExecSpec e ->
-                e.commandLine 'netsh', 'interface', 'ip', 'show', 'interfaces'
-                e.standardOutput = os
-            }
-            os.toString().trim()
-        }.readLines()
-            .findAll { it.toLowerCase().contains('dockernat') }
-            .collect { it.split().first() }
-            .flatten()
-            .collect { NetworkInterface.getByIndex(Integer.parseInt(it)) }
-            .findAll { it.up && it.getInterfaceAddresses().any() }
-            .collect { it.getInterfaceAddresses().first().address.hostAddress }
-            .find()
     }
 
     Map<Integer, Integer> getTcpPortsMapping(String serviceName, Map<String, Object> inspection, ServiceHost host) {
