@@ -231,7 +231,7 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
-    @IgnoreIf({ !System.properties['os.name'].toString().toLowerCase().startsWith('windows') && !System.properties['os.name'].toString().toLowerCase().startsWith('macos') })
+    @IgnoreIf({ System.properties['os.name'].toString().toLowerCase().startsWith('windows') || System.properties['os.name'].toString().toLowerCase().startsWith('macos') })
     def "expose localhost as a host for container with HOST networking"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
