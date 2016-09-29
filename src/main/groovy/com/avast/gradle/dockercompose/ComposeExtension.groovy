@@ -19,6 +19,7 @@ class ComposeExtension {
     boolean waitForTcpPorts = true
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
     Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
+    Duration waitForTcpPortsDisconnection = Duration.ofMillis(1000)
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []

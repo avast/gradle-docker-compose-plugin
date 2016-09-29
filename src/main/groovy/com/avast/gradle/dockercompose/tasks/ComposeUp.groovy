@@ -220,7 +220,25 @@ class ComposeUp extends DefaultTask {
                 while (true) {
                     try {
                         def s = new Socket(service.host, forwardedPort)
-                        s.close()
+                        s.setSoTimeout(1)
+                        try {
+                            // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
+                            // if the socket is closed then it returns -1
+                            // if the socket is not closed then returns a data or timeouts (the timeout is set to 1ms)
+                            Thread.sleep(extension.waitForTcpPortsDisconnection.toMillis())
+                            boolean disconnected = false
+                            try {
+                                disconnected = s.inputStream.read() == -1
+                            } catch (Exception e) {
+                                logger.debug("An exception when reading from socket", e) // expected exception
+                            }
+                            if (disconnected) {
+                                throw new RuntimeException("TCP connection on ${service.host}:${forwardedPort} of service '${service.name}' was disconnected right after connected")
+                            }
+                        }
+                        finally {
+                            s.close()
+                        }
                         logger.lifecycle("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is ready")
                         return
                     }

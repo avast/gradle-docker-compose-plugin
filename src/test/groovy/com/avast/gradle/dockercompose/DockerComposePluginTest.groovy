@@ -45,6 +45,7 @@ class DockerComposePluginTest extends Specification {
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx
+                command: bash -c "sleep 5 && nginx -g 'daemon off;'"
                 ports:
                   - 80
         '''
