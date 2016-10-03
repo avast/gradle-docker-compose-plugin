@@ -31,6 +31,17 @@ class DockerComposePluginTest extends Specification {
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
 
+    def "isRequiredBy ensures right order of tasks"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        project.plugins.apply 'java'
+        when:
+        project.dockerCompose.isRequiredBy(project.tasks.test)
+        then:
+        project.tasks.composeUp.shouldRunAfter.values.any { it == project.tasks.testClasses }
+        noExceptionThrown()
+    }
+
     def "allows usage from integration test"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
