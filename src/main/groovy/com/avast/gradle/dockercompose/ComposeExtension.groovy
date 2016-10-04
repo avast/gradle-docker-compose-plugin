@@ -40,6 +40,10 @@ class ComposeExtension {
     void isRequiredBy(Task task) {
         task.dependsOn upTask
         task.finalizedBy downTask
+        def ut = upTask // to access private field from closure
+        task.getTaskDependencies().getDependencies(task)
+            .findAll { Task.class.isAssignableFrom(it.class) && ((Task)it).name.toLowerCase().contains('classes') }
+            .each { ut.shouldRunAfter it }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
