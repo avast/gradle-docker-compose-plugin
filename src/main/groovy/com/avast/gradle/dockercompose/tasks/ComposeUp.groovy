@@ -10,6 +10,7 @@ import org.gradle.process.ExecSpec
 import org.yaml.snakeyaml.Yaml
 
 import java.time.Instant
+import java.util.concurrent.Executors
 
 class ComposeUp extends DefaultTask {
 
@@ -40,6 +41,9 @@ class ComposeUp extends DefaultTask {
             e.commandLine extension.composeCommand('up', '-d')
         }
         try {
+            if (extension.captureContainersOutput) {
+                captureContainersOutput()
+            }
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
             if (extension.waitForTcpPorts) {
@@ -50,6 +54,34 @@ class ComposeUp extends DefaultTask {
             downTask.down()
             throw e
         }
+    }
+
+    protected void captureContainersOutput() {
+        def t = Executors.defaultThreadFactory().newThread(new Runnable() {
+            @Override
+            void run() {
+                project.exec { ExecSpec e ->
+                    e.commandLine extension.composeCommand('logs', '-f', '--no-color')
+                    e.standardOutput = new OutputStream() {
+                        def buffer = new ArrayList<Byte>()
+                        @Override
+                        void write(int b) throws IOException {
+                            if (b == 10 || b == 13) {
+                                if (buffer.size() > 0) {
+                                    def toPrint = buffer.collect { it as byte }.toArray() as byte[]
+                                    logger.lifecycle(new String(toPrint))
+                                    buffer.clear()
+                                }
+                            } else {
+                                buffer.add(b as Byte)
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        t.daemon = true
+        t.start()
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
