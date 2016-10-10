@@ -57,6 +57,8 @@ class ComposeUp extends DefaultTask {
     }
 
     protected void captureContainersOutput() {
+        // execute daemon thread that executes `docker-compose logs -f --no-color`
+        // the -f arguments means `follow` and so this command ends when docker-compose finishes
         def t = Executors.defaultThreadFactory().newThread(new Runnable() {
             @Override
             void run() {
@@ -66,8 +68,10 @@ class ComposeUp extends DefaultTask {
                         def buffer = new ArrayList<Byte>()
                         @Override
                         void write(int b) throws IOException {
+                            // store bytes into buffer until end-of-line character is detected
                             if (b == 10 || b == 13) {
                                 if (buffer.size() > 0) {
+                                    // convert the byte buffer to characters and print these characters
                                     def toPrint = buffer.collect { it as byte }.toArray() as byte[]
                                     logger.lifecycle(new String(toPrint))
                                     buffer.clear()
