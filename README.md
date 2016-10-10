@@ -38,8 +38,8 @@ dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy
 
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
-    // captureContainersOutput = true // prinnts output of all containers to Gradle output - very useful for debugging
-    // stopContainers = false                                              // useful for debugging
+    // captureContainersOutput = true // prints output of all containers to Gradle output - very useful for debugging
+    // stopContainers = false // doesn't call `docker-compose down` - useful for debugging
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
