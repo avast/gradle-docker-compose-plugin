@@ -71,8 +71,8 @@ bintray {
     }
 }
 
-project.setProperty('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
-project.setProperty('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
+project.ext.set('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
+project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
 pluginBundle {
     website = 'https://github.com/avast/docker-compose-gradle-plugin'
     vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin'
