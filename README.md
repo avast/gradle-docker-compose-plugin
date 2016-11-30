@@ -34,6 +34,11 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'docker-compose'
 
+// Or use the new Gradle Portal plugins:
+// plugins {
+//  id 'com.avast.gradle.docker-compose' version "$versionHere"
+// }
+
 dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown'
 
 dockerCompose {
