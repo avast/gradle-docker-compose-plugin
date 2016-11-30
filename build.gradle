@@ -1,9 +1,11 @@
 buildscript {
     repositories {
         jcenter()
+        maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.5'
+        classpath 'com.gradle.publish:plugin-publish-plugin:0.9.6'
     }
 }
 apply plugin: 'com.jfrog.bintray'
@@ -11,6 +13,7 @@ apply plugin: 'com.jfrog.bintray'
 apply plugin: 'groovy'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'com.gradle.plugin-publish'
 
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
@@ -64,6 +67,21 @@ bintray {
         version {
             name = project.version
             vcsTag = project.version
+        }
+    }
+}
+
+project.ext.set('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
+project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
+pluginBundle {
+    website = 'https://github.com/avast/docker-compose-gradle-plugin'
+    vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin'
+    description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
+    tags = ['docker', 'docker-compose', 'gradle']
+    plugins {
+        dockerComposePlugin {
+            id = 'com.avast.gradle.docker-compose'
+            displayName = 'Gradle Docker Compose plugin'
         }
     }
 }
