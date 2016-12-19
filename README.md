@@ -7,6 +7,8 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeDown` task stops the application and removes the containers.
 
+`composePull` task pulls and optionally builds the images required by the application. This is useful, for example, with a CI platform that caches docker images to decrease build times.
+
 ## Why to use Docker Compose?
 1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done.
 2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker-compose up` before these tests.
