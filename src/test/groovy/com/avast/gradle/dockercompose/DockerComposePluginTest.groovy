@@ -2,6 +2,7 @@ package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeUp
+import com.avast.gradle.dockercompose.tasks.ComposePull
 import org.gradle.api.Task
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
 import org.gradle.api.tasks.testing.Test
@@ -17,6 +18,7 @@ class DockerComposePluginTest extends Specification {
         then:
         project.tasks.composeUp instanceof ComposeUp
         project.tasks.composeDown instanceof ComposeDown
+        project.tasks.composePull instanceof ComposePull
         project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
@@ -67,6 +69,29 @@ class DockerComposePluginTest extends Specification {
         noExceptionThrown()
         cleanup:
         project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch(ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
+    def "allows pull from integration test"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "sleep 5 && nginx -g 'daemon off;'"
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'docker-compose'
+        when:
+        project.tasks.composePull.pull()
+        then:
+        noExceptionThrown()
+        cleanup:
         try {
             projectDir.delete()
         } catch(ignored) {
