@@ -5,8 +5,10 @@ import com.avast.gradle.dockercompose.tasks.ComposeUp
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.process.ExecSpec
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
+import org.gradle.util.VersionNumber
 
 import java.time.Duration
 
@@ -80,6 +82,18 @@ class ComposeExtension {
         res.addAll(useComposeFiles.collectMany { ['-f', it] })
         res.addAll(args)
         res
+    }
+
+    VersionNumber getDockerComposeVersion() {
+        def p = project
+        new ByteArrayOutputStream().withStream { os ->
+            p.exec { ExecSpec e ->
+                e.environment = environment
+                e.commandLine composeCommand('--version')
+                e.standardOutput = os
+            }
+            VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
+        }
     }
 }
 

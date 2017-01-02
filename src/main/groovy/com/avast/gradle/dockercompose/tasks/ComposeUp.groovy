@@ -7,6 +7,7 @@ import com.avast.gradle.dockercompose.ServiceInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
+import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import java.time.Instant
@@ -103,14 +104,49 @@ class ComposeUp extends DefaultTask {
     }
 
     Iterable<String> getServiceNames() {
-        String[] composeFiles = extension.useComposeFiles.empty ? ['docker-compose.yml', 'docker-compose.override.yml'] : extension.useComposeFiles
-        composeFiles
-            .findAll { project.file(it).exists() }
-            .collectMany { composeFile ->
+        if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.9.0')) {
+            new ByteArrayOutputStream().withStream { os ->
+                project.exec { ExecSpec e ->
+                    e.environment = extension.environment
+                    e.commandLine extension.composeCommand('config', '--services')
+                    e.standardOutput = os
+                }
+                os.toString().readLines()
+            }
+        } else {
+            def composeFiles = extension.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
+            composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
                 // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
                 '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
             }.unique()
+
+        }
+    }
+
+    Iterable<File> getStandardComposeFiles() {
+        def res = []
+        def f = findInParentDirectories('docker-compose.yml', project.projectDir)
+        if (f != null) res.add(f)
+        f = findInParentDirectories('docker-compose.override.yml', project.projectDir)
+        if (f != null) res.add(f)
+        res
+    }
+
+    Iterable<File> getCustomComposeFiles() {
+        extension.useComposeFiles.collect {
+            def f = project.file(it)
+            if (!f.exists()) {
+                throw new IllegalArgumentException("Custom Docker Compose file not found: $f")
+            }
+            f
+        }
+    }
+
+    File findInParentDirectories(String filename, File directory) {
+        if ((directory) == null) return null
+        def f = new File(directory, filename)
+        f.exists() ? f : findInParentDirectories(filename, directory.parentFile)
     }
 
     String getContainerId(String serviceName) {
