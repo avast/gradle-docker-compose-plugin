@@ -104,7 +104,7 @@ class ComposeUp extends DefaultTask {
     }
 
     Iterable<String> getServiceNames() {
-        if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.9.0')) {
+        if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
             new ByteArrayOutputStream().withStream { os ->
                 project.exec { ExecSpec e ->
                     e.environment = extension.environment
