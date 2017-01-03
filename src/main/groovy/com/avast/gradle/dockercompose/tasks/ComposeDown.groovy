@@ -23,7 +23,7 @@ class ComposeDown extends DefaultTask {
                 e.commandLine extension.composeCommand('stop')
             }
             if (extension.removeContainers) {
-                if (getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
+                if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
                     switch (extension.removeImages) {
                         case RemoveImages.All:
@@ -47,17 +47,6 @@ class ComposeDown extends DefaultTask {
                     }
                 }
             }
-        }
-    }
-
-    VersionNumber getDockerComposeVersion() {
-        new ByteArrayOutputStream().withStream { os ->
-            project.exec { ExecSpec e ->
-                e.environment = extension.environment
-                e.commandLine extension.composeCommand('--version')
-                e.standardOutput = os
-            }
-            VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
         }
     }
 }
