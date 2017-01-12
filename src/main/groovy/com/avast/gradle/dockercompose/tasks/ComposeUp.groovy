@@ -117,8 +117,8 @@ class ComposeUp extends DefaultTask {
             def composeFiles = extension.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
             composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
-                // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
-                '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
+                // if there is 'version' on top-level then information about services is in 'services' sub-tree
+                compose.containsKey('version') ? ((Map) compose.get('services')).keySet() : compose.keySet()
             }.unique()
 
         }
