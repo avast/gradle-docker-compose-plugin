@@ -26,6 +26,7 @@ class ComposeExtension {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+    String projectName = null
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -74,12 +75,15 @@ class ComposeExtension {
     }
 
     /**
-     * Composes docker-compose command, mainly adds '-f' options when `useComposeFiles` is set.
+     * Composes docker-compose command, mainly adds '-f' and '-p' options.
      */
     @PackageScope
     Iterable<String> composeCommand(String... args) {
         def res = ['docker-compose']
         res.addAll(useComposeFiles.collectMany { ['-f', it] })
+        if (projectName) {
+            res.addAll(['-p', projectName])
+        }
         res.addAll(args)
         res
     }

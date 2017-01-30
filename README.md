@@ -50,6 +50,7 @@ dockerCompose {
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
+    // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 
