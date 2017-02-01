@@ -89,10 +89,11 @@ class ComposeExtension {
     }
 
     VersionNumber getDockerComposeVersion() {
-        def p = project
+        def p = this.project
+        def env = this.environment
         new ByteArrayOutputStream().withStream { os ->
             p.exec { ExecSpec e ->
-                e.environment = environment
+                e.environment = env
                 e.commandLine composeCommand('--version')
                 e.standardOutput = os
             }
