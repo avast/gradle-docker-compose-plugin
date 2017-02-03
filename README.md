@@ -51,6 +51,7 @@ dockerCompose {
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
+    // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable if not present in PATH
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 

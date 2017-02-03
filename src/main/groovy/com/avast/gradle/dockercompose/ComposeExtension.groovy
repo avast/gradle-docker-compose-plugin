@@ -33,6 +33,7 @@ class ComposeExtension {
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
 
+    String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
@@ -79,7 +80,7 @@ class ComposeExtension {
      */
     @PackageScope
     Iterable<String> composeCommand(String... args) {
-        def res = ['docker-compose']
+        def res = [executable]
         res.addAll(useComposeFiles.collectMany { ['-f', it] })
         if (projectName) {
             res.addAll(['-p', projectName])
