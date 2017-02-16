@@ -241,7 +241,7 @@ class ComposeUp extends DefaultTask {
                 if (inspectionState.containsKey('Health')) {
                     String healthStatus = inspectionState.Health.Status
                     if (!"starting".equalsIgnoreCase(healthStatus)) {
-                        logger.lifecycle("${service.name} healh state reported as '$healthStatus' - continuing...")
+                        logger.lifecycle("${service.name} health state reported as '$healthStatus' - continuing...")
                         return
                     }
                 } else {
