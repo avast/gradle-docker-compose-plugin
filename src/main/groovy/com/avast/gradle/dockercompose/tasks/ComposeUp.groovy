@@ -165,7 +165,7 @@ class ComposeUp extends DefaultTask {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 e.environment = extension.environment
-                e.commandLine 'docker', 'inspect', containerId
+                e.commandLine extension.dockerCommand('inspect', containerId)
                 e.standardOutput os
             }
             def inspectionAsString = os.toString()
@@ -305,7 +305,7 @@ class ComposeUp extends DefaultTask {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 e.environment = extension.environment
-                e.commandLine 'docker', 'logs', '--follow=false', containerId
+                e.commandLine extension.dockerCommand('logs', '--follow=false', containerId)
                 e.standardOutput = os
             }
             os.toString().trim()

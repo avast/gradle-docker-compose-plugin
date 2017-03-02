@@ -36,6 +36,8 @@ class ComposeExtension {
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
 
+    String dockerExecutable = 'docker'
+
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
         this.downTask = downTask
@@ -85,6 +87,13 @@ class ComposeExtension {
         if (projectName) {
             res.addAll(['-p', projectName])
         }
+        res.addAll(args)
+        res
+    }
+
+    @PackageScope
+    Iterable<String> dockerCommand(String... args) {
+        def res = [dockerExecutable]
         res.addAll(args)
         res
     }
