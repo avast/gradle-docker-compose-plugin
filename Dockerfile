@@ -2,18 +2,7 @@
 FROM java:8u111-jdk-alpine
 MAINTAINER augustyn@avast.com
 
-RUN apk add --update curl libstdc++ && rm -rf /var/cache/apk/*
-
-# install Docker
-ENV DOCKER_VERSION=1.13.1
-RUN curl -sSL -O https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION} \
-    && chmod +x docker-${DOCKER_VERSION} \
-    && mv docker-${DOCKER_VERSION} /usr/local/bin/docker
-
-# install docker-compose
-ENV COMPOSE_VERSION 1.11.2
-RUN curl -o /usr/local/bin/docker-compose -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-Linux-x86_64" \
-	&& chmod +x /usr/local/bin/docker-compose
+RUN apk add --update libstdc++ docker=1.11.2-r1 py-pip=8.1.2-r0 && rm -rf /var/cache/apk/* && pip install --no-cache-dir docker-compose==1.11.2
 
 # allow to bind local Docker to the outer Docker
 VOLUME /var/run/docker.sock
