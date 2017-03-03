@@ -64,6 +64,7 @@ class ComposeUp extends DefaultTask {
             @Override
             void run() {
                 project.exec { ExecSpec e ->
+                    e.environment = extension.environment
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
                         def buffer = new ArrayList<Byte>()
@@ -163,7 +164,8 @@ class ComposeUp extends DefaultTask {
     Map<String, Object> getDockerInspection(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine 'docker', 'inspect', containerId
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('inspect', containerId)
                 e.standardOutput os
             }
             def inspectionAsString = os.toString()
@@ -302,7 +304,8 @@ class ComposeUp extends DefaultTask {
         def containerId = getContainerId(serviceName)
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine 'docker', 'logs', '--follow=false', containerId
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('logs', '--follow=false', containerId)
                 e.standardOutput = os
             }
             os.toString().trim()
