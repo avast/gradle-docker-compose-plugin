@@ -242,10 +242,12 @@ class ComposeUp extends DefaultTask {
                 Map<String, Object> inspectionState = getDockerInspection(service.getContainerId()).State
                 if (inspectionState.containsKey('Health')) {
                     String healthStatus = inspectionState.Health.Status
-                    if (!"starting".equalsIgnoreCase(healthStatus)) {
+                    if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
                         logger.lifecycle("${service.name} health state reported as '$healthStatus' - continuing...")
                         return
                     }
+                    logger.lifecycle("Waiting for ${service.name} to become healthy (it's $healthStatus)")
+                    sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
                 } else {
                     logger.debug("Service ${service.name} or this version of Docker doesn't support healtchecks")
                     return
@@ -253,8 +255,6 @@ class ComposeUp extends DefaultTask {
                 if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
                     throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
                 }
-                logger.lifecycle("Waiting for ${service.name} to become healthy")
-                sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
             }
         }
     }
