@@ -7,6 +7,8 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeDown` task stops the application and removes the containers.
 
+`composePull` task pulls and optionally builds the images required by the application. This is useful, for example, with a CI platform that caches docker images to decrease build times.
+
 ## Why to use Docker Compose?
 1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done.
 2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker-compose up` before these tests.
@@ -48,6 +50,9 @@ dockerCompose {
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = false
+    // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
+    // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
+    // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (usefull if not present in PATH)
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 

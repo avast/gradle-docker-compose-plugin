@@ -7,6 +7,7 @@ import com.avast.gradle.dockercompose.ServiceInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
+import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import java.time.Instant
@@ -63,6 +64,7 @@ class ComposeUp extends DefaultTask {
             @Override
             void run() {
                 project.exec { ExecSpec e ->
+                    e.environment = extension.environment
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
                         def buffer = new ArrayList<Byte>()
@@ -103,14 +105,49 @@ class ComposeUp extends DefaultTask {
     }
 
     Iterable<String> getServiceNames() {
-        String[] composeFiles = extension.useComposeFiles.empty ? ['docker-compose.yml', 'docker-compose.override.yml'] : extension.useComposeFiles
-        composeFiles
-            .findAll { project.file(it).exists() }
-            .collectMany { composeFile ->
+        if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
+            new ByteArrayOutputStream().withStream { os ->
+                project.exec { ExecSpec e ->
+                    e.environment = extension.environment
+                    e.commandLine extension.composeCommand('config', '--services')
+                    e.standardOutput = os
+                }
+                os.toString().readLines()
+            }
+        } else {
+            def composeFiles = extension.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
+            composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
-                // if there is 'version: 2' on top-level then information about services is in 'services' sub-tree
-                '2'.equals(compose.get('version')) ? ((Map) compose.get('services')).keySet() : compose.keySet()
+                // if there is 'version' on top-level then information about services is in 'services' sub-tree
+                compose.containsKey('version') ? ((Map) compose.get('services')).keySet() : compose.keySet()
             }.unique()
+
+        }
+    }
+
+    Iterable<File> getStandardComposeFiles() {
+        def res = []
+        def f = findInParentDirectories('docker-compose.yml', project.projectDir)
+        if (f != null) res.add(f)
+        f = findInParentDirectories('docker-compose.override.yml', project.projectDir)
+        if (f != null) res.add(f)
+        res
+    }
+
+    Iterable<File> getCustomComposeFiles() {
+        extension.useComposeFiles.collect {
+            def f = project.file(it)
+            if (!f.exists()) {
+                throw new IllegalArgumentException("Custom Docker Compose file not found: $f")
+            }
+            f
+        }
+    }
+
+    File findInParentDirectories(String filename, File directory) {
+        if ((directory) == null) return null
+        def f = new File(directory, filename)
+        f.exists() ? f : findInParentDirectories(filename, directory.parentFile)
     }
 
     String getContainerId(String serviceName) {
@@ -127,7 +164,8 @@ class ComposeUp extends DefaultTask {
     Map<String, Object> getDockerInspection(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine 'docker', 'inspect', containerId
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('inspect', containerId)
                 e.standardOutput os
             }
             def inspectionAsString = os.toString()
@@ -204,10 +242,12 @@ class ComposeUp extends DefaultTask {
                 Map<String, Object> inspectionState = getDockerInspection(service.getContainerId()).State
                 if (inspectionState.containsKey('Health')) {
                     String healthStatus = inspectionState.Health.Status
-                    if (!"starting".equalsIgnoreCase(healthStatus)) {
-                        logger.lifecycle("${service.name} healh state reported as '$healthStatus' - continuing...")
+                    if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
+                        logger.lifecycle("${service.name} health state reported as '$healthStatus' - continuing...")
                         return
                     }
+                    logger.lifecycle("Waiting for ${service.name} to become healthy (it's $healthStatus)")
+                    sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
                 } else {
                     logger.debug("Service ${service.name} or this version of Docker doesn't support healtchecks")
                     return
@@ -215,8 +255,6 @@ class ComposeUp extends DefaultTask {
                 if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
                     throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
                 }
-                logger.lifecycle("Waiting for ${service.name} to become healthy")
-                sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
             }
         }
     }
@@ -266,7 +304,8 @@ class ComposeUp extends DefaultTask {
         def containerId = getContainerId(serviceName)
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.commandLine 'docker', 'logs', '--follow=false', containerId
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('logs', '--follow=false', containerId)
                 e.standardOutput = os
             }
             os.toString().trim()

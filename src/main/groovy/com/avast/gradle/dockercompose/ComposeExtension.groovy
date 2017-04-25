@@ -5,8 +5,10 @@ import com.avast.gradle.dockercompose.tasks.ComposeUp
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.process.ExecSpec
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
+import org.gradle.util.VersionNumber
 
 import java.time.Duration
 
@@ -24,13 +26,17 @@ class ComposeExtension {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+    String projectName = null
 
     boolean stopContainers = true
     boolean removeContainers = true
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
 
+    String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
+
+    String dockerExecutable = 'docker'
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
@@ -72,14 +78,37 @@ class ComposeExtension {
     }
 
     /**
-     * Composes docker-compose command, mainly adds '-f' options when `useComposeFiles` is set.
+     * Composes docker-compose command, mainly adds '-f' and '-p' options.
      */
     @PackageScope
     Iterable<String> composeCommand(String... args) {
-        def res = ['docker-compose']
+        def res = [executable]
         res.addAll(useComposeFiles.collectMany { ['-f', it] })
+        if (projectName) {
+            res.addAll(['-p', projectName])
+        }
         res.addAll(args)
         res
+    }
+
+    @PackageScope
+    Iterable<String> dockerCommand(String... args) {
+        def res = [dockerExecutable]
+        res.addAll(args)
+        res
+    }
+
+    VersionNumber getDockerComposeVersion() {
+        def p = this.project
+        def env = this.environment
+        new ByteArrayOutputStream().withStream { os ->
+            p.exec { ExecSpec e ->
+                e.environment = env
+                e.commandLine composeCommand('--version')
+                e.standardOutput = os
+            }
+            VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
+        }
     }
 }
 
