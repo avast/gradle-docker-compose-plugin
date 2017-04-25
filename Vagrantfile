@@ -27,5 +27,7 @@ Vagrant.configure("2") do |config|
     apt-get -y update
     apt-get -y install docker-engine linux-image-extra-$(uname -r) linux-image-extra-virtual openjdk-8-jdk-headless
     usermod -aG docker vagrant
+    # Workaround https://bugs.launchpad.net/ubuntu/+source/ca-certificates-java/+bug/1396760
+    /var/lib/dpkg/info/ca-certificates-java.postinst configure
   SHELL
 end
