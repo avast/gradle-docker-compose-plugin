@@ -64,3 +64,6 @@ crashlytics-build.properties
 
 # NetBeans
 /.nb-gradle/
+
+# Vagrant
+.vagrant/
