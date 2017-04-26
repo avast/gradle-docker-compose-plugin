@@ -61,3 +61,6 @@ crashlytics-build.properties
 .classpath
 .project
 /bin/
+
+# NetBeans
+/.nb-gradle/
