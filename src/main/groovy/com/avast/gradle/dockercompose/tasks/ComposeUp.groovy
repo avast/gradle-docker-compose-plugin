@@ -33,17 +33,13 @@ class ComposeUp extends DefaultTask {
     void up() {
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
-                if (extension.dockerWorkingDirectory != null) {
-                    e.setWorkingDir(extension.dockerWorkingDirectory)
-                }
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('build')
             }
         }
         project.exec { ExecSpec e ->
-            if (extension.dockerWorkingDirectory != null) {
-                e.setWorkingDir(extension.dockerWorkingDirectory)
-            }
+            extension.setExecSpecWorkingDirectory(e)
             e.environment = extension.environment
             e.commandLine extension.composeCommand('up', '-d')
         }
@@ -70,9 +66,7 @@ class ComposeUp extends DefaultTask {
             @Override
             void run() {
                 project.exec { ExecSpec e ->
-                    if (extension.dockerWorkingDirectory != null) {
-                        e.setWorkingDir(extension.dockerWorkingDirectory)
-                    }
+                    extension.setExecSpecWorkingDirectory(e)
                     e.environment = extension.environment
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
@@ -117,9 +111,7 @@ class ComposeUp extends DefaultTask {
         if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
             new ByteArrayOutputStream().withStream { os ->
                 project.exec { ExecSpec e ->
-                    if (extension.dockerWorkingDirectory != null) {
-                        e.setWorkingDir(extension.dockerWorkingDirectory)
-                    }
+                    extension.setExecSpecWorkingDirectory(e)
                     e.environment = extension.environment
                     e.commandLine extension.composeCommand('config', '--services')
                     e.standardOutput = os
@@ -165,9 +157,7 @@ class ComposeUp extends DefaultTask {
     String getContainerId(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                if (extension.dockerWorkingDirectory != null) {
-                    e.setWorkingDir(extension.dockerWorkingDirectory)
-                }
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os
@@ -179,9 +169,7 @@ class ComposeUp extends DefaultTask {
     Map<String, Object> getDockerInspection(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                if (extension.dockerWorkingDirectory != null) {
-                    e.setWorkingDir(extension.dockerWorkingDirectory)
-                }
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.dockerCommand('inspect', containerId)
                 e.standardOutput os
@@ -322,9 +310,7 @@ class ComposeUp extends DefaultTask {
         def containerId = getContainerId(serviceName)
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                if (extension.dockerWorkingDirectory != null) {
-                    e.setWorkingDir(extension.dockerWorkingDirectory)
-                }
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.dockerCommand('logs', '--follow=false', containerId)
                 e.standardOutput = os

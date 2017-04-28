@@ -79,6 +79,12 @@ class ComposeExtension {
         }
     }
 
+    void setExecSpecWorkingDirectory(ExecSpec e) {
+        if(dockerWorkingDirectory != null) {
+            e.setWorkingDir(dockerWorkingDirectory)
+        }
+    }
+
     /**
      * Composes docker-compose command, mainly adds '-f' and '-p' options.
      */
@@ -105,9 +111,7 @@ class ComposeExtension {
         def env = this.environment
         new ByteArrayOutputStream().withStream { os ->
             p.exec { ExecSpec e ->
-                if (dockerWorkingDirectory != null) {
-                    e.setWorkingDir(dockerWorkingDirectory)
-                }
+                setExecSpecWorkingDirectory(e)
                 e.environment = env
                 e.commandLine composeCommand('--version')
                 e.standardOutput = os
