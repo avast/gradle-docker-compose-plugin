@@ -38,6 +38,8 @@ class ComposeExtension {
 
     String dockerExecutable = 'docker'
 
+    String dockerWorkingDirectory = null;
+
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
         this.downTask = downTask
@@ -103,6 +105,9 @@ class ComposeExtension {
         def env = this.environment
         new ByteArrayOutputStream().withStream { os ->
             p.exec { ExecSpec e ->
+                if (dockerWorkingDirectory != null) {
+                    e.setWorkingDir(dockerWorkingDirectory)
+                }
                 e.environment = env
                 e.commandLine composeCommand('--version')
                 e.standardOutput = os

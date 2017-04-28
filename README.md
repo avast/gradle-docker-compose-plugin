@@ -53,6 +53,7 @@ dockerCompose {
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
     // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (usefull if not present in PATH)
+    // dockerWorkingDirectory = '/path/to/where/docker/should/be/invoked/from'
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 
