@@ -38,7 +38,7 @@ class ComposeExtension {
 
     String dockerExecutable = 'docker'
 
-    String dockerWorkingDirectory = null;
+    String dockerComposeWorkingDirectory = null;
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
@@ -80,8 +80,8 @@ class ComposeExtension {
     }
 
     void setExecSpecWorkingDirectory(ExecSpec e) {
-        if(dockerWorkingDirectory != null) {
-            e.setWorkingDir(dockerWorkingDirectory)
+        if(dockerComposeWorkingDirectory != null) {
+            e.setWorkingDir(dockerComposeWorkingDirectory)
         }
     }
 

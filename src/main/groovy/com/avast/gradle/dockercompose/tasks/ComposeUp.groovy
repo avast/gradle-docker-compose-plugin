@@ -169,7 +169,6 @@ class ComposeUp extends DefaultTask {
     Map<String, Object> getDockerInspection(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.dockerCommand('inspect', containerId)
                 e.standardOutput os
@@ -310,7 +309,6 @@ class ComposeUp extends DefaultTask {
         def containerId = getContainerId(serviceName)
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.dockerCommand('logs', '--follow=false', containerId)
                 e.standardOutput = os
