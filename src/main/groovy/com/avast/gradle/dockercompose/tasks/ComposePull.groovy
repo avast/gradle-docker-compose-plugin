@@ -18,11 +18,13 @@ class ComposePull extends DefaultTask {
     void pull() {
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('build')
             }
         }
         project.exec { ExecSpec e ->
+            extension.setExecSpecWorkingDirectory(e)
             e.environment = extension.environment
             e.commandLine extension.composeCommand('pull')
         }

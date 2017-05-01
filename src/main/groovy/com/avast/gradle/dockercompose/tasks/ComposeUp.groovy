@@ -33,11 +33,13 @@ class ComposeUp extends DefaultTask {
     void up() {
         if (extension.buildBeforeUp) {
             project.exec { ExecSpec e ->
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('build')
             }
         }
         project.exec { ExecSpec e ->
+            extension.setExecSpecWorkingDirectory(e)
             e.environment = extension.environment
             e.commandLine extension.composeCommand('up', '-d')
         }
@@ -64,6 +66,7 @@ class ComposeUp extends DefaultTask {
             @Override
             void run() {
                 project.exec { ExecSpec e ->
+                    extension.setExecSpecWorkingDirectory(e)
                     e.environment = extension.environment
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
@@ -108,6 +111,7 @@ class ComposeUp extends DefaultTask {
         if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
             new ByteArrayOutputStream().withStream { os ->
                 project.exec { ExecSpec e ->
+                    extension.setExecSpecWorkingDirectory(e)
                     e.environment = extension.environment
                     e.commandLine extension.composeCommand('config', '--services')
                     e.standardOutput = os
@@ -153,6 +157,7 @@ class ComposeUp extends DefaultTask {
     String getContainerId(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os

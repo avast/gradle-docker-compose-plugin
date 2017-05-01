@@ -19,6 +19,7 @@ class ComposeDown extends DefaultTask {
     void down() {
         if (extension.stopContainers) {
             project.exec { ExecSpec e ->
+                extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 e.commandLine extension.composeCommand('stop')
             }
@@ -37,11 +38,13 @@ class ComposeDown extends DefaultTask {
                         args += ['--volumes']
                     }
                     project.exec { ExecSpec e ->
+                        extension.setExecSpecWorkingDirectory(e)
                         e.environment = extension.environment
                         e.commandLine extension.composeCommand(args)
                     }
                 } else {
                     project.exec { ExecSpec e ->
+                        extension.setExecSpecWorkingDirectory(e)
                         e.environment = extension.environment
                         e.commandLine extension.composeCommand('rm', '-f')
                     }
