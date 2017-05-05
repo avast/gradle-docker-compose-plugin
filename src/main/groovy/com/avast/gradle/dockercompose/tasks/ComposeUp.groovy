@@ -182,8 +182,9 @@ class ComposeUp extends DefaultTask {
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
         String dockerHost = extension.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
-            logger.lifecycle("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName'")
-            new ServiceHost(host: dockerHost.toURI().host, type: ServiceHostType.RemoteDockerHost)
+            def host = dockerHost.toURI().host ?: 'localhost'
+            logger.lifecycle("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
+            new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
         } else if (isMac() || isWindows()) {
             logger.lifecycle("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
