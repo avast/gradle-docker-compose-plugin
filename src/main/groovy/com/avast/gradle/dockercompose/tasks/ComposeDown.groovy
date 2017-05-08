@@ -21,7 +21,8 @@ class ComposeDown extends DefaultTask {
             project.exec { ExecSpec e ->
                 extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
-                e.commandLine extension.composeCommand('stop')
+                String[] args = ['stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds()]
+                e.commandLine extension.composeCommand(args)
             }
             if (extension.removeContainers) {
                 if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {

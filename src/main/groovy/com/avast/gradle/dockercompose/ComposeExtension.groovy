@@ -39,6 +39,7 @@ class ComposeExtension {
     String dockerExecutable = 'docker'
 
     String dockerComposeWorkingDirectory = null;
+    Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
         this.project = project
