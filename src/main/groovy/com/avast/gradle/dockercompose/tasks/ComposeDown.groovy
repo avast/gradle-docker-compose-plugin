@@ -22,6 +22,9 @@ class ComposeDown extends DefaultTask {
                 extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 String[] args = ['stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds()]
+                if (extension.removeOrphans()) {
+                    args += '--remove-orphans'
+                }
                 e.commandLine extension.composeCommand(args)
             }
             if (extension.removeContainers) {
