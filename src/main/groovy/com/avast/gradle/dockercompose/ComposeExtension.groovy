@@ -32,6 +32,7 @@ class ComposeExtension {
     boolean removeContainers = true
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
+    boolean removeOrphans = false
 
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
@@ -119,6 +120,10 @@ class ComposeExtension {
             }
             VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
         }
+    }
+
+    boolean removeOrphans() {
+        getDockerComposeVersion() >= VersionNumber.parse('1.7.0') && this.removeOrphans
     }
 }
 

@@ -41,7 +41,11 @@ class ComposeUp extends DefaultTask {
         project.exec { ExecSpec e ->
             extension.setExecSpecWorkingDirectory(e)
             e.environment = extension.environment
-            e.commandLine extension.composeCommand('up', '-d')
+            String[] args = ['up', '-d']
+            if (extension.removeOrphans()) {
+                args += '--remove-orphans'
+            }
+            e.commandLine extension.composeCommand(args)
         }
         try {
             if (extension.captureContainersOutput) {

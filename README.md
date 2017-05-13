@@ -49,6 +49,7 @@ dockerCompose {
     // stopContainers = false // doesn't call `docker-compose down` - useful for debugging
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
+    // removeOrphans = false // Removes containers for services not defined in the Compose file
     // removeVolumes = false
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
