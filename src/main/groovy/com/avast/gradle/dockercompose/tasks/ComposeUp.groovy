@@ -45,6 +45,11 @@ class ComposeUp extends DefaultTask {
             if (extension.removeOrphans()) {
                 args += '--remove-orphans'
             }
+            if (extension.scale()) {
+                args += extension.scale.collect { service, value ->
+                    ['--scale', "$service=$value"]
+                }.flatten()
+            }
             e.commandLine extension.composeCommand(args)
         }
         try {
@@ -75,6 +80,7 @@ class ComposeUp extends DefaultTask {
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
                         def buffer = new ArrayList<Byte>()
+
                         @Override
                         void write(int b) throws IOException {
                             // store bytes into buffer until end-of-line character is detected
@@ -98,17 +104,20 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        getServiceNames().collect { createServiceInfo(it) }
+        getServiceNames().collect { createServiceInfo(it) }.collectMany { [it].flatten() }
+        
     }
 
-    protected ServiceInfo createServiceInfo(String serviceName) {
-        String containerId = getContainerId(serviceName)
-        logger.info("Container ID of service $serviceName is $containerId")
-        def inspection = getDockerInspection(containerId)
-        ServiceHost host = getServiceHost(serviceName, inspection)
-        logger.info("Will use $host as host of service $serviceName")
-        def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-        new ServiceInfo(name: serviceName, serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
+    protected Iterable<ServiceInfo> createServiceInfo(String serviceName) {
+        Iterable<String> containerIds = getContainerIds(serviceName)
+        containerIds.collect { String containerId ->
+            logger.info("Container ID of service $serviceName is $containerId")
+            def inspection = getDockerInspection(containerId)
+            ServiceHost host = getServiceHost(serviceName, inspection)
+            logger.info("Will use $host as host of service $serviceName")
+            def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
+            new ServiceInfo(name: inspection.Name.replace('/', ''), serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
+        }
     }
 
     Iterable<String> getServiceNames() {
@@ -158,7 +167,7 @@ class ComposeUp extends DefaultTask {
         f.exists() ? f : findInParentDirectories(filename, directory.parentFile)
     }
 
-    String getContainerId(String serviceName) {
+    Iterable<String> getContainerIds(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 extension.setExecSpecWorkingDirectory(e)
@@ -166,7 +175,19 @@ class ComposeUp extends DefaultTask {
                 e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os
             }
-            os.toString().trim()
+            os.toString().readLines()
+        }
+    }
+    
+    String getContainerId(String serviceName) {
+        new ByteArrayOutputStream().withStream { os ->
+            project.exec { ExecSpec e ->
+                extension.setExecSpecWorkingDirectory(e)
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('ps', '-q', '--filter', "\"name=${serviceName}\"")
+                e.standardOutput = os
+            }
+            os.toString()
         }
     }
 
@@ -222,8 +243,7 @@ class ComposeUp extends DefaultTask {
             int exposedPort = exposedPortAsString as int
             if (!forwardedPortsInfos || forwardedPortsInfos.isEmpty()) {
                 logger.debug("No forwarded TCP port for service '$serviceName:$exposedPort'")
-            }
-            else {
+            } else {
                 switch (host.type) {
                     case ServiceHostType.LocalHost:
                     case ServiceHostType.NetworkGateway:

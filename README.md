@@ -57,6 +57,7 @@ dockerCompose {
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
+    // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale SERVICE1=NUM --scale SERVICE2=NUM'
 }
 
 test.doFirst {

@@ -26,6 +26,7 @@ class ComposeExtension {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+    Map<String, Integer> scale = [:]
     String projectName = null
 
     boolean stopContainers = true
@@ -35,11 +36,11 @@ class ComposeExtension {
     boolean removeOrphans = false
 
     String executable = 'docker-compose'
-    Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
+    Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
 
     String dockerExecutable = 'docker'
 
-    String dockerComposeWorkingDirectory = null;
+    String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
@@ -124,6 +125,10 @@ class ComposeExtension {
 
     boolean removeOrphans() {
         getDockerComposeVersion() >= VersionNumber.parse('1.7.0') && this.removeOrphans
+    }
+    
+    boolean scale() {
+        getDockerComposeVersion() >= VersionNumber.parse('1.13.0') && this.scale
     }
 }
 
