@@ -7,7 +7,6 @@ import org.gradle.api.Task
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
-import org.gradle.util.VersionNumber
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -58,10 +57,8 @@ class DockerComposePluginTest extends Specification {
         '''
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.create('integrationTest').doLast {
-            ServiceInfo webInfo = project.dockerCompose.servicesInfos."${projectName}_web_1"
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0]
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
             assert webInfo.ports == webInfo.tcpPorts
             assert !webInfo.containerHostname.isEmpty()
@@ -120,9 +117,8 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.create('integrationTest').doLast {
-            ServiceInfo webInfo = project.dockerCompose.servicesInfos."${projectName}_web_1"
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0]
             assert webInfo.ports.containsKey(8080)
             assert webInfo.ports.containsKey(80)
         }
@@ -160,11 +156,9 @@ class DockerComposePluginTest extends Specification {
         '''
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.create('integrationTest').doLast {
-            assert project.dockerCompose.servicesInfos."${projectName}_web_1".ports.containsKey(80)
-            assert project.dockerCompose.servicesInfos."${projectName}_devweb_1".ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0].ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos."devweb".serviceInstanceInfos[0].ports.containsKey(80)
         }
         when:
             project.tasks.composeUp.up()
@@ -203,9 +197,8 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.create('integrationTest').doLast {
-            ServiceInfo webInfo = project.dockerCompose.servicesInfos."${projectName}_web_1"
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0]
             assert webInfo.ports.containsKey(8080)
             assert !webInfo.ports.containsKey(80)
             assert !project.dockerCompose.servicesInfos.devweb
@@ -232,20 +225,18 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'java'
         project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.composeUp.up()
         Test test = project.tasks.test as Test
         when:
             project.dockerCompose.exposeAsEnvironment(test)
             project.dockerCompose.exposeAsSystemProperties(test)
         then:
-            test.environment.containsKey('TEST_WEB_1_HOST')
-            test.environment.containsKey('TEST_WEB_1_CONTAINER_HOSTNAME')
-            test.environment.containsKey('TEST_WEB_1_TCP_80')
-            test.systemProperties.containsKey('test_web_1.host')
-            test.systemProperties.containsKey('test_web_1.containerHostname')
-            test.systemProperties.containsKey('test_web_1.tcp.80')
+            test.environment.containsKey('WEB_1_HOST')
+            test.environment.containsKey('WEB_1_CONTAINER_HOSTNAME')
+            test.environment.containsKey('WEB_1_TCP_80')
+            test.systemProperties.containsKey('web_1.host')
+            test.systemProperties.containsKey('web_1.containerHostname')
+            test.systemProperties.containsKey('web_1.tcp.80')
         cleanup:
             project.tasks.composeDown.down()
             try {
@@ -293,8 +284,8 @@ class DockerComposePluginTest extends Specification {
             project.dockerCompose.exposeAsEnvironment(test)
             project.dockerCompose.exposeAsSystemProperties(test)
         then:
-            test.environment.get('TEST_WEB_1_HOST') == 'localhost'
-            test.systemProperties.get('test_web_1.host') == 'localhost'
+            test.environment.get('WEB_1_HOST') == 'localhost'
+            test.systemProperties.get('web_1.host') == 'localhost'
         cleanup:
             project.tasks.composeDown.down()
             try {
@@ -312,10 +303,8 @@ class DockerComposePluginTest extends Specification {
         '''
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.composeUp.up()
-        String containerId = project.dockerCompose.servicesInfos."${projectName}_hello_1".containerId
+        String containerId = project.dockerCompose.servicesInfos."hello".serviceInstanceInfos[0].containerId
         when:
             String output = project.tasks.composeUp.getServiceLogs(containerId)
         then:
@@ -340,9 +329,8 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
         project.tasks.create('integrationTest').doLast {
-            ServiceInfo webInfo = project.dockerCompose.servicesInfos."${projectName}_web_1"
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0]
             assert webInfo.ports.containsKey(80)
         }
         when:
@@ -377,7 +365,7 @@ class DockerComposePluginTest extends Specification {
         Integer scale = 2
         extension.scale = ['web': scale]
         project.tasks.create('integrationTest').doLast {
-            def webInfos = project.dockerCompose.servicesInfos
+            def webInfos = project.dockerCompose.servicesInfos."web".serviceInstanceInfos
             if (extension.scale()) {
                 assert webInfos.size() == scale
             } else {
