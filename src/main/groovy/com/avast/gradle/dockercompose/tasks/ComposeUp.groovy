@@ -178,18 +178,6 @@ class ComposeUp extends DefaultTask {
             os.toString().readLines()
         }
     }
-    
-    String getContainerId(String serviceName) {
-        new ByteArrayOutputStream().withStream { os ->
-            project.exec { ExecSpec e ->
-                extension.setExecSpecWorkingDirectory(e)
-                e.environment = extension.environment
-                e.commandLine extension.dockerCommand('ps', '-q', '--filter', "\"name=${serviceName}\"")
-                e.standardOutput = os
-            }
-            os.toString()
-        }
-    }
 
     Map<String, Object> getDockerInspection(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
@@ -283,7 +271,7 @@ class ComposeUp extends DefaultTask {
                     return
                 }
                 if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
-                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
+                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.containerId)}")
                 }
             }
         }
@@ -320,7 +308,7 @@ class ComposeUp extends DefaultTask {
                     }
                     catch (Exception e) {
                         if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
-                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
+                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.containerId)}")
                         }
                         logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' (${e.message})")
                         sleep(extension.waitAfterTcpProbeFailure.toMillis())
@@ -330,8 +318,7 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    String getServiceLogs(String serviceName) {
-        def containerId = getContainerId(serviceName)
+    String getServiceLogs(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 e.environment = extension.environment
