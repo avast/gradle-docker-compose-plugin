@@ -109,7 +109,6 @@ class ComposeUp extends DefaultTask {
     }
 
     protected ServiceInfo createServiceInfo(String serviceName) {
-        String defaultProjectName = extension.projectName ?: new File(System.getProperty('user.dir')).name
         Iterable<String> containerIds = getContainerIds(serviceName)
         ServiceInfo serviceInfo = new ServiceInfo(name: serviceName)
         containerIds.each { String containerId ->
