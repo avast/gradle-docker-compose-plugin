@@ -10,6 +10,8 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static org.gradle.util.VersionNumber.parse
+
 class DockerComposePluginTest extends Specification {
     String projectName = 'test'
 
@@ -350,6 +352,33 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
+    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0')} )
+    def "exception is thrown for scale option if unsupported docker-compose is used"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+        extension.scale = ['web': 2]
+        when:
+            project.tasks.composeUp.up()
+        then:
+            thrown(UnsupportedOperationException)
+        cleanup:
+            project.tasks.composeDown.down()
+            try {
+                projectDir.delete()
+            } catch (ignored) {
+                projectDir.deleteOnExit()
+            }
+    }
+
+    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0')} )
     def "docker-compose scale option launches multiple instances of service"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
@@ -380,6 +409,7 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
+    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0')} )
     def "environment variables and system properties exposed for all scaled containers"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
