@@ -110,18 +110,20 @@ class ComposeUp extends DefaultTask {
 
     protected ServiceInfo createServiceInfo(String serviceName) {
         Iterable<String> containerIds = getContainerIds(serviceName)
-        ServiceInfo serviceInfo = new ServiceInfo(name: serviceName)
-        containerIds.each { String containerId ->
+        List<ServiceInstanceInfo> serviceInstanceInfos = createServiceInstanceInfos(containerIds, serviceName)
+        new ServiceInfo(name: serviceName, serviceInstanceInfos: serviceInstanceInfos)
+    }
+
+    List<ServiceInstanceInfo> createServiceInstanceInfos(Iterable<String> containerIds, String serviceName) {
+        containerIds.collect { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
             def inspection = getDockerInspection(containerId)
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-            ServiceInstanceInfo serviceInstanceInfo = new ServiceInstanceInfo(instanceName: inspection.Name.find(/${serviceName}_\d+/), 
+            new ServiceInstanceInfo(instanceName: inspection.Name.find(/${serviceName}_\d+/),
                     serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
-            serviceInfo.serviceInstanceInfos.add(serviceInstanceInfo)
         }
-        serviceInfo
     }
 
     Iterable<String> getServiceNames() {
@@ -282,7 +284,7 @@ class ComposeUp extends DefaultTask {
             }
         }
     }
-    
+
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.serviceInstanceInfos.each { serviceInstance ->

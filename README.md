@@ -63,12 +63,16 @@ dockerCompose {
 test.doFirst {
     // exposes "${serviceName}_HOST" and "${serviceName}_TCP_${exposedPort}" environment variables
     // for example exposes "WEB_HOST" and "WEB_TCP_80" environment variables for service named `web` with exposed port `80`
+    // if service is scaled using scale option, environment variables will be exposed for each service instance like "WEB_1_HOST", "WEB_1_TCP_80", "WEB_2_HOST", "WEB_2_TCP_80" and so on
     dockerCompose.exposeAsEnvironment(test)
     // exposes "${serviceName}.host" and "${serviceName}.tcp.${exposedPort}" system properties
     // for example exposes "web.host" and "web.tcp.80" system properties for service named `web` with exposed port `80`
+    // if service is scaled using scale option, environment variables will be exposed for each service instance like "web_1.host", "web_1.tcp.80", "web_2.host", "web_2.tcp.80" and so on
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
-    def webInfo = dockerCompose.servicesInfos.web
+    def webInfo = dockerCompose.servicesInfos.web.serviceInstanceInfos[0]
+    // in case scale option is used, serviceInstanceInfos will contain information about all instances of scaled service. Particular service can be retreived either by iterating the serviceInstanceInfos list or using getInstanceByName() method
+    def webInfo = dockerCompose.servicesInfos.web.getInstanceByName('web_1')
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host
     systemProperty 'myweb.port', webInfo.ports[80]    
@@ -81,5 +85,5 @@ test.doFirst {
 * All properties in `dockerCompose` have meaningful default values so you don't have to touch it. If you are interested then you can look at [ComposeExtension.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ComposeExtension.groovy) for reference.
 * `dockerCompose.servicesInfos` contains information about running containers so you must access this property after `composeUp` task is finished. So `doFirst` of your test task is perfect place where to access it.
 * Plugin honours a `docker-compose.override.yml` file, but only when no files are specified with `useComposeFiles` (conform command-line behavior).
-* Check [ServiceInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ServiceInfo.groovy) to see what you can know about running containers.
+* Check [ServiceInstanceInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ServiceInstanceInfo.groovy) to see what you can know about running containers.
 * You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the 'DOCKER_HOST' environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
