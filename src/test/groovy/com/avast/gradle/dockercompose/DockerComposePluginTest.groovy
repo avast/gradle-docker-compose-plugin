@@ -352,7 +352,7 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
-    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0')} )
+    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0') })
     def "exception is thrown for scale option if unsupported docker-compose is used"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
@@ -378,7 +378,7 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
-    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0')} )
+    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale option launches multiple instances of service"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
@@ -409,7 +409,7 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
-    @IgnoreIf( {parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0')} )
+    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "environment variables and system properties exposed for all scaled containers"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
@@ -429,12 +429,14 @@ class DockerComposePluginTest extends Specification {
             project.dockerCompose.exposeAsEnvironment(test)
             project.dockerCompose.exposeAsSystemProperties(test)
         then:
-            test.environment.containsKey("WEB_${containerInstance}_HOST".toString())
-            test.environment.containsKey("WEB_${containerInstance}_CONTAINER_HOSTNAME".toString())
-            test.environment.containsKey("WEB_${containerInstance}_TCP_80".toString())
-            test.systemProperties.containsKey("web_${containerInstance}.host".toString())
-            test.systemProperties.containsKey("web_${containerInstance}.containerHostname".toString())
-            test.systemProperties.containsKey("web_${containerInstance}.tcp.80".toString())
+            [1, 2].each { containerInstance ->
+                assert test.environment.containsKey("WEB_${containerInstance}_HOST".toString())
+                assert test.environment.containsKey("WEB_${containerInstance}_CONTAINER_HOSTNAME".toString())
+                assert test.environment.containsKey("WEB_${containerInstance}_TCP_80".toString())
+                assert test.systemProperties.containsKey("web_${containerInstance}.host".toString())
+                assert test.systemProperties.containsKey("web_${containerInstance}.containerHostname".toString())
+                assert test.systemProperties.containsKey("web_${containerInstance}.tcp.80".toString())
+            }
         cleanup:
             project.tasks.composeDown.down()
             try {
@@ -442,7 +444,5 @@ class DockerComposePluginTest extends Specification {
             } catch (ignored) {
                 projectDir.deleteOnExit()
             }
-        where:
-            containerInstance << [1, 2]
     }
 }
