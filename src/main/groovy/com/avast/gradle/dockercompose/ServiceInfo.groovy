@@ -5,16 +5,18 @@ import groovy.transform.Immutable
 @Immutable
 class ServiceInfo {
     String name
-    ServiceHost serviceHost
-    /* Mapping from exposed to forwarded port. */
-    Map<Integer, Integer> tcpPorts
-    String containerHostname
-    /* Docker inspection */
-    Map<String, Object> inspection
-    String getContainerId() { inspection.Id }
+    Map<String, ServiceInstanceInfo> serviceInstanceInfos = [:]
 
-    String getHost() { serviceHost.host }
-    Map<Integer, Integer> getPorts() { tcpPorts }
+    String getHost() { firstInstance.serviceHost.host }
+    Map<Integer, Integer> getPorts() { firstInstance.tcpPorts }
     Integer getPort() { ports.values().first() }
-    Integer getTcpPort() { tcpPorts.values().first() }
+    Integer getTcpPort() { firstInstance.tcpPorts.values().first() }
+    
+    ServiceInstanceInfo getFirstInstance() {
+        serviceInstanceInfos.values().first()
+    }
+    
+    ServiceInstanceInfo getInstanceByName(String name) {
+        serviceInstanceInfos.get(name)
+    }
 }

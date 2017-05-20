@@ -2,9 +2,10 @@ language: generic
 
 sudo: required
 env:
-  - DOCKER_VERSION=1.13.1 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~ubuntu-precise
-  - DOCKER_VERSION=1.12.6 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~ubuntu-precise
-  - DOCKER_VERSION=1.11.2 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~precise
+  - DOCKER_VERSION=1.13.1 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~ubuntu-precise DOCKER_COMPOSE_VERSION=1.13.0
+  - DOCKER_VERSION=1.13.1 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~ubuntu-precise DOCKER_COMPOSE_VERSION=1.11.2
+  - DOCKER_VERSION=1.12.6 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~ubuntu-precise DOCKER_COMPOSE_VERSION=1.11.2
+  - DOCKER_VERSION=1.11.2 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION-0~precise DOCKER_COMPOSE_VERSION=1.11.2
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -18,10 +19,10 @@ before_install:
   - curl -sSL https://get.docker.com/ | sh
   - sudo apt-get -y --force-yes install docker-engine=$DOCKER_PACKAGE_VERSION
   # Build image with building environment
-  - sudo docker build --tag=build-image .
+  - sudo docker build --build-arg DOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --tag=build-image .
 
 script:
-  - sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image test --info
+  - sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image test -PDOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --info
 
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && test $DOCKER_VERSION == "1.13.1" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" -e "GRADLE_PORTAL_KEY=$GRADLE_PORTAL_KEY" -e "GRADLE_PORTAL_SECRET=$GRADLE_PORTAL_SECRET" build-image bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info
+  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/docker-compose-gradle-plugin" && test $DOCKER_VERSION == "1.13.1" && test $DOCKER_COMPOSE_VERSION == "1.13.0" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" -e "GRADLE_PORTAL_KEY=$GRADLE_PORTAL_KEY" -e "GRADLE_PORTAL_SECRET=$GRADLE_PORTAL_SECRET" build-image bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info

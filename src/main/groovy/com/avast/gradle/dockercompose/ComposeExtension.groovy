@@ -26,6 +26,7 @@ class ComposeExtension {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+    Map<String, Integer> scale = [:]
     String projectName = null
 
     boolean stopContainers = true
@@ -35,11 +36,11 @@ class ComposeExtension {
     boolean removeOrphans = false
 
     String executable = 'docker-compose'
-    Map<String, Object> environment = new HashMap<String, Object>(System.getenv());
+    Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
 
     String dockerExecutable = 'docker'
 
-    String dockerComposeWorkingDirectory = null;
+    String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
     ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
@@ -53,8 +54,8 @@ class ComposeExtension {
         task.finalizedBy downTask
         def ut = upTask // to access private field from closure
         task.getTaskDependencies().getDependencies(task)
-            .findAll { Task.class.isAssignableFrom(it.class) && ((Task)it).name.toLowerCase().contains('classes') }
-            .each { ut.shouldRunAfter it }
+                .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
+                .each { ut.shouldRunAfter it }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
@@ -62,27 +63,45 @@ class ComposeExtension {
     }
 
     void exposeAsEnvironment(ProcessForkOptions task) {
-        servicesInfos.values().each { si ->
-            task.environment.put("${si.name.toUpperCase()}_HOST".toString(), si.host)
-            task.environment.put("${si.name.toUpperCase()}_CONTAINER_HOSTNAME".toString(), si.containerHostname)
-            si.tcpPorts.each {
-                task.environment.put("${si.name.toUpperCase()}_TCP_${it.key}".toString(), it.value)
+        servicesInfos.values().each { serviceInfo ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+                if (instanceName.endsWith('_1')) {
+                    task.environment << createEnvironmentVariables(serviceInfo.name.toUpperCase(), si)
+                }
+                task.environment << createEnvironmentVariables(instanceName.toUpperCase(), si)
             }
         }
     }
 
     void exposeAsSystemProperties(JavaForkOptions task) {
-        servicesInfos.values().each { si ->
-            task.systemProperties.put("${si.name}.host".toString(), si.host)
-            task.systemProperties.put("${si.name}.containerHostname".toString(), si.containerHostname)
-            si.tcpPorts.each {
-                task.systemProperties.put("${si.name}.tcp.${it.key}".toString(), it.value)
+        servicesInfos.values().each { serviceInfo ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+                if(instanceName.endsWith('_1')) {
+                    task.systemProperties << createSystemProperties(serviceInfo.name, si)
+                }
+                task.systemProperties << createSystemProperties(instanceName, si)
             }
         }
     }
 
+    protected Map<String, Object> createEnvironmentVariables(String variableName, ServiceInstanceInfo si) {
+        Map<String, Object> environmentVariables = [:]
+        environmentVariables.put("${variableName}_HOST".toString(), si.host)
+        environmentVariables.put("${variableName}_CONTAINER_HOSTNAME".toString(), si.containerHostname)
+        si.tcpPorts.each { environmentVariables.put("${variableName}_TCP_${it.key}".toString(), it.value) }
+        environmentVariables
+    }
+
+    protected Map<String, Object> createSystemProperties(String variableName, ServiceInstanceInfo si) {
+        Map<String, Object> systemProperties = [:]
+        systemProperties.put("${variableName}.host".toString(), si.host)
+        systemProperties.put("${variableName}.containerHostname".toString(), si.containerHostname)
+        si.tcpPorts.each { systemProperties.put("${variableName}.tcp.${it.key}".toString(), it.value) }
+        systemProperties
+    }
+
     void setExecSpecWorkingDirectory(ExecSpec e) {
-        if(dockerComposeWorkingDirectory != null) {
+        if (dockerComposeWorkingDirectory != null) {
             e.setWorkingDir(dockerComposeWorkingDirectory)
         }
     }
@@ -123,7 +142,14 @@ class ComposeExtension {
     }
 
     boolean removeOrphans() {
-        getDockerComposeVersion() >= VersionNumber.parse('1.7.0') && this.removeOrphans
+        dockerComposeVersion >= VersionNumber.parse('1.7.0') && this.removeOrphans
+    }
+
+    boolean scale() {
+        if (dockerComposeVersion < VersionNumber.parse('1.13.0') && this.scale) {
+            throw new UnsupportedOperationException("docker-compose version $dockerComposeVersion doesn't support --scale option")
+        }
+        this.scale
     }
 }
 

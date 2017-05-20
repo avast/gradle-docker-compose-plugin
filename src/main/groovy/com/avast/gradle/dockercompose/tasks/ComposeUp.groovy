@@ -4,6 +4,7 @@ import com.avast.gradle.dockercompose.ComposeExtension
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceHostType
 import com.avast.gradle.dockercompose.ServiceInfo
+import com.avast.gradle.dockercompose.ServiceInstanceInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
@@ -45,6 +46,11 @@ class ComposeUp extends DefaultTask {
             if (extension.removeOrphans()) {
                 args += '--remove-orphans'
             }
+            if (extension.scale()) {
+                args += extension.scale.collect { service, value ->
+                    ['--scale', "$service=$value"]
+                }.flatten()
+            }
             e.commandLine extension.composeCommand(args)
         }
         try {
@@ -75,6 +81,7 @@ class ComposeUp extends DefaultTask {
                     e.commandLine extension.composeCommand('logs', '-f', '--no-color')
                     e.standardOutput = new OutputStream() {
                         def buffer = new ArrayList<Byte>()
+
                         @Override
                         void write(int b) throws IOException {
                             // store bytes into buffer until end-of-line character is detected
@@ -102,13 +109,22 @@ class ComposeUp extends DefaultTask {
     }
 
     protected ServiceInfo createServiceInfo(String serviceName) {
-        String containerId = getContainerId(serviceName)
-        logger.info("Container ID of service $serviceName is $containerId")
-        def inspection = getDockerInspection(containerId)
-        ServiceHost host = getServiceHost(serviceName, inspection)
-        logger.info("Will use $host as host of service $serviceName")
-        def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-        new ServiceInfo(name: serviceName, serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
+        Iterable<String> containerIds = getContainerIds(serviceName)
+        Map<String, ServiceInstanceInfo> serviceInstanceInfos = createServiceInstanceInfos(containerIds, serviceName)
+        new ServiceInfo(name: serviceName, serviceInstanceInfos: serviceInstanceInfos)
+    }
+
+    Map<String, ServiceInstanceInfo> createServiceInstanceInfos(Iterable<String> containerIds, String serviceName) {
+        containerIds.collectEntries { String containerId ->
+            logger.info("Container ID of service $serviceName is $containerId")
+            def inspection = getDockerInspection(containerId)
+            ServiceHost host = getServiceHost(serviceName, inspection)
+            logger.info("Will use $host as host of service $serviceName")
+            def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
+            String instanceName = inspection.Name.find(/${serviceName}_\d+/)
+            [(instanceName): new ServiceInstanceInfo(instanceName: instanceName, serviceHost: host, tcpPorts: tcpPorts, 
+                    containerHostname: inspection.Config.Hostname, inspection: inspection)]
+        }
     }
 
     Iterable<String> getServiceNames() {
@@ -158,7 +174,7 @@ class ComposeUp extends DefaultTask {
         f.exists() ? f : findInParentDirectories(filename, directory.parentFile)
     }
 
-    String getContainerId(String serviceName) {
+    Iterable<String> getContainerIds(String serviceName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 extension.setExecSpecWorkingDirectory(e)
@@ -166,7 +182,7 @@ class ComposeUp extends DefaultTask {
                 e.commandLine extension.composeCommand('ps', '-q', serviceName)
                 e.standardOutput = os
             }
-            os.toString().trim()
+            os.toString().readLines()
         }
     }
 
@@ -222,8 +238,7 @@ class ComposeUp extends DefaultTask {
             int exposedPort = exposedPortAsString as int
             if (!forwardedPortsInfos || forwardedPortsInfos.isEmpty()) {
                 logger.debug("No forwarded TCP port for service '$serviceName:$exposedPort'")
-            }
-            else {
+            } else {
                 switch (host.type) {
                     case ServiceHostType.LocalHost:
                     case ServiceHostType.NetworkGateway:
@@ -246,72 +261,75 @@ class ComposeUp extends DefaultTask {
     }
 
     void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
-        servicesInfos.forEach { service ->
-            def start = Instant.now()
-            while (true) {
-                Map<String, Object> inspectionState = getDockerInspection(service.getContainerId()).State
-                if (inspectionState.containsKey('Health')) {
-                    String healthStatus = inspectionState.Health.Status
-                    if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
-                        logger.lifecycle("${service.name} health state reported as '$healthStatus' - continuing...")
+        servicesInfos.forEach { serviceInfo ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, serviceInstance ->
+                def start = Instant.now()
+                while (true) {
+                    Map<String, Object> inspectionState = getDockerInspection(serviceInstance.containerId).State
+                    if (inspectionState.containsKey('Health')) {
+                        String healthStatus = inspectionState.Health.Status
+                        if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
+                            logger.lifecycle("${instanceName} health state reported as '$healthStatus' - continuing...")
+                            return
+                        }
+                        logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
+                        sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
+                    } else {
+                        logger.debug("Service ${instanceName} or this version of Docker doesn't support healtchecks")
                         return
                     }
-                    logger.lifecycle("Waiting for ${service.name} to become healthy (it's $healthStatus)")
-                    sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
-                } else {
-                    logger.debug("Service ${service.name} or this version of Docker doesn't support healtchecks")
-                    return
-                }
-                if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
-                    throw new RuntimeException("Container ${service.containerId} of service ${service.name} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
+                    if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
+                        throw new RuntimeException("Container ${serviceInstance.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
+                    }
                 }
             }
         }
     }
 
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
-        servicesInfos.forEach { service ->
-            service.tcpPorts.forEach { exposedPort, forwardedPort ->
-                logger.lifecycle("Probing TCP socket on ${service.host}:${forwardedPort} of service '${service.name}'")
-                def start = Instant.now()
-                while (true) {
-                    try {
-                        def s = new Socket(service.host, forwardedPort)
-                        s.setSoTimeout(extension.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
+        servicesInfos.forEach { serviceInfo ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, serviceInstance ->
+                serviceInstance.tcpPorts.forEach { exposedPort, forwardedPort ->
+                    logger.lifecycle("Probing TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}'")
+                    def start = Instant.now()
+                    while (true) {
                         try {
-                            // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
-                            // if the socket is closed then it returns -1
-                            // if the socket is not closed then returns a data or timeouts
-                            boolean disconnected = false
+                            def s = new Socket(serviceInstance.host, forwardedPort)
+                            s.setSoTimeout(extension.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
                             try {
-                                disconnected = s.inputStream.read() == -1
-                            } catch (Exception e) {
-                                logger.debug("An exception when reading from socket", e) // expected exception
+                                // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
+                                // if the socket is closed then it returns -1
+                                // if the socket is not closed then returns a data or timeouts
+                                boolean disconnected = false
+                                try {
+                                    disconnected = s.inputStream.read() == -1
+                                } catch (Exception e) {
+                                    logger.debug("An exception when reading from socket", e) // expected exception
+                                }
+                                if (disconnected) {
+                                    throw new RuntimeException("TCP connection on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' was disconnected right after connected")
+                                }
                             }
-                            if (disconnected) {
-                                throw new RuntimeException("TCP connection on ${service.host}:${forwardedPort} of service '${service.name}' was disconnected right after connected")
+                            finally {
+                                s.close()
                             }
+                            logger.lifecycle("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' is ready")
+                            return
                         }
-                        finally {
-                            s.close()
+                        catch (Exception e) {
+                            if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
+                                throw new RuntimeException("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
+                            }
+                            logger.lifecycle("Waiting for TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
+                            sleep(extension.waitAfterTcpProbeFailure.toMillis())
                         }
-                        logger.lifecycle("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is ready")
-                        return
-                    }
-                    catch (Exception e) {
-                        if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
-                            throw new RuntimeException("TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(service.name)}")
-                        }
-                        logger.lifecycle("Waiting for TCP socket on ${service.host}:${forwardedPort} of service '${service.name}' (${e.message})")
-                        sleep(extension.waitAfterTcpProbeFailure.toMillis())
                     }
                 }
             }
         }
     }
 
-    String getServiceLogs(String serviceName) {
-        def containerId = getContainerId(serviceName)
+    String getServiceLogs(String containerId) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
                 e.environment = extension.environment
