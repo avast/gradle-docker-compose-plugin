@@ -5,18 +5,15 @@ import groovy.transform.Immutable
 @Immutable
 class ServiceInfo {
     String name
-    Map<String, ServiceInstanceInfo> serviceInstanceInfos = [:]
+    /* Key is instance name, for example service_1 */
+    Map<String, ContainerInfo> containerInfos = [:]
 
-    String getHost() { firstInstance.serviceHost.host }
-    Map<Integer, Integer> getPorts() { firstInstance.tcpPorts }
+    String getHost() { firstContainer.serviceHost.host }
+    Map<Integer, Integer> getPorts() { firstContainer.tcpPorts }
     Integer getPort() { ports.values().first() }
-    Integer getTcpPort() { firstInstance.tcpPorts.values().first() }
+    Integer getTcpPort() { firstContainer.tcpPorts.values().first() }
     
-    ServiceInstanceInfo getFirstInstance() {
-        serviceInstanceInfos.values().first()
-    }
-    
-    ServiceInstanceInfo getInstanceByName(String name) {
-        serviceInstanceInfos.get(name)
+    ContainerInfo getFirstContainer() {
+        containerInfos.values().first()
     }
 }

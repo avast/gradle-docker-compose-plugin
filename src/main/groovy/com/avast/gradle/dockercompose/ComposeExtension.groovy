@@ -64,7 +64,7 @@ class ComposeExtension {
 
     void exposeAsEnvironment(ProcessForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+            serviceInfo.containerInfos.each { instanceName, si ->
                 if (instanceName.endsWith('_1')) {
                     task.environment << createEnvironmentVariables(serviceInfo.name.toUpperCase(), si)
                 }
@@ -75,7 +75,7 @@ class ComposeExtension {
 
     void exposeAsSystemProperties(JavaForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+            serviceInfo.containerInfos.each { instanceName, si ->
                 if(instanceName.endsWith('_1')) {
                     task.systemProperties << createSystemProperties(serviceInfo.name, si)
                 }
@@ -84,19 +84,19 @@ class ComposeExtension {
         }
     }
 
-    protected Map<String, Object> createEnvironmentVariables(String variableName, ServiceInstanceInfo si) {
+    protected Map<String, Object> createEnvironmentVariables(String variableName, ContainerInfo ci) {
         Map<String, Object> environmentVariables = [:]
-        environmentVariables.put("${variableName}_HOST".toString(), si.host)
-        environmentVariables.put("${variableName}_CONTAINER_HOSTNAME".toString(), si.containerHostname)
-        si.tcpPorts.each { environmentVariables.put("${variableName}_TCP_${it.key}".toString(), it.value) }
+        environmentVariables.put("${variableName}_HOST".toString(), ci.host)
+        environmentVariables.put("${variableName}_CONTAINER_HOSTNAME".toString(), ci.containerHostname)
+        ci.tcpPorts.each { environmentVariables.put("${variableName}_TCP_${it.key}".toString(), it.value) }
         environmentVariables
     }
 
-    protected Map<String, Object> createSystemProperties(String variableName, ServiceInstanceInfo si) {
+    protected Map<String, Object> createSystemProperties(String variableName, ContainerInfo ci) {
         Map<String, Object> systemProperties = [:]
-        systemProperties.put("${variableName}.host".toString(), si.host)
-        systemProperties.put("${variableName}.containerHostname".toString(), si.containerHostname)
-        si.tcpPorts.each { systemProperties.put("${variableName}.tcp.${it.key}".toString(), it.value) }
+        systemProperties.put("${variableName}.host".toString(), ci.host)
+        systemProperties.put("${variableName}.containerHostname".toString(), ci.containerHostname)
+        ci.tcpPorts.each { systemProperties.put("${variableName}.tcp.${it.key}".toString(), it.value) }
         systemProperties
     }
 

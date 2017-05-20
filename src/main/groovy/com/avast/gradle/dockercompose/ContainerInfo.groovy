@@ -3,15 +3,16 @@ package com.avast.gradle.dockercompose
 import groovy.transform.Immutable
 
 @Immutable
-class ServiceInstanceInfo {
+class ContainerInfo {
+    /* For example serviceName_1 */
     String instanceName
     ServiceHost serviceHost
     /* Mapping from exposed to forwarded port. */
     Map<Integer, Integer> tcpPorts
-    String containerHostname
     /* Docker inspection */
     Map<String, Object> inspection
     String getContainerId() { inspection.Id }
+    String getContainerHostname() { inspection.Config.Hostname }
 
     String getHost() { serviceHost.host }
     Map<Integer, Integer> getPorts() { tcpPorts }
