@@ -71,8 +71,8 @@ test.doFirst {
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
     def webInfo = dockerCompose.servicesInfos.web.firstInstance
-    // in case scale option is used, serviceInstanceInfos will contain information about all running containers of service. Particular container can be retreived either by iterating the values of serviceInstanceInfos map, getting particular service by key like 'web_1' or using getInstanceByName() method
-    def webInfo = dockerCompose.servicesInfos.web.getInstanceByName('web_1')
+    // in case scale option is used, dockerCompose.servicesInfos.containerInfo will contain information about all running containers of service. Particular container can be retreived either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
+    def webInfo = dockerCompose.servicesInfos.web.'web_1'
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host
     systemProperty 'myweb.port', webInfo.ports[80]    
@@ -85,5 +85,5 @@ test.doFirst {
 * All properties in `dockerCompose` have meaningful default values so you don't have to touch it. If you are interested then you can look at [ComposeExtension.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ComposeExtension.groovy) for reference.
 * `dockerCompose.servicesInfos` contains information about running containers so you must access this property after `composeUp` task is finished. So `doFirst` of your test task is perfect place where to access it.
 * Plugin honours a `docker-compose.override.yml` file, but only when no files are specified with `useComposeFiles` (conform command-line behavior).
-* Check [ServiceInstanceInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ServiceInstanceInfo.groovy) to see what you can know about running containers.
+* Check [ContainerInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ContainerInfo.groovy) to see what you can know about running containers.
 * You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the 'DOCKER_HOST' environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
