@@ -7,10 +7,10 @@ class ServiceInfo {
     String name
     Map<String, ServiceInstanceInfo> serviceInstanceInfos = [:]
 
-    String getHost() { serviceInstanceInfos.values().first().serviceHost.host }
-    Map<Integer, Integer> getPorts() { serviceInstanceInfos.values().first().tcpPorts }
+    String getHost() { firstInstance.serviceHost.host }
+    Map<Integer, Integer> getPorts() { firstInstance.tcpPorts }
     Integer getPort() { ports.values().first() }
-    Integer getTcpPort() { serviceInstanceInfos.values().first().tcpPorts.values().first() }
+    Integer getTcpPort() { firstInstance.tcpPorts.values().first() }
     
     ServiceInstanceInfo getFirstInstance() {
         serviceInstanceInfos.values().first()
