@@ -60,7 +60,7 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         project.tasks.create('integrationTest').doLast {
-            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos."web".serviceInstanceInfos[0]
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.firstInstance
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
             assert webInfo.ports == webInfo.tcpPorts
             assert !webInfo.containerHostname.isEmpty()
@@ -120,7 +120,7 @@ class DockerComposePluginTest extends Specification {
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.create('integrationTest').doLast {
-            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.serviceInstanceInfos[0]
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.firstInstance
             assert webInfo.ports.containsKey(8080)
             assert webInfo.ports.containsKey(80)
         }
@@ -159,8 +159,8 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         project.tasks.create('integrationTest').doLast {
-            assert project.dockerCompose.servicesInfos.web.serviceInstanceInfos[0].ports.containsKey(80)
-            assert project.dockerCompose.servicesInfos.devweb.serviceInstanceInfos[0].ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos.web.firstInstance.ports.containsKey(80)
+            assert project.dockerCompose.servicesInfos.devweb.firstInstance.ports.containsKey(80)
         }
         when:
             project.tasks.composeUp.up()
@@ -200,7 +200,7 @@ class DockerComposePluginTest extends Specification {
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.create('integrationTest').doLast {
-            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.serviceInstanceInfos[0]
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.firstInstance
             assert webInfo.ports.containsKey(8080)
             assert !webInfo.ports.containsKey(80)
             assert !project.dockerCompose.servicesInfos.devweb
@@ -306,7 +306,7 @@ class DockerComposePluginTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         project.tasks.composeUp.up()
-        String containerId = project.dockerCompose.servicesInfos.hello.serviceInstanceInfos[0].containerId
+        String containerId = project.dockerCompose.servicesInfos.hello.firstInstance.containerId
         when:
             String output = project.tasks.composeUp.getServiceLogs(containerId)
         then:
@@ -332,7 +332,7 @@ class DockerComposePluginTest extends Specification {
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.create('integrationTest').doLast {
-            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.serviceInstanceInfos[0]
+            ServiceInstanceInfo webInfo = project.dockerCompose.servicesInfos.web.firstInstance
             assert webInfo.ports.containsKey(80)
         }
         when:
@@ -394,6 +394,8 @@ class DockerComposePluginTest extends Specification {
         project.tasks.create('integrationTest').doLast {
             def webInfos = project.dockerCompose.servicesInfos.web.serviceInstanceInfos
             assert webInfos.size() == 2
+            assert webInfos.containsKey('web_1')
+            assert webInfos.containsKey('web_2')
         }
         when:
             project.tasks.composeUp.up()

@@ -64,22 +64,22 @@ class ComposeExtension {
 
     void exposeAsEnvironment(ProcessForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { si ->
-                if (si.instanceName.endsWith('_1')) {
+            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+                if (instanceName.endsWith('_1')) {
                     task.environment << createEnvironmentVariables(serviceInfo.name.toUpperCase(), si)
                 }
-                task.environment << createEnvironmentVariables(si.instanceName.toUpperCase(), si)
+                task.environment << createEnvironmentVariables(instanceName.toUpperCase(), si)
             }
         }
     }
 
     void exposeAsSystemProperties(JavaForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { si ->
-                if(si.instanceName.endsWith('_1')) {
+            serviceInfo.serviceInstanceInfos.each { instanceName, si ->
+                if(instanceName.endsWith('_1')) {
                     task.systemProperties << createSystemProperties(serviceInfo.name, si)
                 }
-                task.systemProperties << createSystemProperties(si.instanceName, si)
+                task.systemProperties << createSystemProperties(instanceName, si)
             }
         }
     }

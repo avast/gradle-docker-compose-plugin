@@ -57,7 +57,7 @@ dockerCompose {
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
-    // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale SERVICE1=NUM --scale SERVICE2=NUM'
+    // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
 }
 
 test.doFirst {
@@ -70,8 +70,8 @@ test.doFirst {
     // if service is scaled using scale option, environment variables will be exposed for each service instance like "web_1.host", "web_1.tcp.80", "web_2.host", "web_2.tcp.80" and so on
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
-    def webInfo = dockerCompose.servicesInfos.web.serviceInstanceInfos[0]
-    // in case scale option is used, serviceInstanceInfos will contain information about all instances of scaled service. Particular service can be retreived either by iterating the serviceInstanceInfos list or using getInstanceByName() method
+    def webInfo = dockerCompose.servicesInfos.web.firstInstance
+    // in case scale option is used, serviceInstanceInfos will contain information about all running containers of service. Particular container can be retreived either by iterating the values of serviceInstanceInfos map, getting particular service by key like 'web_1' or using getInstanceByName() method
     def webInfo = dockerCompose.servicesInfos.web.getInstanceByName('web_1')
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host

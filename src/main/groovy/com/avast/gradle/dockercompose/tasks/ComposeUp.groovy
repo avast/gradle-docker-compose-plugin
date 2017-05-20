@@ -110,19 +110,20 @@ class ComposeUp extends DefaultTask {
 
     protected ServiceInfo createServiceInfo(String serviceName) {
         Iterable<String> containerIds = getContainerIds(serviceName)
-        List<ServiceInstanceInfo> serviceInstanceInfos = createServiceInstanceInfos(containerIds, serviceName)
+        Map<String, ServiceInstanceInfo> serviceInstanceInfos = createServiceInstanceInfos(containerIds, serviceName)
         new ServiceInfo(name: serviceName, serviceInstanceInfos: serviceInstanceInfos)
     }
 
-    List<ServiceInstanceInfo> createServiceInstanceInfos(Iterable<String> containerIds, String serviceName) {
-        containerIds.collect { String containerId ->
+    Map<String, ServiceInstanceInfo> createServiceInstanceInfos(Iterable<String> containerIds, String serviceName) {
+        containerIds.collectEntries { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
             def inspection = getDockerInspection(containerId)
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-            new ServiceInstanceInfo(instanceName: inspection.Name.find(/${serviceName}_\d+/),
-                    serviceHost: host, tcpPorts: tcpPorts, containerHostname: inspection.Config.Hostname, inspection: inspection)
+            String instanceName = inspection.Name.find(/${serviceName}_\d+/)
+            [(instanceName): new ServiceInstanceInfo(instanceName: instanceName, serviceHost: host, tcpPorts: tcpPorts, 
+                    containerHostname: inspection.Config.Hostname, inspection: inspection)]
         }
     }
 
@@ -261,24 +262,24 @@ class ComposeUp extends DefaultTask {
 
     void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
         servicesInfos.forEach { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { serviceInstance ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, serviceInstance ->
                 def start = Instant.now()
                 while (true) {
                     Map<String, Object> inspectionState = getDockerInspection(serviceInstance.containerId).State
                     if (inspectionState.containsKey('Health')) {
                         String healthStatus = inspectionState.Health.Status
                         if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
-                            logger.lifecycle("${serviceInstance.instanceName} health state reported as '$healthStatus' - continuing...")
+                            logger.lifecycle("${instanceName} health state reported as '$healthStatus' - continuing...")
                             return
                         }
-                        logger.lifecycle("Waiting for ${serviceInstance.instanceName} to become healthy (it's $healthStatus)")
+                        logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
                         sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
                     } else {
-                        logger.debug("Service ${serviceInstance.instanceName} or this version of Docker doesn't support healtchecks")
+                        logger.debug("Service ${instanceName} or this version of Docker doesn't support healtchecks")
                         return
                     }
                     if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
-                        throw new RuntimeException("Container ${serviceInstance.containerId} of service ${serviceInstance.instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
+                        throw new RuntimeException("Container ${serviceInstance.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
                     }
                 }
             }
@@ -287,9 +288,9 @@ class ComposeUp extends DefaultTask {
 
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         servicesInfos.forEach { serviceInfo ->
-            serviceInfo.serviceInstanceInfos.each { serviceInstance ->
+            serviceInfo.serviceInstanceInfos.each { instanceName, serviceInstance ->
                 serviceInstance.tcpPorts.forEach { exposedPort, forwardedPort ->
-                    logger.lifecycle("Probing TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${serviceInstance.instanceName}'")
+                    logger.lifecycle("Probing TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}'")
                     def start = Instant.now()
                     while (true) {
                         try {
@@ -306,20 +307,20 @@ class ComposeUp extends DefaultTask {
                                     logger.debug("An exception when reading from socket", e) // expected exception
                                 }
                                 if (disconnected) {
-                                    throw new RuntimeException("TCP connection on ${serviceInstance.host}:${forwardedPort} of service '${serviceInstance.instanceName}' was disconnected right after connected")
+                                    throw new RuntimeException("TCP connection on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' was disconnected right after connected")
                                 }
                             }
                             finally {
                                 s.close()
                             }
-                            logger.lifecycle("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${serviceInstance.instanceName}' is ready")
+                            logger.lifecycle("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' is ready")
                             return
                         }
                         catch (Exception e) {
                             if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
-                                throw new RuntimeException("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${serviceInstance.instanceName}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
+                                throw new RuntimeException("TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(serviceInstance.containerId)}")
                             }
-                            logger.lifecycle("Waiting for TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${serviceInstance.instanceName}' (${e.message})")
+                            logger.lifecycle("Waiting for TCP socket on ${serviceInstance.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
                             sleep(extension.waitAfterTcpProbeFailure.toMillis())
                         }
                     }
