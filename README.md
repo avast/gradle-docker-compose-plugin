@@ -71,7 +71,7 @@ test.doFirst {
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
     def webInfo = dockerCompose.servicesInfos.web.firstInstance
-    // in case scale option is used, dockerCompose.servicesInfos.containerInfo will contain information about all running containers of service. Particular container can be retreived either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
+    // in case scale option is used, dockerCompose.servicesInfos.containerInfos will contain information about all running containers of service. Particular container can be retreived either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
     def webInfo = dockerCompose.servicesInfos.web.'web_1'
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host
