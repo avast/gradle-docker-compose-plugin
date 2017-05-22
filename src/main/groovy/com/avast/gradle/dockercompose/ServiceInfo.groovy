@@ -16,4 +16,8 @@ class ServiceInfo {
     ContainerInfo getFirstContainer() {
         containerInfos.values().first()
     }
+
+    def propertyMissing(String name) {
+        return containerInfos[name]
+    }
 }
