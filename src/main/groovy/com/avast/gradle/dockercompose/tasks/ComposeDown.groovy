@@ -22,9 +22,6 @@ class ComposeDown extends DefaultTask {
                 extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
                 String[] args = ['stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds()]
-                if (extension.removeOrphans()) {
-                    args += '--remove-orphans'
-                }
                 e.commandLine extension.composeCommand(args)
             }
             if (extension.removeContainers) {
@@ -40,6 +37,9 @@ class ComposeDown extends DefaultTask {
                     }
                     if(extension.removeVolumes) {
                         args += ['--volumes']
+                    }
+                    if (extension.removeOrphans()) {
+                        args += '--remove-orphans'
                     }
                     project.exec { ExecSpec e ->
                         extension.setExecSpecWorkingDirectory(e)
