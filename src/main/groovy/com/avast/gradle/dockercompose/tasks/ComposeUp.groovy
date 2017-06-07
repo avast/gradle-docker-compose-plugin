@@ -121,7 +121,7 @@ class ComposeUp extends DefaultTask {
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
-            String instanceName = inspection.Name.find(/${serviceName}_\d+/)
+            String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
             [(instanceName): new ContainerInfo(
                                 instanceName: instanceName,
                                 serviceHost: host,
