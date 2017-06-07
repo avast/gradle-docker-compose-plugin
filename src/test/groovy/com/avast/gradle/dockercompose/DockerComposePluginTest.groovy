@@ -447,4 +447,48 @@ class DockerComposePluginTest extends Specification {
                 projectDir.deleteOnExit()
             }
     }
+
+    def "exposes environment variables and system properties for container with custom name"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << composeFileContent
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        project.plugins.apply 'java'
+        project.plugins.apply 'docker-compose'
+        project.tasks.composeUp.up()
+        Test test = project.tasks.test as Test
+        when:
+        project.dockerCompose.exposeAsEnvironment(test)
+        project.dockerCompose.exposeAsSystemProperties(test)
+        then:
+        test.environment.containsKey('CUSTOM_CONTAINER_NAME_HOST')
+        test.environment.containsKey('CUSTOM_CONTAINER_NAME_CONTAINER_HOSTNAME')
+        test.environment.containsKey('CUSTOM_CONTAINER_NAME_TCP_80')
+        test.systemProperties.containsKey('custom_container_name.host')
+        test.systemProperties.containsKey('custom_container_name.containerHostname')
+        test.systemProperties.containsKey('custom_container_name.tcp.80')
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch (ignored) {
+            projectDir.deleteOnExit()
+        }
+        where:
+        // test it for both compose file version 1 and 2
+        composeFileContent << ['''
+            web:
+                container_name: custom_container_name
+                image: nginx
+                ports:
+                  - 80
+        ''', '''
+            version: '2'
+            services:
+                web:
+                    container_name: custom_container_name
+                    image: nginx
+                    ports:
+                      - 80
+        ''']
+    }
 }
