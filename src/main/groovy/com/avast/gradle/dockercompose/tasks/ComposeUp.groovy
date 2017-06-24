@@ -54,16 +54,15 @@ class ComposeUp extends DefaultTask {
             e.commandLine extension.composeCommand(args)
         }
         try {
-            if (extension.captureContainersOutput instanceof Boolean) {
+            if (extension.captureContainersOutput) {
                 if (extension.captureContainersOutput) {
                     captureContainersOutput(logger.&lifecycle)
                 }
-            } else if (extension.captureContainersOutput instanceof CharSequence) {
-                def logFile = new File(extension.captureContainersOutput)
+            }
+            if (extension.captureContainersOutputToFile != null) {
+                def logFile = extension.captureContainersOutputToFile
                 logFile.parentFile.mkdirs()
                 captureContainersOutput(logFile.&write)
-            } else {
-                throw new IllegalArgumentException("Illegal type of captureContainersOutput '${extension.captureContainersOutput.class.name}' expected boolean or CharSequence")
             }
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())

@@ -19,7 +19,8 @@ class ComposeExtension {
 
     boolean buildBeforeUp = true
     boolean waitForTcpPorts = true
-    Object captureContainersOutput = false
+    boolean captureContainersOutput = false
+    File captureContainersOutputToFile = null
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
     Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
     Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
@@ -104,6 +105,14 @@ class ComposeExtension {
         if (dockerComposeWorkingDirectory != null) {
             e.setWorkingDir(dockerComposeWorkingDirectory)
         }
+    }
+
+    void setCaptureContainersOutputToFile(CharSequence path) {
+        captureContainersOutputToFile = new File(path)
+    }
+
+    void setCaptureContainersOutputToFile(File file) {
+        captureContainersOutputToFile = file
     }
 
     /**

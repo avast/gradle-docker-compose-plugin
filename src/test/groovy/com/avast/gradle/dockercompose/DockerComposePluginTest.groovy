@@ -164,7 +164,37 @@ class DockerComposePluginTest extends Specification {
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
 
         when:
-            extension.captureContainersOutput = "${logFile.absolutePath}"
+        extension.captureContainersOutputToFile = logFile
+        project.tasks.composeUp.up()
+        then:
+        noExceptionThrown()
+        logFile.text.contains("heres some output")
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch (ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
+    def "captures container output to file path"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        def logFile = new File(projectDir, "web.log")
+
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+
+        when:
+            extension.captureContainersOutputToFile = "${logFile.absolutePath}"
             project.tasks.composeUp.up()
         then:
             noExceptionThrown()
