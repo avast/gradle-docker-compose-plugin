@@ -5,7 +5,12 @@ import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import org.gradle.api.Task
 import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.testing.Test
+import org.gradle.internal.logging.events.LogEvent
+import org.gradle.internal.logging.events.OutputEvent
+import org.gradle.internal.logging.events.OutputEventListener
+import org.gradle.internal.logging.slf4j.Slf4jLoggingConfigurer
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -96,6 +101,106 @@ class DockerComposePluginTest extends Specification {
         then:
             noExceptionThrown()
         cleanup:
+            try {
+                projectDir.delete()
+            } catch (ignored) {
+                projectDir.deleteOnExit()
+            }
+    }
+
+    def "captures container output to stdout"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+
+        def stdout = new StringBuffer()
+
+        new Slf4jLoggingConfigurer(new OutputEventListener() {
+            @Override
+            void onOutput(OutputEvent outputEvent) {
+                if (outputEvent instanceof LogEvent) {
+                    stdout.append(((LogEvent) outputEvent).message)
+                }
+            }
+        }).configure(LogLevel.LIFECYCLE)
+
+        when:
+            extension.captureContainersOutput = true
+            project.tasks.composeUp.up()
+        then:
+            noExceptionThrown()
+            stdout.toString().contains("heres some output")
+        cleanup:
+            project.tasks.composeDown.down()
+            try {
+                projectDir.delete()
+            } catch (ignored) {
+                projectDir.deleteOnExit()
+            }
+    }
+
+    def "captures container output to file"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        def logFile = new File(projectDir, "web.log")
+
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+
+        when:
+        extension.captureContainersOutputToFile = logFile
+        project.tasks.composeUp.up()
+        then:
+        noExceptionThrown()
+        logFile.text.contains("heres some output")
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch (ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
+    def "captures container output to file path"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                ports:
+                  - 80
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+        def logFile = new File(projectDir, "web.log")
+
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+
+        when:
+            extension.captureContainersOutputToFile = "${logFile.absolutePath}"
+            project.tasks.composeUp.up()
+        then:
+            noExceptionThrown()
+            logFile.text.contains("heres some output")
+        cleanup:
+            project.tasks.composeDown.down()
             try {
                 projectDir.delete()
             } catch (ignored) {
