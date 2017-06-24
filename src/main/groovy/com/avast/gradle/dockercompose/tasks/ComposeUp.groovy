@@ -55,9 +55,7 @@ class ComposeUp extends DefaultTask {
         }
         try {
             if (extension.captureContainersOutput) {
-                if (extension.captureContainersOutput) {
-                    captureContainersOutput(logger.&lifecycle)
-                }
+                captureContainersOutput(logger.&lifecycle)
             }
             if (extension.captureContainersOutputToFile != null) {
                 def logFile = extension.captureContainersOutputToFile
