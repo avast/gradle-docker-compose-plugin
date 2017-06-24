@@ -108,7 +108,7 @@ class ComposeExtension {
     }
 
     void setCaptureContainersOutputToFile(CharSequence path) {
-        captureContainersOutputToFile = new File(path)
+        captureContainersOutputToFile = project.file(path)
     }
 
     void setCaptureContainersOutputToFile(File file) {
