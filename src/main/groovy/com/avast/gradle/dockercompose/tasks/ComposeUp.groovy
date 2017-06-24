@@ -54,8 +54,16 @@ class ComposeUp extends DefaultTask {
             e.commandLine extension.composeCommand(args)
         }
         try {
-            if (extension.captureContainersOutput) {
-                captureContainersOutput()
+            if (extension.captureContainersOutput instanceof Boolean) {
+                if (extension.captureContainersOutput) {
+                    captureContainersOutput(logger.&lifecycle)
+                }
+            } else if (extension.captureContainersOutput instanceof CharSequence) {
+                def logFile = new File(extension.captureContainersOutput)
+                logFile.parentFile.mkdirs()
+                captureContainersOutput(logFile.&write)
+            } else {
+                throw new IllegalArgumentException("Illegal type of captureContainersOutput '${extension.captureContainersOutput.class.name}' expected boolean or CharSequence")
             }
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
@@ -69,7 +77,7 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    protected void captureContainersOutput() {
+    protected void captureContainersOutput(Closure<Void> logMethod) {
         // execute daemon thread that executes `docker-compose logs -f --no-color`
         // the -f arguments means `follow` and so this command ends when docker-compose finishes
         def t = Executors.defaultThreadFactory().newThread(new Runnable() {
@@ -89,7 +97,7 @@ class ComposeUp extends DefaultTask {
                                 if (buffer.size() > 0) {
                                     // convert the byte buffer to characters and print these characters
                                     def toPrint = buffer.collect { it as byte }.toArray() as byte[]
-                                    logger.lifecycle(new String(toPrint))
+                                    logMethod(new String(toPrint))
                                     buffer.clear()
                                 }
                             } else {

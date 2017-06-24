@@ -19,7 +19,7 @@ class ComposeExtension {
 
     boolean buildBeforeUp = true
     boolean waitForTcpPorts = true
-    boolean captureContainersOutput = false
+    Object captureContainersOutput = false
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
     Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
     Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
