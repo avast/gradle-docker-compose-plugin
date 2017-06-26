@@ -113,7 +113,7 @@ class DockerComposePluginTest extends Specification {
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx
-                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
                 ports:
                   - 80
         '''
@@ -128,7 +128,7 @@ class DockerComposePluginTest extends Specification {
             @Override
             void onOutput(OutputEvent outputEvent) {
                 if (outputEvent instanceof LogEvent) {
-                    stdout.append(((LogEvent) outputEvent).message)
+                    stdout.append(((LogEvent) outputEvent).message + '\n')
                 }
             }
         }).configure(LogLevel.LIFECYCLE)
@@ -138,7 +138,7 @@ class DockerComposePluginTest extends Specification {
             project.tasks.composeUp.up()
         then:
             noExceptionThrown()
-            stdout.toString().contains("heres some output")
+            stdout.toString().contains("web_1  | heres some output\nweb_1  | and some more")
         cleanup:
             project.tasks.composeDown.down()
             try {
@@ -153,7 +153,7 @@ class DockerComposePluginTest extends Specification {
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx
-                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
                 ports:
                   - 80
         '''
@@ -164,18 +164,18 @@ class DockerComposePluginTest extends Specification {
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
 
         when:
-        extension.captureContainersOutputToFile = logFile
-        project.tasks.composeUp.up()
+            extension.captureContainersOutputToFile = logFile
+            project.tasks.composeUp.up()
         then:
-        noExceptionThrown()
-        logFile.text.contains("heres some output")
+            noExceptionThrown()
+            logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
         cleanup:
-        project.tasks.composeDown.down()
-        try {
-            projectDir.delete()
-        } catch (ignored) {
-            projectDir.deleteOnExit()
-        }
+            project.tasks.composeDown.down()
+            try {
+                projectDir.delete()
+            } catch (ignored) {
+                projectDir.deleteOnExit()
+            }
     }
 
     def "captures container output to file path"() {
@@ -183,7 +183,7 @@ class DockerComposePluginTest extends Specification {
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx
-                command: bash -c "echo 'heres some output' && sleep 5 && nginx -g 'daemon off;'"
+                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
                 ports:
                   - 80
         '''
@@ -198,7 +198,7 @@ class DockerComposePluginTest extends Specification {
             project.tasks.composeUp.up()
         then:
             noExceptionThrown()
-            logFile.text.contains("heres some output")
+            logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
         cleanup:
             project.tasks.composeDown.down()
             try {

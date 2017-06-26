@@ -60,7 +60,7 @@ class ComposeUp extends DefaultTask {
             if (extension.captureContainersOutputToFile != null) {
                 def logFile = extension.captureContainersOutputToFile
                 logFile.parentFile.mkdirs()
-                captureContainersOutput(logFile.&write)
+                captureContainersOutput({ logFile.append(it + '\n') })
             }
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
