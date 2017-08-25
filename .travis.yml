@@ -16,7 +16,7 @@ cache:
     - $HOME/.m2
 
 before_install:
-  - curl -sSL https://get.docker.com/ | sh
+  - curl -sSL https://get.docker.com/ | sudo sh
   - sudo apt-get -y --force-yes install docker-engine=$DOCKER_PACKAGE_VERSION
   # Build image with building environment
   - sudo docker build --build-arg DOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --tag=build-image .
