@@ -5,6 +5,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeUp
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.ExecSpec
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
@@ -48,6 +49,13 @@ class ComposeExtension {
         this.project = project
         this.downTask = downTask
         this.upTask = upTask
+
+        if (OperatingSystem.current().isMacOsX()) {
+            // Default installation is inaccessible from path, so set sensible
+            // defaults for this platform.
+            this.executable = '/usr/local/bin/docker-compose'
+            this.dockerExecutable = '/usr/local/bin/docker'
+        }
     }
 
     void isRequiredBy(Task task) {
