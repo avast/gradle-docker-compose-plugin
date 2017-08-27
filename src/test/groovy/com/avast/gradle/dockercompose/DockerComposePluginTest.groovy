@@ -457,7 +457,7 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
-    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0') })
+    @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') == null || parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0') })
     def "exception is thrown for scale option if unsupported docker-compose is used"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
