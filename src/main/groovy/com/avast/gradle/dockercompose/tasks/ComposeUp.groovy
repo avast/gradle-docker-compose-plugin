@@ -46,11 +46,15 @@ class ComposeUp extends DefaultTask {
             if (extension.removeOrphans()) {
                 args += '--remove-orphans'
             }
+            if (extension.forceRecreate) {
+                args += '--force-recreate'
+            }
             if (extension.scale()) {
                 args += extension.scale.collect { service, value ->
                     ['--scale', "$service=$value"]
                 }.flatten()
             }
+            args += extension.startedServices
             e.commandLine extension.composeCommand(args)
         }
         try {
