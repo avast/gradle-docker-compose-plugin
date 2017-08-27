@@ -28,6 +28,7 @@ class ComposeExtension {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+    List<String> startedServices = []
     Map<String, Integer> scale = [:]
     String projectName = null
 
@@ -36,6 +37,7 @@ class ComposeExtension {
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
     boolean removeOrphans = false
+    boolean forceRecreate = false
 
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
@@ -126,7 +128,6 @@ class ComposeExtension {
     /**
      * Composes docker-compose command, mainly adds '-f' and '-p' options.
      */
-    @PackageScope
     Iterable<String> composeCommand(String... args) {
         def res = [executable]
         res.addAll(useComposeFiles.collectMany { ['-f', it] })
@@ -137,7 +138,6 @@ class ComposeExtension {
         res
     }
 
-    @PackageScope
     Iterable<String> dockerCommand(String... args) {
         def res = [dockerExecutable]
         res.addAll(args)

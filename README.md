@@ -45,12 +45,14 @@ dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy
 
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
+    // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' (when not specified, all services are executed)
     // captureContainersOutput = true // prints output of all containers to Gradle output - very useful for debugging
     // captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
     // stopContainers = false // doesn't call `docker-compose down` - useful for debugging
     // removeContainers = false
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeOrphans = false // Removes containers for services not defined in the Compose file
+    // forceRecreate = true // pass '--force-recreate' when calling 'docker-compose up'
     // removeVolumes = false
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
