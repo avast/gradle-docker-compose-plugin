@@ -1,5 +1,5 @@
-# docker-compose-gradle-plugin
-[![Build Status](https://travis-ci.org/avast/docker-compose-gradle-plugin.svg?branch=master)](https://travis-ci.org/avast/docker-compose-gradle-plugin) [![Download](https://api.bintray.com/packages/avast/maven/docker-compose-gradle-plugin/images/download.svg) ](https://bintray.com/avast/maven/docker-compose-gradle-plugin/_latestVersion)
+# gradle-docker-compose-plugin
+[![Build Status](https://travis-ci.org/avast/gradle-docker-compose-plugin.svg?branch=master)](https://travis-ci.org/avast/gradle-docker-compose-plugin) [![Download](https://api.bintray.com/packages/avast/maven/gradle-docker-compose-plugin/images/download.svg) ](https://bintray.com/avast/maven/gradle-docker-compose-plugin/_latestVersion)
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
@@ -29,7 +29,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "com.avast.gradle:docker-compose-gradle-plugin:$versionHere"
+        classpath "com.avast.gradle:gradle-docker-compose-plugin:$versionHere"
     }
 }
 

@@ -19,7 +19,7 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 group = 'com.avast.gradle'
-archivesBaseName = 'docker-compose-gradle-plugin'
+archivesBaseName = 'gradle-docker-compose-plugin'
 version = version == 'unspecified' ? 'DEVELOPER-SNAPSHOT' : version
 
 repositories {
@@ -56,13 +56,13 @@ bintray {
     publish = true
     pkg {
         repo = 'maven'
-        name = 'docker-compose-gradle-plugin'
+        name = 'gradle-docker-compose-plugin'
         desc = 'Simplifies usage of Docker Compose for local development and integration testing in Gradle environment.'
         userOrg = 'avast'
         licenses = ['MIT']
-        vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin.git'
-        websiteUrl = 'https://github.com/avast/docker-compose-gradle-plugin'
-        issueTrackerUrl = 'https://github.com/avast/docker-compose-gradle-plugin/issues'
+        vcsUrl = 'https://github.com/avast/gradle-docker-compose-plugin.git'
+        websiteUrl = 'https://github.com/avast/gradle-docker-compose-plugin'
+        issueTrackerUrl = 'https://github.com/avast/gradle-docker-compose-plugin/issues'
         labels = ['docker', 'docker-compose', 'gradle']
         version {
             name = project.version
@@ -74,8 +74,8 @@ bintray {
 project.ext.set('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
 project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
 pluginBundle {
-    website = 'https://github.com/avast/docker-compose-gradle-plugin'
-    vcsUrl = 'https://github.com/avast/docker-compose-gradle-plugin'
+    website = 'https://github.com/avast/gradle-docker-compose-plugin'
+    vcsUrl = 'https://github.com/avast/gradle-docker-compose-plugin'
     description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
     tags = ['docker', 'docker-compose', 'gradle']
     plugins {
