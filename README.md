@@ -90,4 +90,5 @@ test.doFirst {
 * `dockerCompose.servicesInfos` contains information about running containers so you must access this property after `composeUp` task is finished. So `doFirst` of your test task is perfect place where to access it.
 * Plugin honours a `docker-compose.override.yml` file, but only when no files are specified with `useComposeFiles` (conform command-line behavior).
 * Check [ContainerInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ContainerInfo.groovy) to see what you can know about running containers.
-* You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the 'DOCKER_HOST' environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
+* You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the `DOCKER_HOST` environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
+* If the services executed by `docker-compose` are running on a specific host (different than Docker, like in CirceCI 2.0), then you can set `SERVICES_HOST` environment variable. This value will be used as the hostname where the services are expected to be listening.
