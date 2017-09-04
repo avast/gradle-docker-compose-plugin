@@ -54,6 +54,7 @@ dockerCompose {
     // removeOrphans = false // Removes containers for services not defined in the Compose file
     // forceRecreate = true // pass '--force-recreate' when calling 'docker-compose up'
     // removeVolumes = false
+    // waitForTcpPorts = false // turns off the waiting for exposed TCP ports opening
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
     // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (usefull if not present in PATH)
