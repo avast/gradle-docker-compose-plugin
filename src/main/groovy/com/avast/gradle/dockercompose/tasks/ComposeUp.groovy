@@ -211,37 +211,56 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
+    ServiceHost getServiceHostFromEnvironment (String serviceName, Map<String, Object> inspection) {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
-            logger.lifecycle("'SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
-            new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
+            logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)")
+            return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
         }
+    }
+
+    ServiceHost getServiceHostFromDockerHost (String serviceName, Map<String, Object> inspection) {
         String dockerHost = extension.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("'DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
             new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isMac() || isWindows()) {
+        }
+    }
+
+    ServiceHost getLocalServiceHost (String serviceName, Map<String, Object> inspection) {
+        if (isMac() || isWindows()) {
             logger.lifecycle("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
-        } else {
-            // read gateway of first containers network
-            String gateway
-            Map<String, Object> networkSettings = inspection.NetworkSettings
-            Map<String, Object> networks = networkSettings.Networks
-            if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
-                gateway = 'localhost'
-                logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
-            } else if (networks) {
-                Map.Entry<String, Object> firstNetworkPair = networks.find()
-                gateway = firstNetworkPair.value.Gateway
-                logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
-            } else { // networks not specified (older Docker versions)
-                gateway = networkSettings.Gateway
-                logger.lifecycle("Will use $gateway as host of $serviceName")
-            }
-            new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
+        }
+    }
+
+    ServiceHost getServiceHostFromFirstContainerGateway (String serviceName, Map<String, Object> inspection) {
+        String gateway
+        Map<String, Object> networkSettings = inspection.NetworkSettings
+        Map<String, Object> networks = networkSettings.Networks
+        if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
+            gateway = 'localhost'
+            logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
+        } else if (networks) {
+            Map.Entry<String, Object> firstNetworkPair = networks.find()
+            gateway = firstNetworkPair.value.Gateway
+            logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
+        } else { // networks not specified (older Docker versions)
+            gateway = networkSettings.Gateway
+            logger.lifecycle("Will use $gateway as host of $serviceName")
+        }
+        new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
+    }
+
+    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
+        return [
+            'getServiceHostFromEnvironment',
+            'getServiceHostFromDockerHost',
+            'getLocalServiceHost',
+            'getServiceHostFromFirstContainerGateway'
+        ].findResult { m ->
+            "$m"(serviceName, inspection)
         }
     }
 
