@@ -215,7 +215,7 @@ class ComposeUp extends DefaultTask {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
-            new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
+            return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
         }
         String dockerHost = extension.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
