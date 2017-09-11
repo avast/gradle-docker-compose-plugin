@@ -108,6 +108,36 @@ class DockerComposePluginTest extends Specification {
             }
     }
 
+    def "reads network gateway"() {
+        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        new File(projectDir, 'docker-compose.yml') << '''
+            web:
+                image: nginx
+                command: bash -c "sleep 5"
+        '''
+        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+
+        project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
+
+        when:
+        extension.captureContainersOutput = true
+        project.tasks.composeUp.up()
+        ServiceInfo serviceInfo = project.tasks.composeUp.servicesInfos.find().value
+        def networkName = serviceInfo.firstContainer.inspection.NetworkSettings.Networks.find().key
+        String networkGateway = project.tasks.composeUp.getNetworkGateway(networkName)
+        then:
+        noExceptionThrown()
+        !networkGateway.empty
+        cleanup:
+        project.tasks.composeDown.down()
+        try {
+            projectDir.delete()
+        } catch (ignored) {
+            projectDir.deleteOnExit()
+        }
+    }
+
     def "captures container output to stdout"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''

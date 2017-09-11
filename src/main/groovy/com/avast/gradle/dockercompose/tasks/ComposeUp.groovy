@@ -211,6 +211,33 @@ class ComposeUp extends DefaultTask {
         }
     }
 
+    Map<String, Object> getNetworkInspection(String networkName) {
+        new ByteArrayOutputStream().withStream { os ->
+            project.exec { ExecSpec e ->
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('network', 'inspect', networkName)
+                e.standardOutput os
+            }
+            def inspectionAsString = os.toString()
+            logger.debug("Inspection for network $networkName: $inspectionAsString")
+            (new Yaml().load(inspectionAsString))[0] as Map<String, Object>
+        }
+    }
+
+    String getNetworkGateway(String networkName) {
+        def networkInspection = getNetworkInspection(networkName)
+        if (networkInspection) {
+            Map<String, Object> ipam = networkInspection.IPAM
+            if (ipam) {
+                Map<String, Object>[] ipamConfig = ipam.Config
+                if (ipamConfig && ipamConfig.size() > 0) {
+                    return ipamConfig[0].Gateway
+                }
+            }
+        }
+        null
+    }
+
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
@@ -233,13 +260,20 @@ class ComposeUp extends DefaultTask {
             if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
                 logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
-            } else if (networks) {
+            } else if (networks && networks.size() > 0) {
                 Map.Entry<String, Object> firstNetworkPair = networks.find()
                 gateway = firstNetworkPair.value.Gateway
+                if (!gateway) {
+                    logger.lifecycle("Gateway cannot be read from container inspection - trying to read from network inspection (network '${firstNetworkPair.key}')")
+                    gateway = getNetworkGateway(firstNetworkPair.key)
+                }
                 logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
             } else { // networks not specified (older Docker versions)
                 gateway = networkSettings.Gateway
                 logger.lifecycle("Will use $gateway as host of $serviceName")
+            }
+            if (!gateway) {
+                throw new RuntimeException('Gateway cannot be obtained')
             }
             new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
