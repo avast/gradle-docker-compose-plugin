@@ -128,16 +128,16 @@ class ComposeUp extends DefaultTask {
     Map<String, ContainerInfo> createContainerInfos(Iterable<String> containerIds, String serviceName) {
         containerIds.collectEntries { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
-            def inspection = getValidDockerInspection(serviceName, containerId, 10)
+            def inspection = getValidDockerInspection(serviceName, containerId)
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
             String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
             [(instanceName): new ContainerInfo(
-                                instanceName: instanceName,
-                                serviceHost: host,
-                                tcpPorts: tcpPorts,
-                                inspection: inspection)]
+                    instanceName: instanceName,
+                    serviceHost: host,
+                    tcpPorts: tcpPorts,
+                    inspection: inspection)]
         }
     }
 
@@ -213,42 +213,27 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    Map<String, Object> getValidDockerInspection(String serviceName, String containerId, int remainingRetries) {
+    Map<String, Object> getValidDockerInspection(String serviceName, String containerId) {
         def dockerInspection = getDockerInspection(containerId)
-        def validationError = getDockerInspectionValidationError(serviceName, dockerInspection)
-        if (validationError.empty) {
-            dockerInspection
-        } else {
-            def msg = "Docker inspection of container $containerId (service $serviceName) is not valid: '$validationError'\n${dockerInspection.toString()}"
-            if (remainingRetries <= 0) {
-                throw new RuntimeException(msg)
-            }
-            logger.lifecycle("$msg Sleeping and trying again")
-            Thread.sleep(10000)
-            getValidDockerInspection(serviceName, containerId, remainingRetries - 1)
-        }
+        validateDockerInspection(serviceName, dockerInspection)
+        dockerInspection
     }
 
-    private String getDockerInspectionValidationError(String serviceName, Map<String, Object> inspection) {
+    void validateDockerInspection(String serviceName, Map<String, Object> inspection) {
         ServiceHost serviceHost
         try {
             serviceHost = getServiceHost(serviceName, inspection, NoOpLogger.INSTANCE)
         } catch (Exception e) {
-            def msg = "Error when getting service host of service $serviceName: ${e.message}"
-            logger.warn(msg, e)
-            return msg
+            throw new RuntimeException("Error when getting service host of service $serviceName: ${e.message}\n${inspection.toString()}", e)
         }
         if (serviceHost.type != ServiceHostType.Host) {
             Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
             Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
             def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
             if (!missingPorts.empty) {
-                def msg = "There ports of service $serviceName are declared as exposed but cannot be found in NetworkSetting: ${missingPorts.join(', ')}"
-                logger.warn(msg)
-                return msg
+                throw new RuntimeException("These ports of service $serviceName are declared as exposed but cannot be found in NetworkSettings: ${missingPorts.join(', ')}\\n${inspection.toString()}")
             }
         }
-        return ""
     }
 
     Map<String, Object> getNetworkInspection(String networkName) {
