@@ -1,11 +1,13 @@
 package com.avast.gradle.dockercompose.tasks
 
 import com.avast.gradle.dockercompose.ComposeExtension
+import com.avast.gradle.dockercompose.NoOpLogger
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceHostType
 import com.avast.gradle.dockercompose.ServiceInfo
 import com.avast.gradle.dockercompose.ContainerInfo
 import org.gradle.api.DefaultTask
+import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 import org.gradle.util.VersionNumber
@@ -126,7 +128,7 @@ class ComposeUp extends DefaultTask {
     Map<String, ContainerInfo> createContainerInfos(Iterable<String> containerIds, String serviceName) {
         containerIds.collectEntries { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
-            def inspection = getDockerInspection(containerId)
+            def inspection = getValidDockerInspection(serviceName, containerId, 10)
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
@@ -211,6 +213,44 @@ class ComposeUp extends DefaultTask {
         }
     }
 
+    Map<String, Object> getValidDockerInspection(String serviceName, String containerId, int remainingRetries) {
+        def dockerInspection = getDockerInspection(containerId)
+        def validationError = getDockerInspectionValidationError(serviceName, dockerInspection)
+        if (validationError.empty) {
+            dockerInspection
+        } else {
+            def msg = "Docker inspection of container $containerId (service $serviceName) is not valid: '$validationError'\n${dockerInspection.toString()}"
+            if (remainingRetries <= 0) {
+                throw new RuntimeException(msg)
+            }
+            logger.lifecycle("$msg Sleeping and trying again")
+            Thread.sleep(10000)
+            getValidDockerInspection(serviceName, containerId, remainingRetries - 1)
+        }
+    }
+
+    private String getDockerInspectionValidationError(String serviceName, Map<String, Object> inspection) {
+        ServiceHost serviceHost
+        try {
+            serviceHost = getServiceHost(serviceName, inspection, NoOpLogger.INSTANCE)
+        } catch (Exception e) {
+            def msg = "Error when getting service host of service $serviceName: ${e.message}"
+            logger.warn(msg, e)
+            return msg
+        }
+        if (serviceHost.type != ServiceHostType.Host) {
+            Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
+            Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
+            def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
+            if (!missingPorts.empty) {
+                def msg = "There ports of service $serviceName are declared as exposed but cannot be found in NetworkSetting: ${missingPorts.join(', ')}"
+                logger.warn(msg)
+                return msg
+            }
+        }
+        return ""
+    }
+
     Map<String, Object> getNetworkInspection(String networkName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
@@ -238,7 +278,8 @@ class ComposeUp extends DefaultTask {
         null
     }
 
-    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
+
+    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection, Logger logger = this.logger) {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
@@ -260,6 +301,7 @@ class ComposeUp extends DefaultTask {
             if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
                 logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
+                return new ServiceHost(host: 'localhost', type: ServiceHostType.Host)
             } else if (networks && networks.size() > 0) {
                 Map.Entry<String, Object> firstNetworkPair = networks.find()
                 gateway = firstNetworkPair.value.Gateway
@@ -302,6 +344,10 @@ class ComposeUp extends DefaultTask {
                         logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $forwardedPort")
                         ports.put(exposedPort, forwardedPort)
                         break
+                    case ServiceHostType.Host:
+                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses HOST network")
+                        ports.put(exposedPort, exposedPort)
+                        break;
                     default:
                         throw new IllegalArgumentException("Unknown ServiceHostType '${host.type}' for service '$serviceName'")
                         break
