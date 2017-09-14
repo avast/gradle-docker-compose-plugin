@@ -1,11 +1,13 @@
 package com.avast.gradle.dockercompose.tasks
 
 import com.avast.gradle.dockercompose.ComposeExtension
+import com.avast.gradle.dockercompose.NoOpLogger
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceHostType
 import com.avast.gradle.dockercompose.ServiceInfo
 import com.avast.gradle.dockercompose.ContainerInfo
 import org.gradle.api.DefaultTask
+import org.gradle.api.logging.Logger
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecSpec
 import org.gradle.util.VersionNumber
@@ -126,7 +128,7 @@ class ComposeUp extends DefaultTask {
     Map<String, ContainerInfo> createContainerInfos(Iterable<String> containerIds, String serviceName) {
         containerIds.collectEntries { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
-            def inspection = getDockerInspection(containerId)
+            def inspection = getValidDockerInspection(serviceName, containerId)
             ServiceHost host = getServiceHost(serviceName, inspection)
             logger.info("Will use $host as host of service $serviceName")
             def tcpPorts = getTcpPortsMapping(serviceName, inspection, host)
@@ -211,7 +213,35 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection) {
+    Map<String, Object> getValidDockerInspection(String serviceName, String containerId) {
+        def dockerInspection = getDockerInspection(containerId)
+        if (isValidDockerInspection(serviceName, dockerInspection)) {
+            dockerInspection
+        } else {
+            logger.lifecycle("Docker inspection of container $containerId (service $serviceName) is invalid - sleeping one second and trying again")
+            Thread.sleep(1000)
+            getValidDockerInspection(serviceName, containerId)
+        }
+    }
+
+    boolean isValidDockerInspection(String serviceName, Map<String, Object> inspection) {
+        try {
+            getServiceHost(serviceName, inspection, NoOpLogger.INSTANCE)
+        } catch (Exception e) {
+            logger.warn("Error when getting service host of service $serviceName: ${e.message}", e)
+            return false
+        }
+        Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
+        Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
+        def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
+        if (!missingPorts.empty) {
+            logger.warn("There ports of service $serviceName are declared as exposed but cannot be found in NetworkSetting: ${missingPorts.join(', ')}")
+            return false
+        }
+        return true
+    }
+
+    ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection, Logger logger = this.logger) {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
