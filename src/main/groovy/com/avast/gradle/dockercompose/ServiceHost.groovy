@@ -11,5 +11,6 @@ class ServiceHost {
 enum ServiceHostType {
     NetworkGateway,
     RemoteDockerHost,
-    LocalHost
+    LocalHost,
+    Host
 }

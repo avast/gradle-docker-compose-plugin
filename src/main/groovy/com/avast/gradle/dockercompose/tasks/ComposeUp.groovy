@@ -230,20 +230,23 @@ class ComposeUp extends DefaultTask {
     }
 
     private String getDockerInspectionValidationError(String serviceName, Map<String, Object> inspection) {
+        ServiceHost serviceHost
         try {
-            getServiceHost(serviceName, inspection, NoOpLogger.INSTANCE)
+            serviceHost = getServiceHost(serviceName, inspection, NoOpLogger.INSTANCE)
         } catch (Exception e) {
             def msg = "Error when getting service host of service $serviceName: ${e.message}"
             logger.warn(msg, e)
             return msg
         }
-        Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
-        Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
-        def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
-        if (!missingPorts.empty) {
-            def msg = "There ports of service $serviceName are declared as exposed but cannot be found in NetworkSetting: ${missingPorts.join(', ')}"
-            logger.warn(msg)
-            return msg
+        if (serviceHost.type != ServiceHostType.Host) {
+            Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
+            Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
+            def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
+            if (!missingPorts.empty) {
+                def msg = "There ports of service $serviceName are declared as exposed but cannot be found in NetworkSetting: ${missingPorts.join(', ')}"
+                logger.warn(msg)
+                return msg
+            }
         }
         return ""
     }
@@ -270,6 +273,7 @@ class ComposeUp extends DefaultTask {
             if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
                 logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
+                return new ServiceHost(host: 'localhost', type: ServiceHostType.Host)
             } else if (networks && networks.size() > 0) {
                 Map.Entry<String, Object> firstNetworkPair = networks.find()
                 gateway = firstNetworkPair.value.Gateway
@@ -308,6 +312,10 @@ class ComposeUp extends DefaultTask {
                         logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $forwardedPort")
                         ports.put(exposedPort, forwardedPort)
                         break
+                    case ServiceHostType.Host:
+                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses HOST network")
+                        ports.put(exposedPort, exposedPort)
+                        break;
                     default:
                         throw new IllegalArgumentException("Unknown ServiceHostType '${host.type}' for service '$serviceName'")
                         break
