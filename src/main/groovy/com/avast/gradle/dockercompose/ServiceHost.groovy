@@ -12,5 +12,6 @@ enum ServiceHostType {
     NetworkGateway,
     RemoteDockerHost,
     LocalHost,
-    Host
+    Host,
+    DirectContainerAccess
 }
