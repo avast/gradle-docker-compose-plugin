@@ -270,25 +270,28 @@ class ComposeUp extends DefaultTask {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
             return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
         }
+        Map<String, Object> networkSettings = inspection.NetworkSettings
+        Map<String, Object> networks = networkSettings.Networks
+        Map.Entry<String, Object> firstNetworkPair = networks.find()
         String dockerHost = extension.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
             new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
+        } else if (isWindows() && "windows".equalsIgnoreCase(inspection.Platform as String) && "nat".equalsIgnoreCase(firstNetworkPair.key)) {
+            logger.lifecycle("Will use direct access to the container")
+            return new ServiceHost(host: firstNetworkPair.value.IPAddress, type: ServiceHostType.DirectContainerAccess)
         } else if (isMac() || isWindows()) {
             logger.lifecycle("Will use localhost as host of $serviceName")
             new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
         } else {
             // read gateway of first containers network
             String gateway
-            Map<String, Object> networkSettings = inspection.NetworkSettings
-            Map<String, Object> networks = networkSettings.Networks
             if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
                 gateway = 'localhost'
                 logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
                 return new ServiceHost(host: 'localhost', type: ServiceHostType.Host)
             } else if (networks && networks.size() > 0) {
-                Map.Entry<String, Object> firstNetworkPair = networks.find()
                 gateway = firstNetworkPair.value.Gateway
                 if (!gateway) {
                     logger.lifecycle("Gateway cannot be read from container inspection - trying to read from network inspection (network '${firstNetworkPair.key}')")
@@ -331,6 +334,10 @@ class ComposeUp extends DefaultTask {
                         break
                     case ServiceHostType.Host:
                         logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses HOST network")
+                        ports.put(exposedPort, exposedPort)
+                        break;
+                    case ServiceHostType.DirectContainerAccess:
+                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses direct access to the container")
                         ports.put(exposedPort, exposedPort)
                         break;
                     default:
