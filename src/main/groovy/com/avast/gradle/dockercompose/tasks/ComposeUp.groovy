@@ -263,6 +263,10 @@ class ComposeUp extends DefaultTask {
         null
     }
 
+    Boolean isNatNetwork(String networkName) {
+        def networkInspection = getNetworkInspection(networkName)
+        networkInspection && "nat".equalsIgnoreCase(networkInspection.Driver as String)
+    }
 
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection, Logger logger = this.logger) {
         String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
@@ -278,7 +282,7 @@ class ComposeUp extends DefaultTask {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
             new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isWindows() && "windows".equalsIgnoreCase(inspection.Platform as String) && "nat".equalsIgnoreCase(firstNetworkPair.key)) {
+        } else if (isWindows() && "windows".equalsIgnoreCase(inspection.Platform as String) && isNatNetwork(firstNetworkPair.key)) {
             logger.lifecycle("Will use direct access to the container")
             return new ServiceHost(host: firstNetworkPair.value.IPAddress, type: ServiceHostType.DirectContainerAccess)
         } else if (isMac() || isWindows()) {
