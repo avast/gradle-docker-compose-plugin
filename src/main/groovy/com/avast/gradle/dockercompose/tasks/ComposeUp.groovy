@@ -236,6 +236,29 @@ class ComposeUp extends DefaultTask {
         }
     }
 
+    String getContainerPlatform(Map<String, Object> inspection) {
+        def platform = inspection.Platform as String
+        platform ?: getDockerPlatform()
+    }
+
+    List<String> getDockerInfo() {
+        new ByteArrayOutputStream().withStream { os ->
+            project.exec { ExecSpec e ->
+                e.environment = extension.environment
+                e.commandLine extension.dockerCommand('info')
+                e.standardOutput os
+            }
+            def asString = os.toString()
+            logger.debug("Docker info: $asString")
+            asString.readLines()
+        }
+    }
+
+    String getDockerPlatform() {
+        List<String> osType = getDockerInfo().find { it.startsWith('OSType:') }.collect { it.substring('OSType:'.length()).trim() }
+        osType.empty ? System.getProperty("os.name") : osType.first()
+    }
+
     Map<String, Object> getNetworkInspection(String networkName) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
@@ -263,9 +286,9 @@ class ComposeUp extends DefaultTask {
         null
     }
 
-    Boolean isNatNetwork(String networkName) {
+    String getNetworkDriver(String networkName) {
         def networkInspection = getNetworkInspection(networkName)
-        networkInspection && "nat".equalsIgnoreCase(networkInspection.Driver as String)
+        networkInspection ? networkInspection.Driver as String : ""
     }
 
     ServiceHost getServiceHost(String serviceName, Map<String, Object> inspection, Logger logger = this.logger) {
@@ -282,8 +305,8 @@ class ComposeUp extends DefaultTask {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
             new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isWindows() && "windows".equalsIgnoreCase(inspection.Platform as String) && isNatNetwork(firstNetworkPair.key)) {
-            logger.lifecycle("Will use direct access to the container")
+        } else if (isWindows() && getContainerPlatform(inspection).toLowerCase().contains('win') && "nat".equalsIgnoreCase(getNetworkDriver(firstNetworkPair.key))) {
+            logger.lifecycle("Will use direct access to the container of $serviceName")
             return new ServiceHost(host: firstNetworkPair.value.IPAddress, type: ServiceHostType.DirectContainerAccess)
         } else if (isMac() || isWindows()) {
             logger.lifecycle("Will use localhost as host of $serviceName")
