@@ -255,8 +255,8 @@ class ComposeUp extends DefaultTask {
     }
 
     String getDockerPlatform() {
-        List<String> osType = getDockerInfo().find { it.startsWith('OSType:') }.collect { it.substring('OSType:'.length()).trim() }
-        osType.empty ? System.getProperty("os.name") : osType.first()
+        String osType = getDockerInfo().find { it.startsWith('OSType:') }
+        osType.empty ? System.getProperty("os.name") : osType.substring('OSType:'.length()).trim()
     }
 
     Map<String, Object> getNetworkInspection(String networkName) {

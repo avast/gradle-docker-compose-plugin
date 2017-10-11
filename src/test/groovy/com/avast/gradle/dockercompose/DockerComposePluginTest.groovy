@@ -138,6 +138,16 @@ class DockerComposePluginTest extends Specification {
         }
     }
 
+    def "reads Docker platform"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        when:
+        String dockerPlatform = project.tasks.composeUp.getDockerPlatform()
+        then:
+        noExceptionThrown()
+        !dockerPlatform.empty
+    }
+
     def "captures container output to stdout"() {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
