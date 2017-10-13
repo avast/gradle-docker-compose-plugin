@@ -3,22 +3,23 @@
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
-`composeUp` task starts the application and waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#/healthcheck) and all exposed TCP ports are open (so till the application is ready). It reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
+`composeUp` task starts the application and waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exposed TCP ports are open (so till the application is ready). It reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
 
 `composeDown` task stops the application and removes the containers.
 
 `composePull` task pulls and optionally builds the images required by the application. This is useful, for example, with a CI platform that caches docker images to decrease build times.
 
 ## Why to use Docker Compose?
-1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done.
+1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done - e.g. the database is running. 
 2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker-compose up` before these tests.
 
 ## Why this plugin?
 You could easily ensure that `docker-compose up` is called before your tests but there are few gotchas that this plugin solves:
 
-1. If you execute `docker-compose up -d` (_detached_) then this command returns immediately and your application is probably not able to serve requests at this time. This plugin waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#/healthcheck) and all exported TCP ports of all services are open.
-  - If waiting for healthy state or open TCP ports timeouts (default is 15 minutes) then it prints log of related service. 
+1. If you execute `docker-compose up -d` (_detached_) then this command returns immediately and your application is probably not able to serve requests at this time. This plugin waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exported TCP ports of all services are open.
+   - If waiting for healthy state or open TCP ports timeouts (default is 15 minutes) then it prints log of related service. 
 2. It's recommended not to assign fixed values of exposed ports in `docker-compose.yml` (i.e. `8888:80`) because it can cause ports collision on integration servers. If you don't assign a fixed value for exposed port (use just `80`) then the port is exposed as a random free port. This plugin reads assigned ports (and even IP addresses of containers) and stores them into `dockerCompose.servicesInfo` map.
+3. There are minor differences when using Linux containers on Linux, Windows and Mac, and when using Windows Containers. This plugin handles these differences for you so you have the same experience in all environments.
 
 # Usage
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposes that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed and available in `PATH`.
