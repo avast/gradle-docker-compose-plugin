@@ -379,9 +379,9 @@ class ComposeUp extends DefaultTask {
     }
 
     void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
+        def start = Instant.now()
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
-                def start = Instant.now()
                 while (true) {
                     Map<String, Object> inspectionState = getDockerInspection(containerInfo.containerId).State
                     if (inspectionState.containsKey('Health')) {
@@ -405,11 +405,11 @@ class ComposeUp extends DefaultTask {
     }
 
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
+        def start = Instant.now()
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 containerInfo.tcpPorts.forEach { exposedPort, forwardedPort ->
                     logger.lifecycle("Probing TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}'")
-                    def start = Instant.now()
                     while (true) {
                         try {
                             def s = new Socket(containerInfo.host, forwardedPort)
