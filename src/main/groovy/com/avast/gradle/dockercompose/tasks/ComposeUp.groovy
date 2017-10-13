@@ -38,7 +38,9 @@ class ComposeUp extends DefaultTask {
             project.exec { ExecSpec e ->
                 extension.setExecSpecWorkingDirectory(e)
                 e.environment = extension.environment
-                e.commandLine extension.composeCommand('build')
+                String[] args = ['build']
+                args += extension.startedServices
+                e.commandLine extension.composeCommand(args)
             }
         }
         project.exec { ExecSpec e ->
