@@ -1,16 +1,10 @@
 package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeDown
-import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ComposePull
+import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Task
-import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
-import org.gradle.api.logging.LogLevel
 import org.gradle.api.tasks.testing.Test
-import org.gradle.internal.logging.events.LogEvent
-import org.gradle.internal.logging.events.OutputEvent
-import org.gradle.internal.logging.events.OutputEventListener
-import org.gradle.internal.logging.slf4j.Slf4jLoggingConfigurer
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -18,8 +12,6 @@ import spock.lang.Specification
 import static org.gradle.util.VersionNumber.parse
 
 class DockerComposePluginTest extends Specification {
-    String projectName = 'test'
-
     def "add tasks and extension to the project"() {
         def project = ProjectBuilder.builder().build()
         when:
@@ -54,330 +46,42 @@ class DockerComposePluginTest extends Specification {
     }
 
     def "allows usage from integration test"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        project.tasks.create('integrationTest').doLast {
-            ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
+        def f = Fixture.withNginx()
+        f.project.tasks.create('integrationTest').doLast {
+            ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
             assert webInfo.ports == webInfo.tcpPorts
             assert !webInfo.containerHostname.isEmpty()
             assert webInfo.inspection.size() > 0
         }
         when:
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
+            f.project.tasks.composeUp.up()
+            f.project.tasks.integrationTest.execute()
         then:
             noExceptionThrown()
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
-    def "allows pull from integration test"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
+    def "allows pull"() {
+        def f = Fixture.withNginx()
         when:
-            project.tasks.composePull.pull()
+            f.project.tasks.composePull.pull()
         then:
             noExceptionThrown()
         cleanup:
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "reads network gateway"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "sleep 5"
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-
-        when:
-        extension.captureContainersOutput = true
-        project.tasks.composeUp.up()
-        ServiceInfo serviceInfo = project.tasks.composeUp.servicesInfos.find().value
-        String networkName = serviceInfo.firstContainer.inspection.NetworkSettings.Networks.find().key
-        String networkGateway = extension.dockerExecutor.getNetworkGateway(networkName)
-        then:
-        noExceptionThrown()
-        !networkGateway.empty
-        cleanup:
-        project.tasks.composeDown.down()
-        try {
-            projectDir.delete()
-        } catch (ignored) {
-            projectDir.deleteOnExit()
-        }
-    }
-
-    def "reads Docker platform"() {
-        def project = ProjectBuilder.builder().build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        when:
-        String dockerPlatform = extension.dockerExecutor.getDockerPlatform()
-        then:
-        noExceptionThrown()
-        !dockerPlatform.empty
-    }
-
-    def "captures container output to stdout"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-
-        def stdout = new StringBuffer()
-
-        new Slf4jLoggingConfigurer(new OutputEventListener() {
-            @Override
-            void onOutput(OutputEvent outputEvent) {
-                if (outputEvent instanceof LogEvent) {
-                    stdout.append(((LogEvent) outputEvent).message + '\n')
-                }
-            }
-        }).configure(LogLevel.LIFECYCLE)
-
-        when:
-            extension.captureContainersOutput = true
-            project.tasks.composeUp.up()
-        then:
-            noExceptionThrown()
-            stdout.toString().contains("web_1  | heres some output\nweb_1  | and some more")
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "captures container output to file"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        def logFile = new File(projectDir, "web.log")
-
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-
-        when:
-            extension.captureContainersOutputToFile = logFile
-            project.tasks.composeUp.up()
-        then:
-            noExceptionThrown()
-            logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "captures container output to file path"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        def logFile = new File(projectDir, "web.log")
-
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-
-        when:
-            extension.captureContainersOutputToFile = "${logFile.absolutePath}"
-            project.tasks.composeUp.up()
-        then:
-            noExceptionThrown()
-            logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "can specify compose files to use"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'original.yml') << '''
-            web:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        new File(projectDir, 'override.yml') << '''
-            web:
-                ports:
-                  - 8080
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.create('integrationTest').doLast {
-            ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
-            assert webInfo.ports.containsKey(8080)
-            assert webInfo.ports.containsKey(80)
-        }
-        when:
-            extension.waitForTcpPorts = false // port 8080 is a fake
-            extension.useComposeFiles = ['original.yml', 'override.yml']
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
-        then:
-            noExceptionThrown()
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-
-    }
-
-    def "docker-compose.override.yml file honoured when no files specified"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-        '''
-        new File(projectDir, 'docker-compose.override.yml') << '''
-            web:
-                ports:
-                  - 80
-            devweb:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        project.tasks.create('integrationTest').doLast {
-            assert project.dockerCompose.servicesInfos.web.firstContainer.ports.containsKey(80)
-            assert project.dockerCompose.servicesInfos.devweb.firstContainer.ports.containsKey(80)
-        }
-        when:
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
-        then:
-            noExceptionThrown()
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "docker-compose.override.yml file ignored when files are specified"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-        '''
-        new File(projectDir, 'docker-compose.override.yml') << '''
-            web:
-                ports:
-                  - 80
-            devweb:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        new File(projectDir, 'docker-compose.prod.yml') << '''
-            web:
-                ports:
-                  - 8080
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.create('integrationTest').doLast {
-            ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
-            assert webInfo.ports.containsKey(8080)
-            assert !webInfo.ports.containsKey(80)
-            assert !project.dockerCompose.servicesInfos.devweb
-        }
-        when:
-            extension.waitForTcpPorts = false // port 8080 is a fake
-            extension.useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml']
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
-        then:
-            noExceptionThrown()
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.close()
     }
 
     def "exposes environment variables and system properties"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << composeFileContent
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'java'
-        project.plugins.apply 'docker-compose'
-        project.tasks.composeUp.up()
-        Test test = project.tasks.test as Test
+        def f = Fixture.custom(composeFileContent)
+        f.project.plugins.apply 'java'
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
         when:
-            project.dockerCompose.exposeAsEnvironment(test)
-            project.dockerCompose.exposeAsSystemProperties(test)
+            f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             test.environment.containsKey('WEB_HOST')
             test.environment.containsKey('WEB_CONTAINER_HOSTNAME')
@@ -386,12 +90,8 @@ class DockerComposePluginTest extends Specification {
             test.systemProperties.containsKey('web.containerHostname')
             test.systemProperties.containsKey('web.tcp.80')
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
         where:
             // test it for both compose file version 1 and 2
             composeFileContent << ['''
@@ -411,8 +111,7 @@ class DockerComposePluginTest extends Specification {
 
     @IgnoreIf({ System.properties['os.name'].toString().toLowerCase().startsWith('windows') || System.properties['os.name'].toString().toLowerCase().startsWith('macos') })
     def "expose localhost as a host for container with HOST networking"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
+        def f = Fixture.custom('''
             version: '2'
             services:
                 web:
@@ -420,163 +119,89 @@ class DockerComposePluginTest extends Specification {
                     network_mode: host
                     ports:
                       - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'java'
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.projectName = projectName
-        project.tasks.composeUp.up()
-        Test test = project.tasks.test as Test
+        ''')
+        f.project.plugins.apply 'java'
+        f.extension.projectName = 'test'
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
         when:
-            project.dockerCompose.exposeAsEnvironment(test)
-            project.dockerCompose.exposeAsSystemProperties(test)
+            f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             test.environment.get('WEB_HOST') == 'localhost'
             test.systemProperties.get('web.host') == 'localhost'
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
-    }
-
-    def "reads logs of service"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            hello:
-                image: hello-world
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.composeUp.up()
-        String containerId = project.dockerCompose.servicesInfos.hello.firstContainer.containerId
-        when:
-            String output = extension.dockerExecutor.getContainerLogs(containerId)
-        then:
-            output.contains('Hello from Docker')
-        cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
     def "docker-compose substitutes environment variables"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
+        def f = Fixture.custom('''
             web:
                 image: nginx
                 ports:
                   - $MY_WEB_PORT
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.create('integrationTest').doLast {
-            ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
+        ''')
+        f.project.tasks.create('integrationTest').doLast {
+            ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
             assert webInfo.ports.containsKey(80)
         }
         when:
-            extension.useComposeFiles = ['docker-compose.yml']
-            extension.environment.put 'MY_WEB_PORT', 80
-            extension.waitForTcpPorts = false  // checked in assert
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
+            f.extension.useComposeFiles = ['docker-compose.yml']
+            f.extension.environment.put 'MY_WEB_PORT', 80
+            f.extension.waitForTcpPorts = false  // checked in assert
+            f.project.tasks.composeUp.up()
+            f.project.tasks.integrationTest.execute()
         then:
             noExceptionThrown()
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
     @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') == null || parse(System.getenv('DOCKER_COMPOSE_VERSION')) >= parse('1.13.0') })
     def "exception is thrown for scale option if unsupported docker-compose is used"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.scale = ['web': 2]
+        def f = Fixture.withNginx()
+        f.extension.scale = ['web': 2]
         when:
-            project.tasks.composeUp.up()
+            f.project.tasks.composeUp.up()
         then:
             thrown(UnsupportedOperationException)
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
     @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale option launches multiple instances of service"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.scale = ['web': 2]
-        project.tasks.create('integrationTest').doLast {
+        def f = Fixture.withNginx()
+        f.extension.scale = ['web': 2]
+        f.project.tasks.create('integrationTest').doLast {
             def webInfos = project.dockerCompose.servicesInfos.web.containerInfos
             assert webInfos.size() == 2
             assert webInfos.containsKey('web_1')
             assert webInfos.containsKey('web_2')
         }
         when:
-            project.tasks.composeUp.up()
-            project.tasks.integrationTest.execute()
+            f.project.tasks.composeUp.up()
+            f.project.tasks.integrationTest.execute()
         then:
             noExceptionThrown()
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
     @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "environment variables and system properties exposed for all scaled containers"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << '''
-            web:
-                image: nginx
-                ports:
-                  - 80
-        '''
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'java'
-        project.plugins.apply 'docker-compose'
-        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        extension.scale = ['web': 2]
-        project.tasks.composeUp.up()
-        Test test = project.tasks.test as Test
+        def f = Fixture.withNginx()
+        f.project.plugins.apply 'java'
+        f.extension.scale = ['web': 2]
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
         when:
-            project.dockerCompose.exposeAsEnvironment(test)
-            project.dockerCompose.exposeAsSystemProperties(test)
+            f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             [1, 2].each { containerInstance ->
                 assert test.environment.containsKey("WEB_${containerInstance}_HOST".toString())
@@ -587,25 +212,18 @@ class DockerComposePluginTest extends Specification {
                 assert test.systemProperties.containsKey("web_${containerInstance}.tcp.80".toString())
             }
         cleanup:
-            project.tasks.composeDown.down()
-            try {
-                projectDir.delete()
-            } catch (ignored) {
-                projectDir.deleteOnExit()
-            }
+            f.project.tasks.composeDown.down()
+            f.close()
     }
 
     def "exposes environment variables and system properties for container with custom name"() {
-        def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
-        new File(projectDir, 'docker-compose.yml') << composeFileContent
-        def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
-        project.plugins.apply 'java'
-        project.plugins.apply 'docker-compose'
-        project.tasks.composeUp.up()
-        Test test = project.tasks.test as Test
+        def f = Fixture.custom(composeFileContent)
+        f.project.plugins.apply 'java'
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
         when:
-        project.dockerCompose.exposeAsEnvironment(test)
-        project.dockerCompose.exposeAsSystemProperties(test)
+        f.project.dockerCompose.exposeAsEnvironment(test)
+        f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
         test.environment.containsKey('CUSTOM_CONTAINER_NAME_HOST')
         test.environment.containsKey('CUSTOM_CONTAINER_NAME_CONTAINER_HOSTNAME')
@@ -614,12 +232,8 @@ class DockerComposePluginTest extends Specification {
         test.systemProperties.containsKey('custom_container_name.containerHostname')
         test.systemProperties.containsKey('custom_container_name.tcp.80')
         cleanup:
-        project.tasks.composeDown.down()
-        try {
-            projectDir.delete()
-        } catch (ignored) {
-            projectDir.deleteOnExit()
-        }
+        f.project.tasks.composeDown.down()
+        f.close()
         where:
         // test it for both compose file version 1 and 2
         composeFileContent << ['''
