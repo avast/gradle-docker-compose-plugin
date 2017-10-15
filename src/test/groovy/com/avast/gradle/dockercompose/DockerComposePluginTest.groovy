@@ -124,8 +124,8 @@ class DockerComposePluginTest extends Specification {
         extension.captureContainersOutput = true
         project.tasks.composeUp.up()
         ServiceInfo serviceInfo = project.tasks.composeUp.servicesInfos.find().value
-        def networkName = serviceInfo.firstContainer.inspection.NetworkSettings.Networks.find().key
-        String networkGateway = project.tasks.composeUp.getNetworkGateway(networkName)
+        String networkName = serviceInfo.firstContainer.inspection.NetworkSettings.Networks.find().key
+        String networkGateway = extension.dockerExecutor.getNetworkGateway(networkName)
         then:
         noExceptionThrown()
         !networkGateway.empty
@@ -141,8 +141,9 @@ class DockerComposePluginTest extends Specification {
     def "reads Docker platform"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         when:
-        String dockerPlatform = project.tasks.composeUp.getDockerPlatform()
+        String dockerPlatform = extension.dockerExecutor.getDockerPlatform()
         then:
         noExceptionThrown()
         !dockerPlatform.empty
@@ -450,10 +451,11 @@ class DockerComposePluginTest extends Specification {
         '''
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
+        def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
         project.tasks.composeUp.up()
         String containerId = project.dockerCompose.servicesInfos.hello.firstContainer.containerId
         when:
-            String output = project.tasks.composeUp.getServiceLogs(containerId)
+            String output = extension.dockerExecutor.getContainerLogs(containerId)
         then:
             output.contains('Hello from Docker')
         cleanup:
