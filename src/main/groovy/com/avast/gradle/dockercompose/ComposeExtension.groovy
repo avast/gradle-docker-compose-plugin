@@ -2,7 +2,6 @@ package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeUp
-import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.internal.os.OperatingSystem
@@ -14,9 +13,11 @@ import org.gradle.util.VersionNumber
 import java.time.Duration
 
 class ComposeExtension {
-    private final ComposeUp upTask
-    private final ComposeDown downTask
-    private final Project project
+    final ComposeUp upTask
+    final ComposeDown downTask
+    final Project project
+    final DockerExecutor dockerExecutor
+    final ComposeExecutor composeExecutor
 
     boolean buildBeforeUp = true
     boolean waitForTcpPorts = true
@@ -51,6 +52,8 @@ class ComposeExtension {
         this.project = project
         this.downTask = downTask
         this.upTask = upTask
+        this.dockerExecutor = new DockerExecutor(this)
+        this.composeExecutor = new ComposeExecutor(this)
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
@@ -111,12 +114,6 @@ class ComposeExtension {
         systemProperties
     }
 
-    void setExecSpecWorkingDirectory(ExecSpec e) {
-        if (dockerComposeWorkingDirectory != null) {
-            e.setWorkingDir(dockerComposeWorkingDirectory)
-        }
-    }
-
     void setCaptureContainersOutputToFile(CharSequence path) {
         captureContainersOutputToFile = project.file(path)
     }
@@ -125,46 +122,14 @@ class ComposeExtension {
         captureContainersOutputToFile = file
     }
 
-    /**
-     * Composes docker-compose command, mainly adds '-f' and '-p' options.
-     */
-    Iterable<String> composeCommand(String... args) {
-        def res = [executable]
-        res.addAll(useComposeFiles.collectMany { ['-f', it] })
-        if (projectName) {
-            res.addAll(['-p', projectName])
-        }
-        res.addAll(args)
-        res
-    }
-
-    Iterable<String> dockerCommand(String... args) {
-        def res = [dockerExecutable]
-        res.addAll(args)
-        res
-    }
-
-    VersionNumber getDockerComposeVersion() {
-        def p = this.project
-        def env = this.environment
-        new ByteArrayOutputStream().withStream { os ->
-            p.exec { ExecSpec e ->
-                setExecSpecWorkingDirectory(e)
-                e.environment = env
-                e.commandLine composeCommand('--version')
-                e.standardOutput = os
-            }
-            VersionNumber.parse(os.toString().trim().findAll(/(\d+\.){2}(\d+)/).head())
-        }
-    }
-
     boolean removeOrphans() {
-        dockerComposeVersion >= VersionNumber.parse('1.7.0') && this.removeOrphans
+        composeExecutor.version >= VersionNumber.parse('1.7.0') && this.removeOrphans
     }
 
     boolean scale() {
-        if (dockerComposeVersion < VersionNumber.parse('1.13.0') && this.scale) {
-            throw new UnsupportedOperationException("docker-compose version $dockerComposeVersion doesn't support --scale option")
+        def v = composeExecutor.version
+        if (v < VersionNumber.parse('1.13.0') && this.scale) {
+            throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
         }
         this.scale
     }

@@ -3,7 +3,6 @@ package com.avast.gradle.dockercompose.tasks
 import com.avast.gradle.dockercompose.ComposeExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecSpec
 
 class ComposePull extends DefaultTask {
 
@@ -17,16 +16,8 @@ class ComposePull extends DefaultTask {
     @TaskAction
     void pull() {
         if (extension.buildBeforeUp) {
-            project.exec { ExecSpec e ->
-                extension.setExecSpecWorkingDirectory(e)
-                e.environment = extension.environment
-                e.commandLine extension.composeCommand('build')
-            }
+            extension.composeExecutor.execute('build', *extension.startedServices)
         }
-        project.exec { ExecSpec e ->
-            extension.setExecSpecWorkingDirectory(e)
-            e.environment = extension.environment
-            e.commandLine extension.composeCommand('pull')
-        }
+        extension.composeExecutor.execute('pull', *extension.startedServices)
     }
 }

@@ -18,14 +18,9 @@ class ComposeDown extends DefaultTask {
     @TaskAction
     void down() {
         if (extension.stopContainers) {
-            project.exec { ExecSpec e ->
-                extension.setExecSpecWorkingDirectory(e)
-                e.environment = extension.environment
-                String[] args = ['stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds()]
-                e.commandLine extension.composeCommand(args)
-            }
+            extension.composeExecutor.execute('stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds().toString())
             if (extension.removeContainers) {
-                if (extension.getDockerComposeVersion() >= VersionNumber.parse('1.6.0')) {
+                if (extension.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
                     switch (extension.removeImages) {
                         case RemoveImages.All:
@@ -41,17 +36,9 @@ class ComposeDown extends DefaultTask {
                     if (extension.removeOrphans()) {
                         args += '--remove-orphans'
                     }
-                    project.exec { ExecSpec e ->
-                        extension.setExecSpecWorkingDirectory(e)
-                        e.environment = extension.environment
-                        e.commandLine extension.composeCommand(args)
-                    }
+                    extension.composeExecutor.execute(args)
                 } else {
-                    project.exec { ExecSpec e ->
-                        extension.setExecSpecWorkingDirectory(e)
-                        e.environment = extension.environment
-                        e.commandLine extension.composeCommand('rm', '-f')
-                    }
+                    extension.composeExecutor.execute('rm', '-f')
                 }
             }
         }
