@@ -57,8 +57,8 @@ dockerCompose {
     // removeVolumes = false
     // waitForTcpPorts = false // turns off the waiting for exposed TCP ports opening
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
-    // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (usefull if not present in PATH)
-    // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (usefull if not present in PATH)
+    // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
+    // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
@@ -76,7 +76,7 @@ test.doFirst {
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
     def webInfo = dockerCompose.servicesInfos.web.firstInstance
-    // in case scale option is used, dockerCompose.servicesInfos.containerInfos will contain information about all running containers of service. Particular container can be retreived either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
+    // in case scale option is used, dockerCompose.servicesInfos.containerInfos will contain information about all running containers of service. Particular container can be retrieved either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
     def webInfo = dockerCompose.servicesInfos.web.'web_1'
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host
