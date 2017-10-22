@@ -42,7 +42,7 @@ apply plugin: 'docker-compose'
 //  id 'com.avast.gradle.docker-compose' version "$versionHere"
 // }
 
-dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown'
+dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
 
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'

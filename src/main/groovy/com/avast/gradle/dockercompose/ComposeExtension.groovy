@@ -70,6 +70,8 @@ class ComposeExtension {
         task.getTaskDependencies().getDependencies(task)
                 .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
                 .each { ut.shouldRunAfter it }
+        if (task instanceof ProcessForkOptions) exposeAsEnvironment(task as ProcessForkOptions)
+        if (task instanceof JavaForkOptions) exposeAsSystemProperties(task as JavaForkOptions)
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
