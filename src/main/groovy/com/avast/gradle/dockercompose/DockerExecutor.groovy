@@ -6,14 +6,14 @@ import org.gradle.process.ExecSpec
 import org.yaml.snakeyaml.Yaml
 
 class DockerExecutor {
-    private final ComposeExtension extension
+    private final ComposeSettings extension
     private final Project project
     private final Logger logger
 
-    DockerExecutor(ComposeExtension extension) {
-        this.extension = extension
-        this.project = extension.project
-        this.logger = extension.project.logger
+    DockerExecutor(ComposeSettings settings) {
+        this.extension = settings
+        this.project = settings.project
+        this.logger = settings.project.logger
     }
 
     String execute(String... args) {
