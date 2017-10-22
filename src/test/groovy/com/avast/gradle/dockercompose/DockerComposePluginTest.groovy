@@ -40,7 +40,7 @@ class DockerComposePluginTest extends Specification {
         up.settings.useComposeFiles == ['test.yml']
     }
 
-    def "dockerCompose.isRequiredBy() adds dependencies"() {
+    def "isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
         Task task = project.tasks.create('integrationTest')
@@ -51,7 +51,7 @@ class DockerComposePluginTest extends Specification {
             task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
 
-    def "dockerCompose.isRequiredBy() adds dependencies for nested settings"() {
+    def "isRequiredBy() adds dependencies for nested settings"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
         Task task = project.tasks.create('integrationTest')
@@ -65,6 +65,24 @@ class DockerComposePluginTest extends Specification {
         then:
         task.dependsOn.contains(project.tasks.nestedComposeUp)
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.nestedComposeDown }
+    }
+
+    def "add tasks of nested settings and isRequiredBy() adds dependencies for nested settings when using simplified syntax"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        Task task = project.tasks.create('integrationTest')
+        when:
+        project.dockerCompose {
+            isRequiredByIntegrationTest 'test.yml'
+        }
+        then:
+        project.tasks.integrationTestComposeUp instanceof ComposeUp
+        project.tasks.integrationTestComposeDown instanceof ComposeDown
+        project.tasks.integrationTestComposePull instanceof ComposePull
+        ComposeUp up = project.tasks.integrationTestComposeUp
+        up.settings.useComposeFiles == ['test.yml']
+        task.dependsOn.contains(project.tasks.integrationTestComposeUp)
+        task.getFinalizedBy().getDependencies(task).any { it == project.tasks.integrationTestComposeDown }
     }
 
     def "isRequiredBy ensures right order of tasks"() {
