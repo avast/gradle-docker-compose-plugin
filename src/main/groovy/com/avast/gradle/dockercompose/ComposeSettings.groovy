@@ -1,6 +1,7 @@
 package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeDown
+import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -14,6 +15,7 @@ import java.time.Duration
 class ComposeSettings {
     final ComposeUp upTask
     final ComposeDown downTask
+    final ComposePull pullTask
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
@@ -47,10 +49,17 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
-    ComposeSettings(Project project, ComposeUp upTask, ComposeDown downTask) {
+    ComposeSettings(Project project, String name = '') {
         this.project = project
-        this.downTask = downTask
-        this.upTask = upTask
+
+        upTask = project.tasks.create(name ? "${name}ComposeUp" : 'composeUp', ComposeUp)
+        upTask.settings = this
+        upTask.downTask = downTask
+        pullTask = project.tasks.create(name ? "${name}ComposePull" : 'composePull', ComposePull)
+        pullTask.settings = this
+        downTask = project.tasks.create(name ? "${name}ComposeDown" : 'composeDown', ComposeDown)
+        downTask.settings = this
+
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
 
@@ -60,6 +69,34 @@ class ComposeSettings {
             this.executable = '/usr/local/bin/docker-compose'
             this.dockerExecutable = '/usr/local/bin/docker'
         }
+    }
+
+    ComposeSettings createNested(String name) {
+        def r = new ComposeSettings(project, name)
+        r.buildBeforeUp = this.buildBeforeUp
+        r.waitForTcpPorts = this.waitForTcpPorts
+        r.captureContainersOutput = this.captureContainersOutput
+        r.waitAfterTcpProbeFailure = this.waitAfterTcpProbeFailure
+        r.waitForTcpPortsTimeout = this.waitForTcpPortsTimeout
+        r.waitForTcpPortsDisconnectionProbeTimeout = this.waitForTcpPortsDisconnectionProbeTimeout
+        r.waitAfterHealthyStateProbeFailure = this.waitAfterHealthyStateProbeFailure
+        r.waitForHealthyStateTimeout = this.waitForHealthyStateTimeout
+
+        r.stopContainers = this.stopContainers
+        r.removeContainers = this.removeContainers
+        r.removeImages = this.removeImages
+        r.removeVolumes = this.removeVolumes
+        r.removeOrphans = this.removeOrphans
+        r.forceRecreate = this.forceRecreate
+
+        r.executable = this.executable
+        r.environment = new HashMap<>(this.environment)
+
+        r.dockerExecutable = this.dockerExecutable
+
+        r.dockerComposeWorkingDirectory = this.dockerComposeWorkingDirectory
+        r.dockerComposeStopTimeout = this.dockerComposeStopTimeout
+        r
     }
 
     void isRequiredBy(Task task) {

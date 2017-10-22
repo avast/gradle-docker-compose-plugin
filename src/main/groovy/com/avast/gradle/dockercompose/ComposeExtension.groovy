@@ -1,11 +1,18 @@
 package com.avast.gradle.dockercompose
 
-import com.avast.gradle.dockercompose.tasks.ComposeDown
-import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Project
+import org.gradle.util.ConfigureUtil
 
 class ComposeExtension extends ComposeSettings {
-    ComposeExtension(Project project, ComposeUp upTask, ComposeDown downTask) {
-        super(project, upTask, downTask)
+    ComposeExtension(Project project) {
+        super(project, '')
+    }
+
+    private HashMap<String, ComposeSettings> settings = [:]
+
+    def methodMissing(String name, def args) {
+        ComposeSettings s = settings.computeIfAbsent(name, { createNested(name) })
+        ConfigureUtil.configure(args[0] as Closure, s)
+        s
     }
 }
