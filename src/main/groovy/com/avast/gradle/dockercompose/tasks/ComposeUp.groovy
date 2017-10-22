@@ -8,7 +8,7 @@ import java.time.Instant
 
 class ComposeUp extends DefaultTask {
 
-    ComposeExtension extension
+    ComposeSettings settings
     ComposeDown downTask
 
     private Map<String, ServiceInfo> servicesInfos = [:]
@@ -24,35 +24,35 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
-        if (extension.buildBeforeUp) {
-            extension.composeExecutor.execute('build', *extension.startedServices)
+        if (settings.buildBeforeUp) {
+            settings.composeExecutor.execute('build', *settings.startedServices)
         }
         String[] args = ['up', '-d']
-        if (extension.removeOrphans()) {
+        if (settings.removeOrphans()) {
             args += '--remove-orphans'
         }
-        if (extension.forceRecreate) {
+        if (settings.forceRecreate) {
             args += '--force-recreate'
         }
-        if (extension.scale()) {
-            args += extension.scale.collect { service, value ->
+        if (settings.scale()) {
+            args += settings.scale.collect { service, value ->
                 ['--scale', "$service=$value"]
             }.flatten()
         }
-        args += extension.startedServices
-        extension.composeExecutor.execute(args)
+        args += settings.startedServices
+        settings.composeExecutor.execute(args)
         try {
-            if (extension.captureContainersOutput) {
-                extension.composeExecutor.captureContainersOutput(logger.&lifecycle)
+            if (settings.captureContainersOutput) {
+                settings.composeExecutor.captureContainersOutput(logger.&lifecycle)
             }
-            if (extension.captureContainersOutputToFile != null) {
-                def logFile = extension.captureContainersOutputToFile
+            if (settings.captureContainersOutputToFile != null) {
+                def logFile = settings.captureContainersOutputToFile
                 logFile.parentFile.mkdirs()
-                extension.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
+                settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
             }
             servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
-            if (extension.waitForTcpPorts) {
+            if (settings.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
             }
         }
@@ -63,11 +63,11 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        extension.composeExecutor.getServiceNames().collect { createServiceInfo(it) }
+        settings.composeExecutor.getServiceNames().collect { createServiceInfo(it) }
     }
 
     protected ServiceInfo createServiceInfo(String serviceName) {
-        Iterable<String> containerIds = extension.composeExecutor.getContainerIds(serviceName)
+        Iterable<String> containerIds = settings.composeExecutor.getContainerIds(serviceName)
         Map<String, ContainerInfo> containerInfos = createContainerInfos(containerIds, serviceName)
         new ServiceInfo(name: serviceName, containerInfos: containerInfos)
     }
@@ -75,10 +75,10 @@ class ComposeUp extends DefaultTask {
     Map<String, ContainerInfo> createContainerInfos(Iterable<String> containerIds, String serviceName) {
         containerIds.collectEntries { String containerId ->
             logger.info("Container ID of service $serviceName is $containerId")
-            def inspection = extension.dockerExecutor.getValidDockerInspection(serviceName, containerId)
-            ServiceHost host = extension.dockerExecutor.getContainerHost(inspection, serviceName, logger)
+            def inspection = settings.dockerExecutor.getValidDockerInspection(serviceName, containerId)
+            ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
             logger.info("Will use $host as host of service $serviceName")
-            def tcpPorts = extension.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
+            def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
             String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
             [(instanceName): new ContainerInfo(
                     instanceName: instanceName,
@@ -93,7 +93,7 @@ class ComposeUp extends DefaultTask {
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 while (true) {
-                    Map<String, Object> inspectionState = extension.dockerExecutor.getInspection(containerInfo.containerId).State
+                    Map<String, Object> inspectionState = settings.dockerExecutor.getInspection(containerInfo.containerId).State
                     if (inspectionState.containsKey('Health')) {
                         String healthStatus = inspectionState.Health.Status
                         if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
@@ -101,12 +101,12 @@ class ComposeUp extends DefaultTask {
                             return
                         }
                         logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
-                        sleep(extension.waitAfterHealthyStateProbeFailure.toMillis())
+                        sleep(settings.waitAfterHealthyStateProbeFailure.toMillis())
                     } else {
                         logger.debug("Service ${instanceName} or this version of Docker doesn't support healtchecks")
                         return
                     }
-                    if (start.plus(extension.waitForHealthyStateTimeout) < Instant.now()) {
+                    if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
                         throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(containerInfo.containerId)}")
                     }
                 }
@@ -123,7 +123,7 @@ class ComposeUp extends DefaultTask {
                     while (true) {
                         try {
                             def s = new Socket(containerInfo.host, forwardedPort)
-                            s.setSoTimeout(extension.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
+                            s.setSoTimeout(settings.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
                             try {
                                 // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
                                 // if the socket is closed then it returns -1
@@ -145,11 +145,11 @@ class ComposeUp extends DefaultTask {
                             return
                         }
                         catch (Exception e) {
-                            if (start.plus(extension.waitForTcpPortsTimeout) < Instant.now()) {
+                            if (start.plus(settings.waitForTcpPortsTimeout) < Instant.now()) {
                                 throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(containerInfo.containerId)}")
                             }
                             logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
-                            sleep(extension.waitAfterTcpProbeFailure.toMillis())
+                            sleep(settings.waitAfterTcpProbeFailure.toMillis())
                         }
                     }
                 }

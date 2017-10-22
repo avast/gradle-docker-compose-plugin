@@ -1,12 +1,12 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeExtension
+import com.avast.gradle.dockercompose.ComposeSettings
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
 class ComposePull extends DefaultTask {
 
-    ComposeExtension extension
+    ComposeSettings settings
 
     ComposePull() {
         group = 'docker'
@@ -15,9 +15,9 @@ class ComposePull extends DefaultTask {
 
     @TaskAction
     void pull() {
-        if (extension.buildBeforeUp) {
-            extension.composeExecutor.execute('build', *extension.startedServices)
+        if (settings.buildBeforeUp) {
+            settings.composeExecutor.execute('build', *settings.startedServices)
         }
-        extension.composeExecutor.execute('pull', *extension.startedServices)
+        settings.composeExecutor.execute('pull', *settings.startedServices)
     }
 }

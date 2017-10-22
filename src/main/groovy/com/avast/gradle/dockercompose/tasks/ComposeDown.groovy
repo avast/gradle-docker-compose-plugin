@@ -1,14 +1,13 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeExtension
+import com.avast.gradle.dockercompose.ComposeSettings
 import com.avast.gradle.dockercompose.RemoveImages
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import org.gradle.process.ExecSpec
 import org.gradle.util.VersionNumber
 
 class ComposeDown extends DefaultTask {
-    ComposeExtension extension
+    ComposeSettings settings
 
     ComposeDown() {
         group = 'docker'
@@ -17,28 +16,28 @@ class ComposeDown extends DefaultTask {
 
     @TaskAction
     void down() {
-        if (extension.stopContainers) {
-            extension.composeExecutor.execute('stop', '--timeout', extension.dockerComposeStopTimeout.getSeconds().toString())
-            if (extension.removeContainers) {
-                if (extension.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
+        if (settings.stopContainers) {
+            settings.composeExecutor.execute('stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString())
+            if (settings.removeContainers) {
+                if (settings.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
-                    switch (extension.removeImages) {
+                    switch (settings.removeImages) {
                         case RemoveImages.All:
                         case RemoveImages.Local:
-                            args += ['--rmi', "${extension.removeImages}".toLowerCase()]
+                            args += ['--rmi', "${settings.removeImages}".toLowerCase()]
                             break
                         default:
                             break
                     }
-                    if(extension.removeVolumes) {
+                    if(settings.removeVolumes) {
                         args += ['--volumes']
                     }
-                    if (extension.removeOrphans()) {
+                    if (settings.removeOrphans()) {
                         args += '--remove-orphans'
                     }
-                    extension.composeExecutor.execute(args)
+                    settings.composeExecutor.execute(args)
                 } else {
-                    extension.composeExecutor.execute('rm', '-f')
+                    settings.composeExecutor.execute('rm', '-f')
                 }
             }
         }
