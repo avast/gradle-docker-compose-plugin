@@ -23,7 +23,24 @@ class DockerComposePluginTest extends Specification {
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
-    def "dockerCompose.isRequiredBy() adds dependencies"() {
+    def "add tasks of nested settings"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+                nested {
+                    useComposeFiles = ['test.yml']
+                }
+            }
+        then:
+        project.tasks.nestedComposeUp instanceof ComposeUp
+        project.tasks.nestedComposeDown instanceof ComposeDown
+        project.tasks.nestedComposePull instanceof ComposePull
+        ComposeUp up = project.tasks.nestedComposeUp
+        up.settings.useComposeFiles == ['test.yml']
+    }
+
+    def "isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
         Task task = project.tasks.create('integrationTest')
@@ -32,6 +49,40 @@ class DockerComposePluginTest extends Specification {
         then:
             task.dependsOn.contains(project.tasks.composeUp)
             task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
+    }
+
+    def "isRequiredBy() adds dependencies for nested settings"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        Task task = project.tasks.create('integrationTest')
+        when:
+        project.dockerCompose {
+            nested {
+                useComposeFiles = ['test.yml']
+                isRequiredBy(task)
+            }
+        }
+        then:
+        task.dependsOn.contains(project.tasks.nestedComposeUp)
+        task.getFinalizedBy().getDependencies(task).any { it == project.tasks.nestedComposeDown }
+    }
+
+    def "add tasks of nested settings and isRequiredBy() adds dependencies for nested settings when using simplified syntax"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        Task task = project.tasks.create('integrationTest')
+        when:
+        project.dockerCompose {
+            isRequiredByIntegrationTest 'test.yml'
+        }
+        then:
+        project.tasks.integrationTestComposeUp instanceof ComposeUp
+        project.tasks.integrationTestComposeDown instanceof ComposeDown
+        project.tasks.integrationTestComposePull instanceof ComposePull
+        ComposeUp up = project.tasks.integrationTestComposeUp
+        up.settings.useComposeFiles == ['test.yml']
+        task.dependsOn.contains(project.tasks.integrationTestComposeUp)
+        task.getFinalizedBy().getDependencies(task).any { it == project.tasks.integrationTestComposeDown }
     }
 
     def "isRequiredBy ensures right order of tasks"() {

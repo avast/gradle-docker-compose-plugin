@@ -9,14 +9,14 @@ import org.yaml.snakeyaml.Yaml
 import java.util.concurrent.Executors
 
 class ComposeExecutor {
-    private final ComposeExtension extension
+    private final ComposeSettings extension
     private final Project project
     private final Logger logger
 
-    ComposeExecutor(ComposeExtension extension) {
-        this.extension = extension
-        this.project = extension.project
-        this.logger = extension.project.logger
+    ComposeExecutor(ComposeSettings settings) {
+        this.extension = settings
+        this.project = settings.project
+        this.logger = settings.project.logger
     }
 
     private void executeWithCustomOutput(OutputStream os, String... args) {
