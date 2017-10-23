@@ -110,7 +110,7 @@ test.doFirst {
 ```
 
 ## Nested configurations
-It possible to create a new set of `ComposeUp`/`ComposePull`/`ComposeDown` tasks using following syntax:
+It is possible to create a new set of `ComposeUp`/`ComposePull`/`ComposeDown` tasks using following syntax:
 ```gradle
 dockerCompose {
     // settings as usual
