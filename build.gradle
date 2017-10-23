@@ -6,9 +6,12 @@ buildscript {
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.7'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
     }
 }
+
 apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.ben-manes.versions'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
@@ -28,7 +31,7 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile 'org.yaml:snakeyaml:1.18'
+    compile 'org.yaml:snakeyaml:1.19'
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:1.1-groovy-2.4') {
         // Conflicting module versions: 2.4.7 vs. 2.4.1
