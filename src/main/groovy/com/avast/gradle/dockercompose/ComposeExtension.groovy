@@ -14,6 +14,14 @@ class ComposeExtension extends ComposeSettings {
         settings.computeIfAbsent(name, { createNested(name) })
     }
 
+    def propertyMissing(String name) {
+        def s = settings.get(name)
+        if (s) {
+            return s
+        }
+        throw new MissingPropertyException("'$name' is not property nor nested settings name")
+    }
+
     def methodMissing(String name, def args) {
         // If the method name is 'isRequiredByXXX' then the name of nested configuration will be XXX
         // and we will call isRequiredBy(XXX) for the newly created nested configuration.

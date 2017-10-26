@@ -50,7 +50,7 @@ class DockerComposePluginTest extends Specification {
             }
         }
         then:
-        project.dockerCompose.nested().servicesInfos instanceof Map<String, ServiceInfo>
+        project.dockerCompose.nested.servicesInfos instanceof Map<String, ServiceInfo>
     }
 
     def "isRequiredBy() adds dependencies"() {
