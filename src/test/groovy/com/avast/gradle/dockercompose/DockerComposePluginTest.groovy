@@ -40,6 +40,19 @@ class DockerComposePluginTest extends Specification {
         up.settings.useComposeFiles == ['test.yml']
     }
 
+    def "is possible to access servicesInfos of nested setting"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            nested {
+                useComposeFiles = ['test.yml']
+            }
+        }
+        then:
+        project.dockerCompose.nested.servicesInfos instanceof Map<String, ServiceInfo>
+    }
+
     def "isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
