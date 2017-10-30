@@ -30,16 +30,19 @@ class ComposeSettings {
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+
     List<String> startedServices = []
+    String exitCodeFromService = ''
     Map<String, Integer> scale = [:]
+    boolean removeOrphans = false
+    boolean forceRecreate = false
+    List<String> upAdditionalArgs = []
     String projectName = null
 
     boolean stopContainers = true
     boolean removeContainers = true
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
-    boolean removeOrphans = false
-    boolean forceRecreate = false
 
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
