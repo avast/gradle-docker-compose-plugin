@@ -39,6 +39,12 @@ class ComposeUp extends DefaultTask {
                 ['--scale', "$service=$value"]
             }.flatten()
         }
+        if (settings.exitCodeFromService) {
+            args += ['--exit-code-from', settings.exitCodeFromService]
+        }
+        if (settings.upAdditionalArgs) {
+            args += settings.upAdditionalArgs
+        }
         args += settings.startedServices
         settings.composeExecutor.execute(args)
         try {
