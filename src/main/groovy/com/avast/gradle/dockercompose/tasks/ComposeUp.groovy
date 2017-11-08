@@ -63,6 +63,7 @@ class ComposeUp extends DefaultTask {
             }
         }
         catch (Exception e) {
+            logger.debug("Failed to start-up Docker containers", e)
             downTask.down()
             throw e
         }
