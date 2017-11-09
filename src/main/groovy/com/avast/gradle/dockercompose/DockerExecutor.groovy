@@ -6,12 +6,12 @@ import org.gradle.process.ExecSpec
 import org.yaml.snakeyaml.Yaml
 
 class DockerExecutor {
-    private final ComposeSettings extension
+    private final ComposeSettings settings
     private final Project project
     private final Logger logger
 
     DockerExecutor(ComposeSettings settings) {
-        this.extension = settings
+        this.settings = settings
         this.project = settings.project
         this.logger = settings.project.logger
     }
@@ -19,8 +19,8 @@ class DockerExecutor {
     String execute(String... args) {
         new ByteArrayOutputStream().withStream { os ->
             project.exec { ExecSpec e ->
-                e.environment = extension.environment
-                def finalArgs = [extension.dockerExecutable]
+                e.environment = settings.environment
+                def finalArgs = [settings.dockerExecutable]
                 finalArgs.addAll(args)
                 e.commandLine finalArgs
                 e.standardOutput os
@@ -104,7 +104,7 @@ class DockerExecutor {
     }
 
     ServiceHost getContainerHost(Map<String, Object> inspection, String serviceName, Logger logger = this.logger) {
-        String servicesHost = extension.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
+        String servicesHost = settings.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
             return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
@@ -112,7 +112,7 @@ class DockerExecutor {
         Map<String, Object> networkSettings = inspection.NetworkSettings
         Map<String, Object> networks = networkSettings.Networks
         Map.Entry<String, Object> firstNetworkPair = networks.find()
-        String dockerHost = extension.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
+        String dockerHost = settings.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")

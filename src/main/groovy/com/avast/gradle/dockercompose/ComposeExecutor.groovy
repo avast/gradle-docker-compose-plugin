@@ -9,21 +9,21 @@ import org.yaml.snakeyaml.Yaml
 import java.util.concurrent.Executors
 
 class ComposeExecutor {
-    private final ComposeSettings extension
+    private final ComposeSettings settings
     private final Project project
     private final Logger logger
 
     ComposeExecutor(ComposeSettings settings) {
-        this.extension = settings
+        this.settings = settings
         this.project = settings.project
         this.logger = settings.project.logger
     }
 
     private void executeWithCustomOutput(OutputStream os, String... args) {
-        def ex = this.extension
+        def ex = this.settings
         project.exec { ExecSpec e ->
-            if (extension.dockerComposeWorkingDirectory) {
-                e.setWorkingDir(extension.dockerComposeWorkingDirectory)
+            if (settings.dockerComposeWorkingDirectory) {
+                e.setWorkingDir(settings.dockerComposeWorkingDirectory)
             }
             e.environment = ex.environment
             def finalArgs = [ex.executable]
@@ -84,12 +84,12 @@ class ComposeExecutor {
     }
 
     Iterable<String> getServiceNames() {
-        if (!extension.startedServices.empty){
-            extension.startedServices
+        if (!settings.startedServices.empty){
+            settings.startedServices
         } else if (version >= VersionNumber.parse('1.6.0')) {
             execute('config', '--services').readLines()
         } else {
-            def composeFiles = extension.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
+            def composeFiles = settings.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
             composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
                 // if there is 'version' on top-level then information about services is in 'services' sub-tree
@@ -109,7 +109,7 @@ class ComposeExecutor {
     }
 
     Iterable<File> getCustomComposeFiles() {
-        extension.useComposeFiles.collect {
+        settings.useComposeFiles.collect {
             def f = project.file(it)
             if (!f.exists()) {
                 throw new IllegalArgumentException("Custom Docker Compose file not found: $f")
