@@ -84,7 +84,9 @@ class ComposeExecutor {
     }
 
     Iterable<String> getServiceNames() {
-        if (version >= VersionNumber.parse('1.6.0')) {
+        if (!extension.startedServices.empty){
+            extension.startedServices
+        } else if (version >= VersionNumber.parse('1.6.0')) {
             execute('config', '--services').readLines()
         } else {
             def composeFiles = extension.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
