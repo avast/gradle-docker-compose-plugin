@@ -114,7 +114,7 @@ class ComposeUp extends DefaultTask {
                         return
                     }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${getServiceLogs(containerInfo.containerId)}")
+                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${settings.getContainerLogs(containerInfo.containerId)}")
                     }
                 }
             }
@@ -153,7 +153,7 @@ class ComposeUp extends DefaultTask {
                         }
                         catch (Exception e) {
                             if (start.plus(settings.waitForTcpPortsTimeout) < Instant.now()) {
-                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${getServiceLogs(containerInfo.containerId)}")
+                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.getContainerLogs(containerInfo.containerId)}")
                             }
                             logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
                             sleep(settings.waitAfterTcpProbeFailure.toMillis())
