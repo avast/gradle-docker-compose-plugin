@@ -57,11 +57,11 @@ class ComposeSettings {
 
         upTask = project.tasks.create(name ? "${name}ComposeUp" : 'composeUp', ComposeUp)
         upTask.settings = this
-        upTask.downTask = downTask
         pullTask = project.tasks.create(name ? "${name}ComposePull" : 'composePull', ComposePull)
         pullTask.settings = this
         downTask = project.tasks.create(name ? "${name}ComposeDown" : 'composeDown', ComposeDown)
         downTask.settings = this
+        upTask.downTask = downTask
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
