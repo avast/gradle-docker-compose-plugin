@@ -101,8 +101,9 @@ class ComposeUp extends DefaultTask {
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 while (true) {
                     Map<String, Object> inspectionState = settings.dockerExecutor.getInspection(containerInfo.containerId).State
+                    String healthStatus = 'undefined'
                     if (inspectionState.containsKey('Health')) {
-                        String healthStatus = inspectionState.Health.Status
+                        healthStatus = inspectionState.Health.Status
                         if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
                             logger.lifecycle("${instanceName} health state reported as '$healthStatus' - continuing...")
                             return
@@ -114,7 +115,7 @@ class ComposeUp extends DefaultTask {
                         return
                     }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as 'starting'. Logs:${System.lineSeparator()}${settings.getContainerLogs(containerInfo.containerId)}")
+                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
                 }
             }
