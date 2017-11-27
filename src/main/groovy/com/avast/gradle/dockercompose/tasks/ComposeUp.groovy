@@ -111,7 +111,7 @@ class ComposeUp extends DefaultTask {
                         logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
                         sleep(settings.waitAfterHealthyStateProbeFailure.toMillis())
                     } else {
-                        logger.debug("Service ${instanceName} or this version of Docker doesn't support healtchecks")
+                        logger.debug("Service ${instanceName} or this version of Docker doesn't support healthchecks")
                         return
                     }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
