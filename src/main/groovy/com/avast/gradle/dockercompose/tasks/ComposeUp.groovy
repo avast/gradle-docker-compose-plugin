@@ -1,6 +1,9 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.*
+import com.avast.gradle.dockercompose.ComposeSettings
+import com.avast.gradle.dockercompose.ContainerInfo
+import com.avast.gradle.dockercompose.ServiceHost
+import com.avast.gradle.dockercompose.ServiceInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
 
@@ -46,8 +49,8 @@ class ComposeUp extends DefaultTask {
             args += settings.upAdditionalArgs
         }
         args += settings.startedServices
-        settings.composeExecutor.execute(args)
         try {
+            settings.composeExecutor.execute(args)
             if (settings.captureContainersOutput) {
                 settings.composeExecutor.captureContainersOutput(logger.&lifecycle)
             }
