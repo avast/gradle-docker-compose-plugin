@@ -71,7 +71,7 @@ dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy
 
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
-    // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' (when not specified, all services are executed)
+    // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
     // exitCodeFromService = 'web'
     // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
     // removeOrphans = false // Removes containers for services not defined in the Compose file
@@ -93,6 +93,8 @@ dockerCompose {
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
+
+    //ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
 }
 
 test.doFirst {
