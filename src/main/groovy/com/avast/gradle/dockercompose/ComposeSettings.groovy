@@ -44,6 +44,8 @@ class ComposeSettings {
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
 
+    boolean ignorePullFailure=false
+
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
 
