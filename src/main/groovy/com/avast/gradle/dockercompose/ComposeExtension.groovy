@@ -28,7 +28,7 @@ class ComposeExtension extends ComposeSettings {
         // The method must have one parameter that is path to the Docker Compose file.
         if (name.startsWith('isRequiredBy') && args.length == 1 && args[0]) {
             def taskName = name.substring('isRequiredBy'.length())
-            if (!taskName.empty) throw new RuntimeException('You called isRequiredBy method with an argument that is not of type Task')
+            if (taskName.empty) throw new RuntimeException('You called isRequiredBy method with an argument that is not of type Task')
             taskName = taskName[0].toLowerCase() + taskName.substring(1)
             ComposeSettings s = getOrCreateNested(taskName)
             s.useComposeFiles = [args[0].toString()]
