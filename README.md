@@ -107,7 +107,7 @@ test.doFirst {
     // if service is scaled using scale option, environment variables will be exposed for each service instance like "web_1.host", "web_1.tcp.80", "web_2.host", "web_2.tcp.80" and so on
     dockerCompose.exposeAsSystemProperties(test)
     // get information about container of service `web` (declared in docker-compose.yml)
-    def webInfo = dockerCompose.servicesInfos.web.firstInstance
+    def webInfo = dockerCompose.servicesInfos.web.firstContainer
     // in case scale option is used, dockerCompose.servicesInfos.containerInfos will contain information about all running containers of service. Particular container can be retrieved either by iterating the values of containerInfos map (key is service instance name, for example 'web_1')
     def webInfo = dockerCompose.servicesInfos.web.'web_1'
     // pass host and exposed TCP port 80 as custom-named Java System properties
