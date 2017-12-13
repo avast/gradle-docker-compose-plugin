@@ -123,7 +123,7 @@ dockerCompose {
     // settings as usual
     myNested {
         useComposeFiles = ['docker-compose-for-integration-tests.yml']
-        isRequiredBy(myTask)
+        isRequiredBy(tasks.myTask)
     }
 }
 ```
