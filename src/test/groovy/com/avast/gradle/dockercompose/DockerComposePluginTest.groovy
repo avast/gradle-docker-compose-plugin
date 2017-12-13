@@ -173,7 +173,10 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
-    @IgnoreIf({ System.properties['os.name'].toString().toLowerCase().startsWith('windows') || System.properties['os.name'].toString().toLowerCase().startsWith('macos') })
+    private static boolean isRunningOnWindows() { System.properties['os.name'].toString().toLowerCase().startsWith('windows') }
+    private static boolean isRunningOnMac() { System.properties['os.name'].toString().toLowerCase().startsWith('macos') || System.properties['os.name'].toString().toLowerCase().startsWith('mac os') }
+
+    @IgnoreIf({ DockerComposePluginTest.isRunningOnWindows() || DockerComposePluginTest.isRunningOnMac() })
     def "expose localhost as a host for container with HOST networking"() {
         def f = Fixture.custom('''
             version: '2'
