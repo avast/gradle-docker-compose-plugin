@@ -19,7 +19,7 @@ class ComposeExecutor {
         this.logger = settings.project.logger
     }
 
-    private void executeWithCustomOutput(OutputStream os, String... args) {
+    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
         def ex = this.settings
         project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
@@ -34,12 +34,13 @@ class ComposeExecutor {
             finalArgs.addAll(args)
             e.commandLine finalArgs
             e.standardOutput = os
+            e.ignoreExitValue = ignoreExitValue
         }
     }
 
     String execute(String... args) {
         new ByteArrayOutputStream().withStream { os ->
-            executeWithCustomOutput(os, args)
+            executeWithCustomOutput(os, false, args)
             os.toString().trim()
         }
     }
@@ -76,7 +77,8 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, 'logs', '-f', '--no-color')
+                // if containers are not stopped then docker-compose exits with 143
+                executeWithCustomOutput(os, !settings.stopContainers, 'logs', '-f', '--no-color')
             }
         })
         t.daemon = true
