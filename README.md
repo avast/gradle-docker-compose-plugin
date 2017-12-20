@@ -70,31 +70,30 @@ apply plugin: 'docker-compose'
 dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
 
 dockerCompose {
-    // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'
+    // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'; default is empty
     // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
     // exitCodeFromService = 'web'
     // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
-    // removeOrphans = false // Removes containers for services not defined in the Compose file
-    // forceRecreate = true // pass '--force-recreate' when calling 'docker-compose up'
+    // forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
+    // ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
     // upAdditionalArgs = ['--no-deps']
 
-    // captureContainersOutput = true // prints output of all containers to Gradle output - very useful for debugging
+    // waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening
+    // captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     // captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
 
-    // stopContainers = false // doesn't call `docker-compose down` - useful for debugging
-    // removeContainers = false
+    // stopContainers = true // doesn't call `docker-compose down` - useful for debugging
+    // removeContainers = true
     // removeImages = "None" // Other accepted values are: "All" and "Local"
-    // removeVolumes = false
-
-    // waitForTcpPorts = false // turns off the waiting for exposed TCP ports opening
+    // removeVolumes = true
+    // removeOrphans = false // removes containers for services not defined in the Compose file
+    
     // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
     // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
-
-    //ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
 }
 
 test.doFirst {
