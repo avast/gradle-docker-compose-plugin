@@ -22,7 +22,7 @@ buildscript {
 
 apply plugin: 'docker-compose'
 
-// Or use the new Gradle Portal plugins:
+// Or use the new Gradle Portal plugins (then you don't have to add the dependency as above):
 // plugins {
 //  id 'com.avast.gradle.docker-compose' version "$versionHere"
 // }
@@ -61,11 +61,6 @@ buildscript {
 }
 
 apply plugin: 'docker-compose'
-
-// Or use the new Gradle Portal plugins:
-// plugins {
-//  id 'com.avast.gradle.docker-compose' version "$versionHere"
-// }
 
 dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
 
