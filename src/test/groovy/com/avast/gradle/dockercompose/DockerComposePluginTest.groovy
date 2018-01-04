@@ -53,6 +53,22 @@ class DockerComposePluginTest extends Specification {
         project.dockerCompose.nested.servicesInfos instanceof Map<String, ServiceInfo>
     }
 
+    def "is possible to override nested settings"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            removeVolumes = true
+            nested {
+                useComposeFiles = ['test.yml']
+                removeVolumes = false
+            }
+        }
+        then:
+        project.dockerCompose.nested.removeVolumes == false
+        project.dockerCompose.removeVolumes == true
+    }
+
     def "isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
