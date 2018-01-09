@@ -32,7 +32,6 @@ class ComposeSettings {
     List<String> useComposeFiles = []
 
     List<String> startedServices = []
-    String exitCodeFromService = ''
     Map<String, Integer> scale = [:]
     boolean removeOrphans = false
     boolean forceRecreate = false

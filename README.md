@@ -67,7 +67,6 @@ dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy
 dockerCompose {
     // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'; default is empty
     // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
-    // exitCodeFromService = 'web'
     // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
     // forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
     // ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
