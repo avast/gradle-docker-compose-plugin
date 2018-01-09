@@ -17,8 +17,12 @@ class ComposeDown extends DefaultTask {
     @TaskAction
     void down() {
         if (settings.stopContainers) {
-            settings.composeExecutor.execute('stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString())
+            settings.composeExecutor.execute('stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *settings.startedServices)
             if (settings.removeContainers) {
+                if (!settings.startedServices.empty) {
+                    logger.warn("You have specified startedServices, but composeDown with removeContainers = true will " +
+                        "stop and remove all services defined in your compose file.")
+                }
                 if (settings.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
                     String[] args = ['down']
                     switch (settings.removeImages) {
