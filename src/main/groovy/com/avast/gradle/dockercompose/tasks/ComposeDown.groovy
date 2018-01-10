@@ -19,29 +19,38 @@ class ComposeDown extends DefaultTask {
         if (settings.stopContainers) {
             settings.composeExecutor.execute('stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *settings.startedServices)
             if (settings.removeContainers) {
-                if (!settings.startedServices.empty) {
-                    logger.warn("You have specified startedServices, but composeDown with removeContainers = true will " +
-                        "stop and remove all services defined in your compose file.")
-                }
                 if (settings.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
-                    String[] args = ['down']
-                    switch (settings.removeImages) {
-                        case RemoveImages.All:
-                        case RemoveImages.Local:
-                            args += ['--rmi', "${settings.removeImages}".toLowerCase()]
-                            break
-                        default:
-                            break
-                    }
-                    if(settings.removeVolumes) {
-                        args += ['--volumes']
-                    }
-                    if (settings.removeOrphans()) {
-                        args += '--remove-orphans'
+                    String[] args = []
+                    if (!settings.startedServices.empty) {
+                        args += ['rm', '-f']
+                        if (settings.removeVolumes) {
+                            args += ['-v']
+                        }
+                        args += settings.startedServices
+                    } else {
+                        args += ['down']
+                        switch (settings.removeImages) {
+                            case RemoveImages.All:
+                            case RemoveImages.Local:
+                                args += ['--rmi', "${settings.removeImages}".toLowerCase()]
+                                break
+                            default:
+                                break
+                        }
+                        if (settings.removeVolumes) {
+                            args += ['--volumes']
+                        }
+                        if (settings.removeOrphans()) {
+                            args += '--remove-orphans'
+                        }
                     }
                     settings.composeExecutor.execute(args)
                 } else {
-                    settings.composeExecutor.execute('rm', '-f')
+                    if (!settings.startedServices.empty) {
+                        settings.composeExecutor.execute('rm', '-f', *settings.startedServices)
+                    } else {
+                        settings.composeExecutor.execute('rm', '-f')
+                    }
                 }
             }
         }
