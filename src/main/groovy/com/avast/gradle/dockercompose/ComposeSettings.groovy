@@ -110,8 +110,8 @@ class ComposeSettings {
         task.getTaskDependencies().getDependencies(task)
                 .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
                 .each { ut.shouldRunAfter it }
-        if (task instanceof ProcessForkOptions) exposeAsEnvironment(task as ProcessForkOptions)
-        if (task instanceof JavaForkOptions) exposeAsSystemProperties(task as JavaForkOptions)
+        if (task instanceof ProcessForkOptions) task.doFirst { exposeAsEnvironment(task as ProcessForkOptions) }
+        if (task instanceof JavaForkOptions) task.doFirst { exposeAsSystemProperties(task as JavaForkOptions) }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
