@@ -77,8 +77,7 @@ class ComposeExecutor {
                         }
                     }
                 }
-                // if containers are not stopped then docker-compose exits with 143
-                executeWithCustomOutput(os, !settings.stopContainers, 'logs', '-f', '--no-color')
+                executeWithCustomOutput(os, true, 'logs', '-f', '--no-color')
             }
         })
         t.daemon = true
