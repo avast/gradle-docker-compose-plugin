@@ -10,13 +10,13 @@ class ComposePull extends DefaultTask {
 
     ComposePull() {
         group = 'docker'
-        description = 'Pulls and builds all images of docker-compose project'
+        description = 'Builds and pulls images of docker-compose project'
     }
 
     @TaskAction
     void pull() {
         if (settings.buildBeforeUp) {
-            settings.composeExecutor.execute('build', *settings.startedServices)
+            settings.buildTask.build()
         }
         String[] args = ['pull']
         if (settings.ignorePullFailure) {

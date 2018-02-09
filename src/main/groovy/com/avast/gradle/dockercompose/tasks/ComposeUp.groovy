@@ -22,7 +22,7 @@ class ComposeUp extends DefaultTask {
 
     ComposeUp() {
         group = 'docker'
-        description = 'Builds and starts all containers of docker-compose project'
+        description = 'Builds and starts containers of docker-compose project'
     }
 
     @TaskAction
