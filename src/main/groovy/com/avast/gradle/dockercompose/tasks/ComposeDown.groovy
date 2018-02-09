@@ -11,7 +11,7 @@ class ComposeDown extends DefaultTask {
 
     ComposeDown() {
         group = 'docker'
-        description = 'Stops and removes all containers of docker-compose project'
+        description = 'Stops and removes containers of docker-compose project'
     }
 
     @TaskAction
