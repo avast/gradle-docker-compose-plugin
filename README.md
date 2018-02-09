@@ -9,6 +9,8 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composePull` task pulls and optionally builds the images required by the application. This is useful, for example, with a CI platform that caches docker images to decrease build times.
 
+`composeBuild` task builds the services of the application.
+
 ## Quick start
 ```gradle
 buildscript {
@@ -110,7 +112,7 @@ test.doFirst {
 ```
 
 ## Nested configurations
-It is possible to create a new set of `ComposeUp`/`ComposePull`/`ComposeDown` tasks using following syntax:
+It is possible to create a new set of `ComposeUp`/`ComposeBuild`/`ComposePull`/`ComposeDown` tasks using following syntax:
 ```gradle
 dockerCompose {
     // settings as usual
@@ -120,7 +122,7 @@ dockerCompose {
     }
 }
 ```
-* It creates `myNestedComposeUp`, `myNestedComposePull` and `myNestedComposeDown` tasks.
+* It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull` and `myNestedComposeDown` tasks.
 * It's possible to use all the settings as in the main `dockerCompose` block.
 * Configuration of the nested settings defaults to the main `dockerCompose` settings.
 
