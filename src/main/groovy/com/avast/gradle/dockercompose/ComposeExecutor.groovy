@@ -49,7 +49,7 @@ class ComposeExecutor {
 
     VersionNumber getVersion() {
         if (cachedVersion) return cachedVersion
-        cachedVersion = VersionNumber.parse(execute('--version').findAll(/(\d+\.){2}(\d+)/).head())
+        cachedVersion = VersionNumber.parse(execute('version', '--short'))
     }
 
     Iterable<String> getContainerIds(String serviceName) {
