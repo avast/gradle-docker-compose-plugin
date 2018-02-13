@@ -45,8 +45,11 @@ class ComposeExecutor {
         }
     }
 
+    private VersionNumber cachedVersion
+
     VersionNumber getVersion() {
-        VersionNumber.parse(execute('--version').findAll(/(\d+\.){2}(\d+)/).head())
+        if (cachedVersion) return cachedVersion
+        cachedVersion = VersionNumber.parse(execute('--version').findAll(/(\d+\.){2}(\d+)/).head())
     }
 
     Iterable<String> getContainerIds(String serviceName) {
