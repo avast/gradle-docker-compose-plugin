@@ -46,9 +46,19 @@ class DockerExecutor {
     }
 
     Map<String, Object> getInspection(String containerId) {
-        def asString = execute('inspect', containerId)
-        logger.debug("Inspection for container $containerId: $asString")
-        (new Yaml().load(asString))[0] as Map<String, Object>
+        getInspections(containerId).values().find()
+    }
+
+    Map<String, Map<String, Object>> getInspections(String... containersIds) {
+        def asString = execute('inspect', *containersIds)
+        logger.debug("Inspections for containers ${containersIds.join(', ')}: $asString")
+        Map<String, Object>[] inspections = new Yaml().load(asString)
+        def r = inspections.collectEntries { [it.Id, it] }
+        def notFoundInspections = containersIds.findAll { !r.containsKey(it) }
+        if (notFoundInspections) {
+            throw new RuntimeException('docker inspect didn\'t return inspection for these containers: ' + notFoundInspections.join(', '))
+        }
+        r
     }
 
     Map<String, Object> getNetworkInspection(String networkName) {
@@ -80,13 +90,7 @@ class DockerExecutor {
         execute('logs', '--follow=false', containerId)
     }
 
-    Map<String, Object> getValidDockerInspection(String serviceName, String containerId) {
-        def dockerInspection = getInspection(containerId)
-        validateDockerInspection(serviceName, dockerInspection)
-        dockerInspection
-    }
-
-    void validateDockerInspection(String serviceName, Map<String, Object> inspection) {
+    void validateInspection(String serviceName, Map<String, Object> inspection) {
         ServiceHost serviceHost
         try {
             serviceHost = getContainerHost(inspection, serviceName, NoOpLogger.INSTANCE)

@@ -70,29 +70,25 @@ class ComposeUp extends DefaultTask {
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo() {
-        settings.composeExecutor.getServiceNames().collect { createServiceInfo(it) }
+        // this code is little bit complicated - the aim is to execute `docker inspect` just once (for all the containers)
+        Map<String, Iterable<String>> serviceToContainersIds = settings.composeExecutor.getServiceNames().collectEntries { [(it) : settings.composeExecutor.getContainerIds(it)] }
+        Map<String, Map<String, Object>> inspections = settings.dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
+        serviceToContainersIds.each { pair -> pair.value.each { settings.dockerExecutor.validateInspection(pair.key, inspections.get(it)) } }
+        serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collectEntries { createContainerInfo(inspections.get(it), pair.key) } ) }
     }
 
-    protected ServiceInfo createServiceInfo(String serviceName) {
-        Iterable<String> containerIds = settings.composeExecutor.getContainerIds(serviceName)
-        Map<String, ContainerInfo> containerInfos = createContainerInfos(containerIds, serviceName)
-        new ServiceInfo(name: serviceName, containerInfos: containerInfos)
-    }
-
-    Map<String, ContainerInfo> createContainerInfos(Iterable<String> containerIds, String serviceName) {
-        containerIds.collectEntries { String containerId ->
-            logger.info("Container ID of service $serviceName is $containerId")
-            def inspection = settings.dockerExecutor.getValidDockerInspection(serviceName, containerId)
-            ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
-            logger.info("Will use $host as host of service $serviceName")
-            def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
-            String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
-            [(instanceName): new ContainerInfo(
-                    instanceName: instanceName,
-                    serviceHost: host,
-                    tcpPorts: tcpPorts,
-                    inspection: inspection)]
-        }
+    protected def createContainerInfo(Map<String, Object> inspection, String serviceName) {
+        String containerId = inspection.Id
+        logger.info("Container ID of service $serviceName is $containerId")
+        ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
+        logger.info("Will use $host as host of service $serviceName")
+        def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
+        String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
+        [(instanceName): new ContainerInfo(
+                instanceName: instanceName,
+                serviceHost: host,
+                tcpPorts: tcpPorts,
+                inspection: inspection)]
     }
 
     void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
@@ -101,7 +97,7 @@ class ComposeUp extends DefaultTask {
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 while (true) {
                     Map<String, Object> inspectionState = settings.dockerExecutor.getInspection(containerInfo.containerId).State
-                    String healthStatus = 'undefined'
+                    String healthStatus
                     if (inspectionState.containsKey('Health')) {
                         healthStatus = inspectionState.Health.Status
                         if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
