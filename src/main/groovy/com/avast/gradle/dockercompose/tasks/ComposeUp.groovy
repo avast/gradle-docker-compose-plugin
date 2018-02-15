@@ -146,7 +146,7 @@ class ComposeUp extends DefaultTask {
                                 s.close()
                             }
                             logger.lifecycle("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is ready")
-                            return
+                            break
                         }
                         catch (Exception e) {
                             if (start.plus(settings.waitForTcpPortsTimeout) < Instant.now()) {
