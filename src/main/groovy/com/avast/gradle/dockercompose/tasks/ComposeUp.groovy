@@ -56,7 +56,8 @@ class ComposeUp extends DefaultTask {
                 logFile.parentFile.mkdirs()
                 settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
             }
-            servicesInfos = loadServicesInfo().collectEntries { [(it.name): (it)] }
+            def servicesToLoad = settings.startedServices ?: settings.composeExecutor.getServiceNames()
+            servicesInfos = loadServicesInfo(servicesToLoad).collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
             if (settings.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
@@ -69,9 +70,9 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    protected Iterable<ServiceInfo> loadServicesInfo() {
+    protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
         // this code is little bit complicated - the aim is to execute `docker inspect` just once (for all the containers)
-        Map<String, Iterable<String>> serviceToContainersIds = settings.composeExecutor.getServiceNames().collectEntries { [(it) : settings.composeExecutor.getContainerIds(it)] }
+        Map<String, Iterable<String>> serviceToContainersIds = servicesNames.collectEntries { [(it) : settings.composeExecutor.getContainerIds(it)] }
         Map<String, Map<String, Object>> inspections = settings.dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
         serviceToContainersIds.each { pair -> pair.value.each { settings.dockerExecutor.validateInspection(pair.key, inspections.get(it)) } }
         serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collectEntries { createContainerInfo(inspections.get(it), pair.key) } ) }
