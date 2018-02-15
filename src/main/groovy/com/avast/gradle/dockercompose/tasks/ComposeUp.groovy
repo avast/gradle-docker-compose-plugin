@@ -102,7 +102,7 @@ class ComposeUp extends DefaultTask {
                         healthStatus = inspectionState.Health.Status
                         if (!"starting".equalsIgnoreCase(healthStatus) && !"unhealthy".equalsIgnoreCase(healthStatus)) {
                             logger.lifecycle("${instanceName} health state reported as '$healthStatus' - continuing...")
-                            return
+                            break
                         }
                         logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
                         sleep(settings.waitAfterHealthyStateProbeFailure.toMillis())
