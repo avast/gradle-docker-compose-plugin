@@ -95,8 +95,10 @@ class ComposeUp extends DefaultTask {
         def start = Instant.now()
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
+                def firstIteration = true
                 while (true) {
-                    Map<String, Object> inspectionState = settings.dockerExecutor.getInspection(containerInfo.containerId).State
+                    def inspection = firstIteration ? containerInfo.inspection : settings.dockerExecutor.getInspection(containerInfo.containerId)
+                    Map<String, Object> inspectionState = inspection.State
                     String healthStatus
                     if (inspectionState.containsKey('Health')) {
                         healthStatus = inspectionState.Health.Status
@@ -105,14 +107,15 @@ class ComposeUp extends DefaultTask {
                             break
                         }
                         logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
-                        sleep(settings.waitAfterHealthyStateProbeFailure.toMillis())
+                        if (!firstIteration) sleep(settings.waitAfterHealthyStateProbeFailure.toMillis())
                     } else {
                         logger.debug("Service ${instanceName} or this version of Docker doesn't support healthchecks")
-                        return
+                        break
                     }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
                         throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
+                    firstIteration = false
                 }
             }
         }
