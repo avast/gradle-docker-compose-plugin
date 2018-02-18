@@ -2,6 +2,7 @@ package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
+import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Project
@@ -16,6 +17,7 @@ import java.time.Duration
 class ComposeSettings {
     final ComposeUp upTask
     final ComposeDown downTask
+    final ComposeDownForced downForcedTask
     final ComposeBuild buildTask
     final ComposePull pullTask
     final Project project
@@ -67,6 +69,8 @@ class ComposeSettings {
         downTask = project.tasks.create(name ? "${name}ComposeDown" : 'composeDown', ComposeDown)
         downTask.settings = this
         upTask.downTask = downTask
+        downForcedTask = project.tasks.create(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced)
+        downForcedTask.settings = this
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
