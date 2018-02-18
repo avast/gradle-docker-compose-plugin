@@ -5,6 +5,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
+import groovy.ui.SystemOutputInterceptor
 import org.gradle.api.Task
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
@@ -21,6 +22,7 @@ class DockerComposePluginTest extends Specification {
         then:
             project.tasks.composeUp instanceof ComposeUp
             project.tasks.composeDown instanceof ComposeDown
+            project.tasks.composeDownForced instanceof ComposeDownForced
             project.tasks.composePull instanceof ComposePull
             project.tasks.composeBuild instanceof ComposeBuild
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
@@ -38,6 +40,7 @@ class DockerComposePluginTest extends Specification {
         then:
         project.tasks.nestedComposeUp instanceof ComposeUp
         project.tasks.nestedComposeDown instanceof ComposeDown
+        project.tasks.nestedComposeDownForced instanceof ComposeDownForced
         project.tasks.nestedComposePull instanceof ComposePull
         project.tasks.nestedComposeBuild instanceof ComposeBuild
         ComposeUp up = project.tasks.nestedComposeUp
@@ -131,7 +134,7 @@ class DockerComposePluginTest extends Specification {
             noExceptionThrown()
     }
 
-    def "allows usage from integration test"() {
+    def "allows to read servicesInfos from another task"() {
         def f = Fixture.withNginx()
         f.project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
@@ -148,6 +151,40 @@ class DockerComposePluginTest extends Specification {
         cleanup:
             f.project.tasks.composeDown.down()
             f.close()
+    }
+
+    def "reconnect to previously executed up task"() {
+        def f = Fixture.withNginx()
+        when:
+        f.project.dockerCompose.stopContainers = false
+        def t = System.nanoTime()
+        f.project.tasks.composeUp.up()
+        def firstDuration = System.nanoTime() - t
+        t = System.nanoTime()
+        f.project.tasks.composeUp.up()
+        def secondDuration = System.nanoTime() - t
+        then:
+        noExceptionThrown()
+        secondDuration < firstDuration
+        f.project.tasks.composeUp.wasReconnected == true
+        cleanup:
+        f.project.tasks.composeDownForced.down()
+        f.close()
+    }
+
+    def "does not reconnect to previously executed up task if the container is killed"() {
+        def f = Fixture.withNginx()
+        when:
+        f.project.dockerCompose.stopContainers = false
+        f.project.tasks.composeUp.up()
+        f.project.dockerCompose.dockerExecutor.execute('kill', f.project.dockerCompose.servicesInfos.values().find().firstContainer.containerId)
+        f.project.tasks.composeUp.up()
+        then:
+        noExceptionThrown()
+        f.project.tasks.composeUp.wasReconnected == false
+        cleanup:
+        f.project.tasks.composeDownForced.down()
+        f.close()
     }
 
     def "allows pull"() {

@@ -81,7 +81,7 @@ dockerCompose {
     // captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     // captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
 
-    // stopContainers = true // doesn't call `docker-compose down` - useful for debugging
+    // stopContainers = true // doesn't call `docker-compose down` - see below the paragraph about reconnectiong
     // removeContainers = true
     // removeImages = "None" // Other accepted values are: "All" and "Local"
     // removeVolumes = true
@@ -135,6 +135,12 @@ dockerCompose {
     isRequiredByMyTask 'docker-compose-for-integration-tests.yml'
 }
 ```
+
+## Reconnecting
+If you specify `stopContainers` to be `false` then the plugin automatically tries to reconnected to the containers from the previous run
+ instead of calling `docker-compose up` again. Thanks to this, the startup can be very fast.
+
+It's very handly in scenarios when you iterate quickly and e.g. don't want to wait for Postgres to start again and again.
 
 # Tips
 * You can call `dockerCompose.isRequiredBy(anyTask)` for any task, for example for your custom `integrationTest` task.

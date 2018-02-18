@@ -11,8 +11,9 @@ import java.time.Instant
 
 class ComposeUp extends DefaultTask {
 
+    Boolean wasReconnected = false // for tests
+
     ComposeSettings settings
-    ComposeDown downTask
 
     private Map<String, ServiceInfo> servicesInfos = [:]
 
@@ -27,6 +28,18 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
+        if (!settings.stopContainers) {
+            def cachedServicesInfos = settings.serviceInfoCache.get({ getStateForCache() })
+            if (cachedServicesInfos) {
+                servicesInfos = cachedServicesInfos
+                logger.lifecycle('Cached services infos loaded while \'stopContainers\' is set to \'false\'.')
+                wasReconnected = true
+                startCapturing()
+                return
+            }
+        }
+        settings.serviceInfoCache.clear()
+        wasReconnected = false
         if (settings.buildBeforeUp) {
             settings.composeExecutor.execute('build', *settings.startedServices)
         }
@@ -48,26 +61,39 @@ class ComposeUp extends DefaultTask {
         args += settings.startedServices
         try {
             settings.composeExecutor.execute(args)
-            if (settings.captureContainersOutput) {
-                settings.composeExecutor.captureContainersOutput(logger.&lifecycle)
-            }
-            if (settings.captureContainersOutputToFile != null) {
-                def logFile = settings.captureContainersOutputToFile
-                logFile.parentFile.mkdirs()
-                settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
-            }
+            startCapturing()
             def servicesToLoad = settings.startedServices ?: settings.composeExecutor.getServiceNames()
             servicesInfos = loadServicesInfo(servicesToLoad).collectEntries { [(it.name): (it)] }
             waitForHealthyContainers(servicesInfos.values())
             if (settings.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
             }
+            if (!settings.stopContainers) {
+                settings.serviceInfoCache.set(servicesInfos, getStateForCache())
+            } else {
+                settings.serviceInfoCache.clear()
+            }
         }
         catch (Exception e) {
             logger.debug("Failed to start-up Docker containers", e)
-            downTask.down()
+            settings.downForcedTask.down()
             throw e
         }
+    }
+
+    protected void startCapturing() {
+        if (settings.captureContainersOutput) {
+            settings.composeExecutor.captureContainersOutput(logger.&lifecycle)
+        }
+        if (settings.captureContainersOutputToFile != null) {
+            def logFile = settings.captureContainersOutputToFile
+            logFile.parentFile.mkdirs()
+            settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
+        }
+    }
+
+    protected def getStateForCache() {
+        settings.composeExecutor.execute('ps')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {

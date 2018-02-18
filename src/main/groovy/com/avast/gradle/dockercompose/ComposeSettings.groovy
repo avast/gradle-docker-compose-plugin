@@ -5,6 +5,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
+import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.internal.os.OperatingSystem
@@ -23,6 +24,7 @@ class ComposeSettings {
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
+    final ServiceInfoCache serviceInfoCache
 
     boolean buildBeforeUp = true
     boolean waitForTcpPorts = true
@@ -68,12 +70,12 @@ class ComposeSettings {
         pullTask.settings = this
         downTask = project.tasks.create(name ? "${name}ComposeDown" : 'composeDown', ComposeDown)
         downTask.settings = this
-        upTask.downTask = downTask
         downForcedTask = project.tasks.create(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced)
         downForcedTask.settings = this
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
+        this.serviceInfoCache = new ServiceInfoCache(this)
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
