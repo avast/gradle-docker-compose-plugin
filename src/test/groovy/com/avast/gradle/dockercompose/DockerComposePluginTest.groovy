@@ -2,6 +2,7 @@ package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
+import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Task
@@ -110,6 +111,7 @@ class DockerComposePluginTest extends Specification {
         then:
         project.tasks.integrationTestComposeUp instanceof ComposeUp
         project.tasks.integrationTestComposeDown instanceof ComposeDown
+        project.tasks.integrationTestComposeDownForced instanceof ComposeDownForced
         project.tasks.integrationTestComposePull instanceof ComposePull
         project.tasks.integrationTestComposeBuild instanceof ComposeBuild
         ComposeUp up = project.tasks.integrationTestComposeUp
