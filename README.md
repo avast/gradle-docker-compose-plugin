@@ -5,7 +5,7 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeUp` task starts the application and waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exposed TCP ports are open (so till the application is ready). It reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
 
-`composeDown` task stops the application and removes the containers, only if 'removeContainers' is set to 'true' (default value).
+`composeDown` task stops the application and removes the containers, only if 'stopContainers' is set to 'true' (default value).
 
 `composeDownForced` task stops the application and removes the containers.
 
