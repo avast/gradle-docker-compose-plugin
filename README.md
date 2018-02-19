@@ -137,7 +137,7 @@ dockerCompose {
 ```
 
 ## Reconnecting
-If you specify `stopContainers` to be `false` then the plugin automatically tries to reconnected to the containers from the previous run
+If you specify `stopContainers` to be `false` then the plugin automatically tries to reconnect to the containers from the previous run
  instead of calling `docker-compose up` again. Thanks to this, the startup can be very fast.
 
 It's very handy in scenarios when you iterate quickly and e.g. don't want to wait for Postgres to start again and again.
