@@ -1,7 +1,9 @@
 package com.avast.gradle.dockercompose.tasks
 
+import groovy.transform.CompileStatic
 import org.gradle.api.tasks.TaskAction
 
+@CompileStatic
 class ComposeDown extends ComposeDownForced {
     ComposeDown() {
         group = 'docker'

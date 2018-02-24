@@ -17,7 +17,7 @@ class ComposeDownForced extends DefaultTask {
     @TaskAction
     void down() {
         settings.serviceInfoCache.clear()
-        settings.composeExecutor.execute('stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *settings.startedServices)
+        settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *settings.startedServices])
         if (settings.removeContainers) {
             if (settings.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
                 String[] args = []
@@ -48,7 +48,7 @@ class ComposeDownForced extends DefaultTask {
                 settings.composeExecutor.execute(args)
             } else {
                 if (!settings.startedServices.empty) {
-                    settings.composeExecutor.execute('rm', '-f', *settings.startedServices)
+                    settings.composeExecutor.execute(*['rm', '-f', *settings.startedServices])
                 } else {
                     settings.composeExecutor.execute('rm', '-f')
                 }

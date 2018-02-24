@@ -1,9 +1,11 @@
 package com.avast.gradle.dockercompose
 
+import groovy.transform.CompileStatic
 import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.Logger
 import org.slf4j.Marker
 
+@CompileStatic
 class NoOpLogger implements Logger {
 
     static Logger INSTANCE = new NoOpLogger()

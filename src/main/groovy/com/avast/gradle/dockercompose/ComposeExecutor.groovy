@@ -27,7 +27,7 @@ class ComposeExecutor {
             }
             e.environment = ex.environment
             def finalArgs = [ex.executable]
-            finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it] })
+            finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
             if (ex.projectName) {
                 finalArgs.addAll(['-p', ex.projectName])
             }
@@ -63,7 +63,7 @@ class ComposeExecutor {
             @Override
             void run() {
                 def os = new OutputStream() {
-                    def buffer = new ArrayList<Byte>()
+                    ArrayList<Byte> buffer = new ArrayList<Byte>()
 
                     @Override
                     void write(int b) throws IOException {

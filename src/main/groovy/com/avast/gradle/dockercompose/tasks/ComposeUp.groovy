@@ -41,7 +41,7 @@ class ComposeUp extends DefaultTask {
         settings.serviceInfoCache.clear()
         wasReconnected = false
         if (settings.buildBeforeUp) {
-            settings.composeExecutor.execute('build', *settings.startedServices)
+            settings.composeExecutor.execute(*['build', *settings.startedServices])
         }
         String[] args = ['up', '-d']
         if (settings.removeOrphans()) {

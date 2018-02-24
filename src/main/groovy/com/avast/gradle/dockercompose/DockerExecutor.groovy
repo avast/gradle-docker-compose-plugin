@@ -50,7 +50,7 @@ class DockerExecutor {
     }
 
     Map<String, Map<String, Object>> getInspections(String... containersIds) {
-        def asString = execute('inspect', *containersIds)
+        def asString = execute(*['inspect', *containersIds])
         logger.debug("Inspections for containers ${containersIds.join(', ')}: $asString")
         Map<String, Object>[] inspections = new Yaml().load(asString)
         def r = inspections.collectEntries { [it.Id, it] }
