@@ -22,6 +22,8 @@ class ComposePull extends DefaultTask {
         if (settings.ignorePullFailure) {
             args += '--ignore-pull-failures'
         }
-        settings.composeExecutor.execute(args, *settings.startedServices)
+        args += settings.pullAdditionalArgs
+        args += settings.startedServices
+        settings.composeExecutor.execute(args)
     }
 }

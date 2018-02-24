@@ -43,6 +43,7 @@ class ComposeDownForced extends DefaultTask {
                     if (settings.removeOrphans()) {
                         args += '--remove-orphans'
                     }
+                    args += settings.downAdditionalArgs
                 }
                 settings.composeExecutor.execute(args)
             } else {

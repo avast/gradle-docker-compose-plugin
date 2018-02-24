@@ -75,7 +75,10 @@ dockerCompose {
     // forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
     // buildBeforeUp = true // performs 'docker-compose build' before calling the 'up' command; default is true
     // ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
+    // buildAdditionalArgs = ['--force-rm']
+    // pullAdditionalArgs = ['--ignore-pull-failures']
     // upAdditionalArgs = ['--no-deps']
+    // downAdditionalArgs = ['--some-switch']
 
     // waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening
     // captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false

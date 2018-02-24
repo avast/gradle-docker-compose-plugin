@@ -41,7 +41,10 @@ class ComposeSettings {
     Map<String, Integer> scale = [:]
     boolean removeOrphans = false
     boolean forceRecreate = false
+    List<String> buildAdditionalArgs = []
+    List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
+    List<String> downAdditionalArgs = []
     String projectName = null
 
     boolean stopContainers = true

@@ -15,6 +15,9 @@ class ComposeBuild extends DefaultTask {
 
     @TaskAction
     void build() {
-        settings.composeExecutor.execute('build', *settings.startedServices)
+        String[] args = ['build']
+        args += settings.buildAdditionalArgs
+        args += settings.startedServices
+        settings.composeExecutor.execute(args)
     }
 }
