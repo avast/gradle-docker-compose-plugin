@@ -27,6 +27,7 @@ class ComposeSettings {
     final ServiceInfoCache serviceInfoCache
 
     boolean buildBeforeUp = true
+    boolean buildBeforePull = true
     boolean waitForTcpPorts = true
     boolean captureContainersOutput = false
     File captureContainersOutputToFile = null
@@ -91,6 +92,7 @@ class ComposeSettings {
     ComposeSettings createNested(String name) {
         def r = new ComposeSettings(project, name)
         r.buildBeforeUp = this.buildBeforeUp
+        r.buildBeforePull = this.buildBeforePull
         r.waitForTcpPorts = this.waitForTcpPorts
         r.captureContainersOutput = this.captureContainersOutput
         r.waitAfterTcpProbeFailure = this.waitAfterTcpProbeFailure

@@ -17,7 +17,7 @@ class ComposePull extends DefaultTask {
 
     @TaskAction
     void pull() {
-        if (settings.buildBeforeUp) {
+        if (settings.buildBeforePull) {
             settings.buildTask.build()
         }
         String[] args = ['pull']
