@@ -134,6 +134,45 @@ class DockerComposePluginTest extends Specification {
             noExceptionThrown()
     }
 
+    def "isRequiredBy does not link input and outputs from task"() {
+        given:
+        def project = ProjectBuilder.builder().build()
+        Task task = project.tasks.create('integrationTest')
+        File tmpFile = File.createTempFile(UUID.randomUUID().toString(), '.tmp')
+        task.inputs.file tmpFile
+
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose.isRequiredBy(task)
+
+        then:
+        project.tasks.composeUp.inputs.files.getFiles() != task.inputs.files.getFiles()
+
+        cleanup:
+        tmpFile.delete()
+    }
+
+    def "isRequiredBy links input and outputs from task when inheritInputAndOutputs is true"() {
+        given:
+        def project = ProjectBuilder.builder().build()
+        Task task = project.tasks.create('integrationTest')
+        File tmpFile = File.createTempFile(UUID.randomUUID().toString(), '.tmp')
+        task.inputs.file tmpFile
+
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            inheritInputAndOutputs = true
+        }
+        project.dockerCompose.isRequiredBy(task)
+
+        then:
+        project.tasks.composeUp.inputs.files.getFiles() == task.inputs.files.getFiles()
+
+        cleanup:
+        tmpFile.delete()
+    }
+
     def "allows to read servicesInfos from another task"() {
         def f = Fixture.withNginx()
         f.project.tasks.create('integrationTest').doLast {
