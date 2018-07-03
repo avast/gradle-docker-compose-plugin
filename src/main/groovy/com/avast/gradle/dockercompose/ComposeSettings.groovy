@@ -63,6 +63,8 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
+    boolean inheritInputAndOutputs = false
+
     ComposeSettings(Project project, String name = '') {
         this.project = project
 
@@ -119,6 +121,16 @@ class ComposeSettings {
     }
 
     void isRequiredBy(Task task) {
+        if (inheritInputAndOutputs) {
+            upTask.inputs.files task.inputs.files
+            downTask.inputs.files task.inputs.files
+            upTask.outputs.upToDateWhen {
+                task
+            }
+            downTask.outputs.upToDateWhen {
+                task
+            }
+        }
         task.dependsOn upTask
         task.finalizedBy downTask
         def ut = upTask // to access private field from closure
