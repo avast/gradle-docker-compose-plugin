@@ -155,8 +155,3 @@ It's very handy in scenarios when you iterate quickly and e.g. don't want to wai
 * Check [ContainerInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ContainerInfo.groovy) to see what you can know about running containers.
 * You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the `DOCKER_HOST` environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
 * If the services executed by `docker-compose` are running on a specific host (different than Docker, like in CirceCI 2.0), then `SERVICES_HOST` environment variable can be used. This value will be used as the hostname where the services are expected to be listening.
-
-# Release notes
-## 0.8.0
-* New parameter `buildBeforePull` that runs `docker-compose build` before `composePull` task. Previously this behaviour 
-was set by `buildBeforeUp`. The `buildBeforePull` parameter is currently used onl for `composeUp` task.
