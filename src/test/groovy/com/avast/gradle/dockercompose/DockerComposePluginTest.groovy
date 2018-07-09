@@ -3,9 +3,9 @@ package com.avast.gradle.dockercompose
 import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
+import com.avast.gradle.dockercompose.tasks.ComposeLogs
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposeUp
-import groovy.ui.SystemOutputInterceptor
 import org.gradle.api.Task
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
@@ -25,6 +25,7 @@ class DockerComposePluginTest extends Specification {
             project.tasks.composeDownForced instanceof ComposeDownForced
             project.tasks.composePull instanceof ComposePull
             project.tasks.composeBuild instanceof ComposeBuild
+            project.tasks.composeLogs instanceof ComposeLogs
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
@@ -43,6 +44,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.nestedComposeDownForced instanceof ComposeDownForced
         project.tasks.nestedComposePull instanceof ComposePull
         project.tasks.nestedComposeBuild instanceof ComposeBuild
+        project.tasks.nestedComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.nestedComposeUp
         up.settings.useComposeFiles == ['test.yml']
     }
@@ -117,6 +119,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.integrationTestComposeDownForced instanceof ComposeDownForced
         project.tasks.integrationTestComposePull instanceof ComposePull
         project.tasks.integrationTestComposeBuild instanceof ComposeBuild
+        project.tasks.integrationTestComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.integrationTestComposeUp
         up.settings.useComposeFiles == ['test.yml']
         task.dependsOn.contains(project.tasks.integrationTestComposeUp)

@@ -45,7 +45,8 @@ class ComposeDownForced extends DefaultTask {
                     }
                     args += settings.downAdditionalArgs
                 }
-                settings.composeExecutor.execute(args)
+                def composeLog = settings.composeLog ? new FileOutputStream(settings.composeLog) : null
+                settings.composeExecutor.executeWithCustomOutput(composeLog, false, args)
             } else {
                 if (!settings.startedServices.empty) {
                     settings.composeExecutor.execute(*['rm', '-f', *settings.startedServices])
