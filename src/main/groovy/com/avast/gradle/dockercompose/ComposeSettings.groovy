@@ -4,6 +4,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
+import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
 import org.gradle.api.Project
@@ -21,6 +22,7 @@ class ComposeSettings {
     final ComposeDownForced downForcedTask
     final ComposeBuild buildTask
     final ComposePull pullTask
+    final ComposePush pushTask
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
@@ -53,6 +55,8 @@ class ComposeSettings {
     boolean removeVolumes = true
 
     boolean ignorePullFailure = false
+    boolean ignorePushFailure = false
+    List<String> pushServices = []
 
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
@@ -75,6 +79,8 @@ class ComposeSettings {
         downTask.settings = this
         downForcedTask = project.tasks.create(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced)
         downForcedTask.settings = this
+        pushTask = project.tasks.create(name ? "${name}ComposePush" : 'composePush', ComposePush)
+        pushTask.settings = this
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
@@ -105,6 +111,9 @@ class ComposeSettings {
         r.removeVolumes = this.removeVolumes
         r.removeOrphans = this.removeOrphans
         r.forceRecreate = this.forceRecreate
+
+        r.ignorePullFailure = this.ignorePullFailure
+        r.ignorePushFailure = this.ignorePushFailure
 
         r.executable = this.executable
         r.environment = new HashMap<>(this.environment)
