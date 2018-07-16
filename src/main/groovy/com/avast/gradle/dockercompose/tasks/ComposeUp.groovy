@@ -180,7 +180,7 @@ class ComposeUp extends DefaultTask {
                         }
                         catch (Exception e) {
                             if (start.plus(settings.waitForTcpPortsTimeout) < Instant.now()) {
-                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.getContainerLogs(containerInfo.containerId)}")
+                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                             }
                             logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
                             sleep(settings.waitAfterTcpProbeFailure.toMillis())
