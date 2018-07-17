@@ -45,7 +45,11 @@ class ComposeDownForced extends DefaultTask {
                     }
                     args += settings.downAdditionalArgs
                 }
-                def composeLog = settings.composeLog ? new FileOutputStream(settings.composeLog) : null
+                def composeLog = null
+                if(settings.composeLogFile) {
+                  settings.composeLogFile.parentFile.mkdirs()
+                  composeLog = new FileOutputStream(settings.composeLogFile)
+                }
                 settings.composeExecutor.executeWithCustomOutput(composeLog, false, args)
             } else {
                 if (!settings.startedServices.empty) {

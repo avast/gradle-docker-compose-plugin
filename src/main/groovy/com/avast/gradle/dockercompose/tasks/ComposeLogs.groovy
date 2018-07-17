@@ -23,6 +23,7 @@ class ComposeLogs extends DefaultTask {
 
     settings.composeExecutor.serviceNames.each { service ->
       println "Extracting container log from service '${service}'"
+      new File(settings.containerLogDir).mkdirs()
       def logStream = new FileOutputStream("${settings.containerLogDir}/${service}.log")
       String[] args = ['logs', '-t', service]
       settings.composeExecutor.executeWithCustomOutput(logStream, false, args)

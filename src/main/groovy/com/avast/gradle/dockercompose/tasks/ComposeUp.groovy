@@ -60,7 +60,11 @@ class ComposeUp extends DefaultTask {
         }
         args += settings.startedServices
         try {
-            def composeLog = settings.composeLog ? new FileOutputStream(settings.composeLog) : null
+            def composeLog = null
+            if(settings.composeLogFile) {
+              settings.composeLogFile.parentFile.mkdirs()
+              composeLog = new FileOutputStream(settings.composeLogFile)
+            }
             settings.composeExecutor.executeWithCustomOutput(composeLog, false, args)
             startCapturing()
             def servicesToLoad = settings.startedServices ?: settings.composeExecutor.getServiceNames()
