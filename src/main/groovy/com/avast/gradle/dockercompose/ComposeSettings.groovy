@@ -13,6 +13,8 @@ import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
 import org.gradle.util.VersionNumber
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Duration
 
 class ComposeSettings {
@@ -46,7 +48,7 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
-    String projectName = null
+    String projectName
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -80,6 +82,9 @@ class ComposeSettings {
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
+
+        def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
+        this.projectName = fullPathMd5 + '_' + project.name + '_' + name
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
