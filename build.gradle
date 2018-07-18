@@ -4,9 +4,9 @@ buildscript {
         maven { url 'https://plugins.gradle.org/m2/' }
     }
     dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.9.10'
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.17.0'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
     }
 }
 
@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile 'org.yaml:snakeyaml:1.19'
+    compile 'org.yaml:snakeyaml:1.21'
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:1.1-groovy-2.4') {
         // Conflicting module versions: 2.4.7 vs. 2.4.1
