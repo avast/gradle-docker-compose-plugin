@@ -91,7 +91,7 @@ dockerCompose {
     // removeVolumes = true
     // removeOrphans = false // removes containers for services not defined in the Compose file
     
-    // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to directory name)
+    // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
     // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
     // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
