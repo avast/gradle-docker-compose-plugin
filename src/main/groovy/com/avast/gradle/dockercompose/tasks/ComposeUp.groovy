@@ -62,6 +62,7 @@ class ComposeUp extends DefaultTask {
         try {
             def composeLog = null
             if(settings.composeLogFile) {
+              logger.debug "Logging docker-compose up to: ${settings.composeLogFile}"
               settings.composeLogFile.parentFile.mkdirs()
               composeLog = new FileOutputStream(settings.composeLogFile)
             }
