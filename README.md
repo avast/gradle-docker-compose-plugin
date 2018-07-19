@@ -13,6 +13,8 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeBuild` task builds the services of the application.
 
+`composePush` task pushes images for services to their respective `registry/repository`
+
 ## Quick start
 ```gradle
 buildscript {
@@ -76,6 +78,8 @@ dockerCompose {
     // buildBeforeUp = true // performs 'docker-compose build' before calling the 'up' command; default is true
     // buildBeforePull = true // performs 'docker-compose build' before calling the 'pull' command; default is true
     // ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
+    // ignorePushFailure = false // when set to true, pass '--ignore-push-failure' to 'docker-compose push'
+    // pushServices = [] // which services should be pushed, if not defined then upon `composePush` task all defined services in compose file will be pushed (default behaviour)
     // buildAdditionalArgs = ['--force-rm']
     // pullAdditionalArgs = ['--ignore-pull-failures']
     // upAdditionalArgs = ['--no-deps']
@@ -119,7 +123,7 @@ test.doFirst {
 ```
 
 ## Nested configurations
-It is possible to create a new set of `ComposeUp`/`ComposeBuild`/`ComposePull`/`ComposeDown` tasks using following syntax:
+It is possible to create a new set of `ComposeUp`/`ComposeBuild`/`ComposePull`/`ComposeDown`/`ComposeDownForced`/`ComposePush` tasks using following syntax:
 ```gradle
 dockerCompose {
     // settings as usual
@@ -129,7 +133,7 @@ dockerCompose {
     }
 }
 ```
-* It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull` and `myNestedComposeDown` tasks.
+* It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull`, `myNestedComposeDown`, `myNestedComposeDownForced` and `myNestedComposePush` tasks.
 * It's possible to use all the settings as in the main `dockerCompose` block.
 * Configuration of the nested settings defaults to the main `dockerCompose` settings.
 

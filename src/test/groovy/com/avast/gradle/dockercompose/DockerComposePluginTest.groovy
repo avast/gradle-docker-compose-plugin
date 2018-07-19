@@ -4,8 +4,8 @@ import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposePull
+import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
-import groovy.ui.SystemOutputInterceptor
 import org.gradle.api.Task
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
@@ -24,6 +24,7 @@ class DockerComposePluginTest extends Specification {
             project.tasks.composeDown instanceof ComposeDown
             project.tasks.composeDownForced instanceof ComposeDownForced
             project.tasks.composePull instanceof ComposePull
+            project.tasks.composePush instanceof ComposePush
             project.tasks.composeBuild instanceof ComposeBuild
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
@@ -42,6 +43,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.nestedComposeDown instanceof ComposeDown
         project.tasks.nestedComposeDownForced instanceof ComposeDownForced
         project.tasks.nestedComposePull instanceof ComposePull
+        project.tasks.composePush instanceof ComposePush
         project.tasks.nestedComposeBuild instanceof ComposeBuild
         ComposeUp up = project.tasks.nestedComposeUp
         up.settings.useComposeFiles == ['test.yml']
@@ -69,11 +71,17 @@ class DockerComposePluginTest extends Specification {
             nested {
                 useComposeFiles = ['test.yml']
                 removeVolumes = false
+                ignorePullFailure = true
+                ignorePushFailure = true
             }
         }
         then:
         project.dockerCompose.nested.removeVolumes == false
         project.dockerCompose.removeVolumes == true
+        project.dockerCompose.ignorePullFailure == false
+        project.dockerCompose.ignorePushFailure == false
+        project.dockerCompose.nested.ignorePullFailure == true
+        project.dockerCompose.nested.ignorePushFailure == true
     }
 
     def "isRequiredBy() adds dependencies"() {
@@ -116,6 +124,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.integrationTestComposeDown instanceof ComposeDown
         project.tasks.integrationTestComposeDownForced instanceof ComposeDownForced
         project.tasks.integrationTestComposePull instanceof ComposePull
+        project.tasks.integrationTestComposePush instanceof ComposePush
         project.tasks.integrationTestComposeBuild instanceof ComposeBuild
         ComposeUp up = project.tasks.integrationTestComposeUp
         up.settings.useComposeFiles == ['test.yml']
