@@ -137,6 +137,13 @@ dockerCompose {
 * It's possible to use all the settings as in the main `dockerCompose` block.
 * Configuration of the nested settings defaults to the main `dockerCompose` settings.
 
+When exposing service info from `myNestedComposeUp` task into your task you should use following syntax:
+```
+test.doFirst {
+    dockerCompose.myNested.exposeAsEnvironment(test)  
+}
+```
+
 It's also possible to use this simplified syntax:
 ```gradle
 dockerCompose {
