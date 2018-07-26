@@ -61,10 +61,10 @@ class ComposeUp extends DefaultTask {
         args += settings.startedServices
         try {
             def composeLog = null
-            if(settings.composeLogFile) {
-              logger.debug "Logging docker-compose up to: ${settings.composeLogFile}"
-              settings.composeLogFile.parentFile.mkdirs()
-              composeLog = new FileOutputStream(settings.composeLogFile)
+            if(settings.composeLogToFile) {
+              logger.debug "Logging docker-compose up to: ${settings.composeLogToFile}"
+              settings.composeLogToFile.parentFile.mkdirs()
+              composeLog = new FileOutputStream(settings.composeLogToFile)
             }
             settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             startCapturing()

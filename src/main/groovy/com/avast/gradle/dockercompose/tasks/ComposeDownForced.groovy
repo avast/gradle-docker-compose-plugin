@@ -46,10 +46,10 @@ class ComposeDownForced extends DefaultTask {
                     args += settings.downAdditionalArgs
                 }
                 def composeLog = null
-                if(settings.composeLogFile) {
-                  logger.debug "Logging docker-compose down to: ${settings.composeLogFile}"
-                  settings.composeLogFile.parentFile.mkdirs()
-                  composeLog = new FileOutputStream(settings.composeLogFile)
+                if(settings.composeLogToFile) {
+                  logger.debug "Logging docker-compose down to: ${settings.composeLogToFile}"
+                  settings.composeLogToFile.parentFile.mkdirs()
+                  composeLog = new FileOutputStream(settings.composeLogToFile)
                 }
                 settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             } else {

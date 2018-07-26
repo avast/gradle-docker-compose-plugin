@@ -65,8 +65,8 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
-    File composeLogFile = null
-    String containerLogDir = null
+    File composeLogToFile = null
+    String containerLogToDir = null
 
     ComposeSettings(Project project, String name = '') {
         this.project = project
@@ -186,12 +186,12 @@ class ComposeSettings {
         captureContainersOutputToFile = file
     }
 
-    void setComposeLogFile(CharSequence path) {
-        composeLogFile = project.file(path)
+    void setComposeLogToFile(CharSequence path) {
+        composeLogToFile = project.file(path)
     }
 
-    void setComposeLogFile(File file) {
-        composeLogFile = file
+    void setComposeLogToFile(File file) {
+        composeLogToFile = file
     }
 
     boolean removeOrphans() {
