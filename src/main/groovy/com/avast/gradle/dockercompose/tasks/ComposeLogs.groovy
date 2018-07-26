@@ -26,7 +26,7 @@ class ComposeLogs extends DefaultTask {
       new File(settings.containerLogDir).mkdirs()
       def logStream = new FileOutputStream("${settings.containerLogDir}/${service}.log")
       String[] args = ['logs', '-t', service]
-      settings.composeExecutor.executeWithCustomOutput(logStream, false, args)
+      settings.composeExecutor.executeWithCustomOutputWithExitValue(logStream, args)
     }
   }
 }

@@ -19,7 +19,15 @@ class ComposeExecutor {
         this.logger = settings.project.logger
     }
 
-    void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
+    void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
+        executeWithCustomOutput(os, false, args)
+    }
+
+    void executeWithCustomOutputNoExitValue(OutputStream os, String... args) {
+        executeWithCustomOutput(os, true, args)
+    }
+
+    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
         def ex = this.settings
         project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
