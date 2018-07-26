@@ -10,7 +10,7 @@ class ComposeLogs extends DefaultTask {
 
   ComposeLogs() {
     group = 'docker'
-    description = 'Displays log output from services in containers of docker-compose project'
+    description = 'Records log output from services in containers of docker-compose project'
   }
 
   @TaskAction
