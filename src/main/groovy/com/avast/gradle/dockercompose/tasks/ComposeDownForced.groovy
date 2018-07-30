@@ -45,7 +45,13 @@ class ComposeDownForced extends DefaultTask {
                     }
                     args += settings.downAdditionalArgs
                 }
-                settings.composeExecutor.execute(args)
+                def composeLog = null
+                if(settings.composeLogToFile) {
+                  logger.debug "Logging docker-compose down to: ${settings.composeLogToFile}"
+                  settings.composeLogToFile.parentFile.mkdirs()
+                  composeLog = new FileOutputStream(settings.composeLogToFile)
+                }
+                settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             } else {
                 if (!settings.startedServices.empty) {
                     settings.composeExecutor.execute(*['rm', '-f', *settings.startedServices])

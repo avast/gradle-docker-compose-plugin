@@ -3,6 +3,7 @@ package com.avast.gradle.dockercompose
 import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
+import com.avast.gradle.dockercompose.tasks.ComposeLogs
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
@@ -24,6 +25,7 @@ class ComposeSettings {
     final ComposeDownForced downForcedTask
     final ComposeBuild buildTask
     final ComposePull pullTask
+    final ComposeLogs logsTask
     final ComposePush pushTask
     final Project project
     final DockerExecutor dockerExecutor
@@ -69,6 +71,9 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
+    File composeLogToFile = null
+    String containerLogToDir = null
+
     ComposeSettings(Project project, String name = '') {
         this.project = project
 
@@ -82,6 +87,8 @@ class ComposeSettings {
         downTask.settings = this
         downForcedTask = project.tasks.create(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced)
         downForcedTask.settings = this
+        logsTask = project.tasks.create(name ? "${name}ComposeLogs" : 'composeLogs', ComposeLogs)
+        logsTask.settings = this
         pushTask = project.tasks.create(name ? "${name}ComposePush" : 'composePush', ComposePush)
         pushTask.settings = this
 
@@ -191,6 +198,14 @@ class ComposeSettings {
 
     void setCaptureContainersOutputToFile(File file) {
         captureContainersOutputToFile = file
+    }
+
+    void setComposeLogToFile(CharSequence path) {
+        composeLogToFile = project.file(path)
+    }
+
+    void setComposeLogToFile(File file) {
+        composeLogToFile = file
     }
 
     boolean removeOrphans() {

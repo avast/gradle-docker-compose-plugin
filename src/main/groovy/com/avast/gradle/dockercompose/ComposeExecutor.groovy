@@ -19,6 +19,14 @@ class ComposeExecutor {
         this.logger = settings.project.logger
     }
 
+    void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
+        executeWithCustomOutput(os, false, args)
+    }
+
+    void executeWithCustomOutputNoExitValue(OutputStream os, String... args) {
+        executeWithCustomOutput(os, true, args)
+    }
+
     private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
         def ex = this.settings
         project.exec { ExecSpec e ->
@@ -33,7 +41,10 @@ class ComposeExecutor {
             }
             finalArgs.addAll(args)
             e.commandLine finalArgs
-            e.standardOutput = os
+            if( null != os ) {
+                e.standardOutput = os
+                e.errorOutput = os
+            }
             e.ignoreExitValue = ignoreExitValue
         }
     }
