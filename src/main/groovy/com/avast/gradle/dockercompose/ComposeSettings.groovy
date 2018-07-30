@@ -35,14 +35,17 @@ class ComposeSettings {
     boolean buildBeforeUp = true
     boolean buildBeforePull = true
     boolean waitForTcpPorts = true
-    boolean captureContainersOutput = false
-    File captureContainersOutputToFile = null
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
     Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
     Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
     List<String> useComposeFiles = []
+
+    boolean captureContainersOutput = false
+    File captureContainersOutputToFile = null
+    File composeLogToFile = null
+    File containerLogToDir
 
     List<String> startedServices = []
     Map<String, Integer> scale = [:]
@@ -71,9 +74,6 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
-    File composeLogToFile = null
-    String containerLogToDir = null
-
     ComposeSettings(Project project, String name = '') {
         this.project = project
 
@@ -98,6 +98,8 @@ class ComposeSettings {
 
         def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
         this.projectName = fullPathMd5 + '_' + project.name + '_' + name
+
+        this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible

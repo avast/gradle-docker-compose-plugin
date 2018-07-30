@@ -13,7 +13,9 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeBuild` task builds the services of the application.
 
-`composePush` task pushes images for services to their respective `registry/repository`
+`composePush` task pushes images for services to their respective `registry/repository`.
+
+`composeLogs` task stores logs from all containers to files in `containerLogToDir` directory.
 
 ## Quick start
 ```gradle
@@ -71,36 +73,38 @@ apply plugin: 'docker-compose'
 dockerCompose.isRequiredBy(test) // hooks 'dependsOn composeUp' and 'finalizedBy composeDown', and exposes environment variables and system properties (if possible)
 
 dockerCompose {
-    // useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'; default is empty
-    // startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
-    // scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
-    // forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
-    // buildBeforeUp = true // performs 'docker-compose build' before calling the 'up' command; default is true
-    // buildBeforePull = true // performs 'docker-compose build' before calling the 'pull' command; default is true
-    // ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
-    // ignorePushFailure = false // when set to true, pass '--ignore-push-failure' to 'docker-compose push'
-    // pushServices = [] // which services should be pushed, if not defined then upon `composePush` task all defined services in compose file will be pushed (default behaviour)
-    // buildAdditionalArgs = ['--force-rm']
-    // pullAdditionalArgs = ['--ignore-pull-failures']
-    // upAdditionalArgs = ['--no-deps']
-    // downAdditionalArgs = ['--some-switch']
+    useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml'] // like 'docker-compose -f <file>'; default is empty
+    startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
+    scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
+    forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
+    buildBeforeUp = true // performs 'docker-compose build' before calling the 'up' command; default is true
+    buildBeforePull = true // performs 'docker-compose build' before calling the 'pull' command; default is true
+    ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
+    ignorePushFailure = false // when set to true, pass '--ignore-push-failure' to 'docker-compose push'
+    pushServices = [] // which services should be pushed, if not defined then upon `composePush` task all defined services in compose file will be pushed (default behaviour)
+    buildAdditionalArgs = ['--force-rm']
+    pullAdditionalArgs = ['--ignore-pull-failures']
+    upAdditionalArgs = ['--no-deps']
+    downAdditionalArgs = ['--some-switch']
 
-    // waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening
-    // captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
-    // captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
+    waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening
+    captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
+    captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
+    composeLogToFile = project.file('build/my-logs.txt') // redirect output of composeUp and composeDown tasks to this file; default is null (ouput is not redirected)
+    containerLogToDir = project.file('build/logs') // directory where composeLogs task stores output of the containers; default: build/containers-logs
 
-    // stopContainers = true // doesn't call `docker-compose down` - see below the paragraph about reconnecting
-    // removeContainers = true
-    // removeImages = "None" // Other accepted values are: "All" and "Local"
-    // removeVolumes = true
-    // removeOrphans = false // removes containers for services not defined in the Compose file
+    stopContainers = true // doesn't call `docker-compose down` - see below the paragraph about reconnecting
+    removeContainers = true
+    removeImages = "None" // Other accepted values are: "All" and "Local"
+    removeVolumes = true
+    removeOrphans = false // removes containers for services not defined in the Compose file
     
-    // projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
-    // executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
-    // dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
-    // dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
-    // dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
-    // environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
+    projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
+    executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
+    dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
+    dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
+    dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
+    environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 
 test.doFirst {

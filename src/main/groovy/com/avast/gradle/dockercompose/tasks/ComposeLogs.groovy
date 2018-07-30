@@ -10,21 +10,15 @@ class ComposeLogs extends DefaultTask {
 
   ComposeLogs() {
     group = 'docker'
-    description = 'Records log output from services in containers of docker-compose project'
+    description = 'Stores log output from services in containers of docker-compose project'
   }
 
   @TaskAction
   void logs() {
-
-    if( !settings.containerLogToDir ) {
-      println 'Not recording container logs: containerLogToDir not specified.'
-      return
-    }
-
     settings.composeExecutor.serviceNames.each { service ->
       println "Extracting container log from service '${service}'"
-      new File(settings.containerLogToDir).mkdirs()
-      def logStream = new FileOutputStream("${settings.containerLogToDir}/${service}.log")
+      settings.containerLogToDir.mkdirs()
+      def logStream = new FileOutputStream("${settings.containerLogToDir.absolutePath}/${service}.log")
       String[] args = ['logs', '-t', service]
       settings.composeExecutor.executeWithCustomOutputWithExitValue(logStream, args)
     }
