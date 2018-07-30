@@ -1,6 +1,5 @@
 package com.avast.gradle.dockercompose
 
-import spock.lang.Ignore
 import spock.lang.Specification
 
 class DockerExecutorTest extends Specification {
@@ -39,6 +38,23 @@ class DockerExecutorTest extends Specification {
         output.contains('Hello from Docker')
         cleanup:
         f.project.tasks.composeDown.down()
+        f.close()
+    }
+
+    def "expose service info from nested task"() {
+        def f = Fixture.withNginx()
+        f.project.plugins.apply 'java'
+        f.project.dockerCompose {
+            nested { }
+        }
+        when:
+        f.project.tasks.nestedComposeUp.up()
+        f.extension.nested.exposeAsSystemProperties(f.project.tasks.test)
+        then:
+        f.project.tasks.test.properties.systemProperties.containsKey('web.host')
+        f.project.tasks.test.properties.systemProperties.containsKey('web.tcp.80')
+        cleanup:
+        f.project.tasks.nestedComposeDown.down()
         f.close()
     }
 }

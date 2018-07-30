@@ -5,6 +5,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
 import com.avast.gradle.dockercompose.tasks.ComposeLogs
 import com.avast.gradle.dockercompose.tasks.ComposePull
+import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
 import org.gradle.api.Project
@@ -14,6 +15,8 @@ import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
 import org.gradle.util.VersionNumber
 
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
 import java.time.Duration
 
 class ComposeSettings {
@@ -23,6 +26,7 @@ class ComposeSettings {
     final ComposeBuild buildTask
     final ComposePull pullTask
     final ComposeLogs logsTask
+    final ComposePush pushTask
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
@@ -48,7 +52,7 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
-    String projectName = null
+    String projectName
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -56,6 +60,8 @@ class ComposeSettings {
     boolean removeVolumes = true
 
     boolean ignorePullFailure = false
+    boolean ignorePushFailure = false
+    List<String> pushServices = []
 
     String executable = 'docker-compose'
     Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
@@ -83,10 +89,15 @@ class ComposeSettings {
         downForcedTask.settings = this
         logsTask = project.tasks.create(name ? "${name}ComposeLogs" : 'composeLogs', ComposeLogs)
         logsTask.settings = this
+        pushTask = project.tasks.create(name ? "${name}ComposePush" : 'composePush', ComposePush)
+        pushTask.settings = this
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
+
+        def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
+        this.projectName = fullPathMd5 + '_' + project.name + '_' + name
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
@@ -114,6 +125,9 @@ class ComposeSettings {
         r.removeVolumes = this.removeVolumes
         r.removeOrphans = this.removeOrphans
         r.forceRecreate = this.forceRecreate
+
+        r.ignorePullFailure = this.ignorePullFailure
+        r.ignorePushFailure = this.ignorePushFailure
 
         r.executable = this.executable
         r.environment = new HashMap<>(this.environment)
