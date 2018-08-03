@@ -90,23 +90,6 @@ class DockerExecutor {
         execute('logs', '--follow=false', containerId)
     }
 
-    void validateInspection(String serviceName, Map<String, Object> inspection) {
-        ServiceHost serviceHost
-        try {
-            serviceHost = getContainerHost(inspection, serviceName, NoOpLogger.INSTANCE)
-        } catch (Exception e) {
-            throw new RuntimeException("Error when getting service host of service $serviceName: ${e.message}\n${inspection.toString()}", e)
-        }
-        if (serviceHost.type != ServiceHostType.Host) {
-            Map<String, Object> portsFromConfig = inspection.Config.ExposedPorts ?: [:]
-            Map<String, Object> portsFromNetwork = inspection.NetworkSettings.Ports
-            def missingPorts = portsFromConfig.keySet().findAll { !portsFromNetwork.containsKey(it) }
-            if (!missingPorts.empty) {
-                throw new RuntimeException("These ports of service $serviceName are declared as exposed but cannot be found in NetworkSettings: ${missingPorts.join(', ')}\\n${inspection.toString()}")
-            }
-        }
-    }
-
     ServiceHost getContainerHost(Map<String, Object> inspection, String serviceName, Logger logger = this.logger) {
         String servicesHost = settings.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
