@@ -39,6 +39,13 @@ dependencies {
     }
 }
 
+test {
+    testLogging {
+        events 'failed'
+        exceptionFormat 'full'
+    }
+}
+
 task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
     classifier = 'sources'
