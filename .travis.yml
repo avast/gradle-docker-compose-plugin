@@ -1,25 +1,23 @@
-language: generic
-
+language: groovy
 sudo: required
 dist: trusty
+services:
+  - docker
 env:
   - DOCKER_VERSION=18.06.1 DOCKER_PACKAGE_VERSION=18.06.1~ce~3-0~ubuntu DOCKER_COMPOSE_VERSION=1.22.0
 
-before_cache:
-  - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
-cache:
-  directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-    - $HOME/.m2
-
 before_install:
   - sudo apt-get -y --force-yes install docker-ce=$DOCKER_PACKAGE_VERSION
-  # Build image with building environment
-  - sudo docker build --build-arg DOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --tag=build-image .
-
-script:
-  - sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock build-image test -PDOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --info --no-daemon
+  - sudo curl -L https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+  - sudo chmod +x /usr/local/bin/docker-compose
 
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/gradle-docker-compose-plugin" && test $DOCKER_VERSION == "18.03.1" && test $DOCKER_COMPOSE_VERSION == "1.22.0" && sudo docker run -v $(pwd):/build -v $HOME/.m2:/root/.m2 -v $HOME/.gradle:/root/.gradle -v /var/run/docker.sock:/var/run/docker.sock -e "BINTRAY_USER=$BINTRAY_USER" -e "BINTRAY_KEY=$BINTRAY_KEY" -e "GRADLE_PORTAL_KEY=$GRADLE_PORTAL_KEY" -e "GRADLE_PORTAL_SECRET=$GRADLE_PORTAL_SECRET" build-image bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info --no-daemon
+  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/gradle-docker-compose-plugin" && test $DOCKER_VERSION == "18.03.1" && test $DOCKER_COMPOSE_VERSION == "1.22.0" && ./gradlew bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info --no-daemon
+
+before_cache:
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+cache:
+  directories:
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
+  - $HOME/.m2
