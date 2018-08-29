@@ -9,7 +9,7 @@ class CustomComposeFilesTest extends Specification {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'original.yml') << '''
             web:
-                image: nginx
+                image: nginx:stable
                 ports:
                   - 80
         '''
@@ -47,14 +47,14 @@ class CustomComposeFilesTest extends Specification {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
             web:
-                image: nginx
+                image: nginx:stable
         '''
         new File(projectDir, 'docker-compose.override.yml') << '''
             web:
                 ports:
                   - 80
             devweb:
-                image: nginx
+                image: nginx:stable
                 ports:
                   - 80
         '''
@@ -82,14 +82,14 @@ class CustomComposeFilesTest extends Specification {
         def projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
             web:
-                image: nginx
+                image: nginx:stable
         '''
         new File(projectDir, 'docker-compose.override.yml') << '''
             web:
                 ports:
                   - 80
             devweb:
-                image: nginx
+                image: nginx:stable
                 ports:
                   - 80
         '''

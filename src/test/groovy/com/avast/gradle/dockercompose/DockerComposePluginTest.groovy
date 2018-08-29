@@ -232,14 +232,14 @@ class DockerComposePluginTest extends Specification {
             // test it for both compose file version 1 and 2
             composeFileContent << ['''
             web:
-                image: nginx
+                image: nginx:stable
                 ports:
                   - 80
         ''', '''
             version: '2'
             services:
                 web:
-                    image: nginx
+                    image: nginx:stable
                     ports:
                       - 80
         ''']
@@ -254,7 +254,7 @@ class DockerComposePluginTest extends Specification {
             version: '2'
             services:
                 web:
-                    image: nginx
+                    image: nginx:stable
                     network_mode: host
                     ports:
                       - 80
@@ -277,7 +277,7 @@ class DockerComposePluginTest extends Specification {
     def "docker-compose substitutes environment variables"() {
         def f = Fixture.custom('''
             web:
-                image: nginx
+                image: nginx:stable
                 ports:
                   - $MY_WEB_PORT
         ''')
@@ -378,7 +378,7 @@ class DockerComposePluginTest extends Specification {
         composeFileContent << ['''
             web:
                 container_name: custom_container_name
-                image: nginx
+                image: nginx:stable
                 ports:
                   - 80
         ''', '''
@@ -386,7 +386,7 @@ class DockerComposePluginTest extends Specification {
             services:
                 web:
                     container_name: custom_container_name
-                    image: nginx
+                    image: nginx:stable
                     ports:
                       - 80
         ''']

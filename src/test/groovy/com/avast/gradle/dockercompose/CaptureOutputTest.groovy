@@ -11,7 +11,7 @@ class CaptureOutputTest extends Specification {
 
     private String composeFileContent = '''
             web:
-                image: nginx
+                image: nginx:stable
                 command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
                 ports:
                   - 80
