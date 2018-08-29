@@ -20,14 +20,14 @@ class ComposeExecutor {
     }
 
     void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
-        executeWithCustomOutput(os, false, args)
+        executeWithCustomOutput(os, false, true, args)
     }
 
     void executeWithCustomOutputNoExitValue(OutputStream os, String... args) {
-        executeWithCustomOutput(os, true, args)
+        executeWithCustomOutput(os, true, true, args)
     }
 
-    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
+    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, String... args) {
         def ex = this.settings
         def er = project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
@@ -35,6 +35,9 @@ class ComposeExecutor {
             }
             e.environment = ex.environment
             def finalArgs = [ex.executable]
+            if (noAnsi && version >= VersionNumber.parse("1.16.0")) {
+                finalArgs.add('--no-ansi')
+            }
             finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
             if (ex.projectName) {
                 finalArgs.addAll(['-p', ex.projectName])
@@ -55,7 +58,14 @@ class ComposeExecutor {
 
     String execute(String... args) {
         new ByteArrayOutputStream().withStream { os ->
-            executeWithCustomOutput(os, false, args)
+            executeWithCustomOutput(os, false, true, args)
+            os.toString().trim()
+        }
+    }
+
+    private String executeWithAnsi(String... args) {
+        new ByteArrayOutputStream().withStream { os ->
+            executeWithCustomOutput(os, false, false, args)
             os.toString().trim()
         }
     }
@@ -64,7 +74,7 @@ class ComposeExecutor {
 
     VersionNumber getVersion() {
         if (cachedVersion) return cachedVersion
-        cachedVersion = VersionNumber.parse(execute('version', '--short'))
+        cachedVersion = VersionNumber.parse(executeWithAnsi('version', '--short'))
     }
 
     Iterable<String> getContainerIds(String serviceName) {
@@ -95,7 +105,7 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, true, 'logs', '-f', '--no-color')
+                executeWithCustomOutput(os, true, true, 'logs', '-f', '--no-color')
             }
         })
         t.daemon = true
