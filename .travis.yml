@@ -12,7 +12,7 @@ before_install:
   - sudo chmod +x /usr/local/bin/docker-compose
 
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/gradle-docker-compose-plugin" && test $DOCKER_VERSION == "18.03.1" && test $DOCKER_COMPOSE_VERSION == "1.22.0" && ./gradlew bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info --no-daemon
+  - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/gradle-docker-compose-plugin" && test $DOCKER_VERSION == "18.06.1" && test $DOCKER_COMPOSE_VERSION == "1.22.0" && ./gradlew bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info --no-daemon
 
 before_cache:
 - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
