@@ -49,7 +49,7 @@ class ComposeDownForced extends DefaultTask {
                 if(settings.composeLogToFile) {
                   logger.debug "Logging docker-compose down to: ${settings.composeLogToFile}"
                   settings.composeLogToFile.parentFile.mkdirs()
-                  composeLog = new FileOutputStream(settings.composeLogToFile)
+                  composeLog = new FileOutputStream(settings.composeLogToFile, true)
                 }
                 settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             } else {
