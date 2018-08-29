@@ -1,8 +1,27 @@
 package com.avast.gradle.dockercompose
 
+import org.gradle.process.ExecSpec
 import spock.lang.Specification
 
 class DockerExecutorTest extends Specification {
+
+    def "executes without error"() {
+        def f = Fixture.plain()
+        when:
+        def output = new ByteArrayOutputStream().withStream { os ->
+            f.project.exec { ExecSpec e ->
+                e.environment = f.extension.environment
+                def finalArgs = [f.extension.dockerExecutable]
+                finalArgs.addAll(['ps'])
+                e.commandLine finalArgs
+                e.standardOutput os
+                e.ignoreExitValue
+            }
+            os.toString().trim()
+        }
+        then:
+        !output.toLowerCase().contains('error')
+    }
 
     def "reads Docker platform"() {
         def f = Fixture.plain()
