@@ -29,28 +29,27 @@ class ComposeExecutor {
 
     private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
         def ex = this.settings
-        new ByteArrayOutputStream().withStream { dos ->
-            def cos = os ?: dos
-            def er = project.exec { ExecSpec e ->
-                if (settings.dockerComposeWorkingDirectory) {
-                    e.setWorkingDir(settings.dockerComposeWorkingDirectory)
-                }
-                e.environment = ex.environment
-                def finalArgs = [ex.executable]
-                finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
-                if (ex.projectName) {
-                    finalArgs.addAll(['-p', ex.projectName])
-                }
-                finalArgs.addAll(args)
-                e.commandLine finalArgs
-                e.standardOutput = cos
-                e.errorOutput = cos
-                e.ignoreExitValue = true
+        def er = project.exec { ExecSpec e ->
+            if (settings.dockerComposeWorkingDirectory) {
+                e.setWorkingDir(settings.dockerComposeWorkingDirectory)
             }
-            if (!ignoreExitValue && er.exitValue != 0) {
-                def stdout = cos.toString().trim()
-                throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable}, stdout: $stdout")
+            e.environment = ex.environment
+            def finalArgs = [ex.executable]
+            finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
+            if (ex.projectName) {
+                finalArgs.addAll(['-p', ex.projectName])
             }
+            finalArgs.addAll(args)
+            e.commandLine finalArgs
+            if (os != null) {
+                e.standardOutput = os
+                e.errorOutput = os
+            }
+            e.ignoreExitValue = true
+        }
+        if (!ignoreExitValue && er.exitValue != 0) {
+            def stdout = os != null ? os.toString().trim() : "N/A"
+            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable}, stdout: $stdout")
         }
     }
 
