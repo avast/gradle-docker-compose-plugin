@@ -31,6 +31,23 @@ class DockerComposePluginTest extends Specification {
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
+    def "allows to define extra properties"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            ext.foo = "bar"
+            ext {
+                bar = "foo"
+            }
+            environment.put "FOO_SETTING", project.rootProject.name
+        }
+        then:
+        project.dockerCompose.foo == "bar"
+        project.dockerCompose.bar == "foo"
+        project.dockerCompose.ext
+    }
+
     def "add tasks of nested settings"() {
         def project = ProjectBuilder.builder().build()
         when:

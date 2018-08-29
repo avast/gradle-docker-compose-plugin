@@ -19,10 +19,11 @@ class ComposeExtension extends ComposeSettings {
         if (s) {
             return s
         }
-        throw new MissingPropertyException("'$name' is not property nor nested settings name")
+        throw new MissingPropertyException(name, getClass())
     }
 
     def methodMissing(String name, def args) {
+        if (name == "ext") throw new MissingMethodException(name, getClass(), args)
         // If the method name is 'isRequiredByXXX' then the name of nested configuration will be XXX
         // and we will call isRequiredBy(XXX) for the newly created nested configuration.
         // The method must have one parameter that is path to the Docker Compose file.
