@@ -11,8 +11,8 @@ class DockerExecutorTest extends Specification {
         def output = new ByteArrayOutputStream().withStream { os ->
             f.project.exec { ExecSpec e ->
                 e.environment = f.extension.environment
-                def finalArgs = [f.extension.executable]
-                finalArgs.addAll(['version'])
+                def finalArgs = [f.extension.dockerExecutable]
+                finalArgs.addAll(['info'])
                 e.commandLine finalArgs
                 e.standardOutput os
                 e.ignoreExitValue = true
