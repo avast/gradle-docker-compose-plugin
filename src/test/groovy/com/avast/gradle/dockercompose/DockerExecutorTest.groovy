@@ -20,7 +20,7 @@ class DockerExecutorTest extends Specification {
             os.toString().trim()
         }
         then:
-        !output.toLowerCase().contains('error')
+        !output
     }
 
     def "reads Docker platform"() {
