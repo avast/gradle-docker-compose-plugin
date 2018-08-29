@@ -3,7 +3,7 @@ language: generic
 sudo: required
 dist: trusty
 env:
-  - DOCKER_VERSION=18.03.1 DOCKER_PACKAGE_VERSION=$DOCKER_VERSION~ce-0~ubuntu DOCKER_COMPOSE_VERSION=1.22.0
+  - DOCKER_VERSION=18.06.1 DOCKER_PACKAGE_VERSION=18.06.1~ce-3~ubuntu DOCKER_COMPOSE_VERSION=1.22.0
 
 before_cache:
   - rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
@@ -14,7 +14,6 @@ cache:
     - $HOME/.m2
 
 before_install:
-  - curl -sSL https://get.docker.com/ | sudo sh
   - sudo apt-get -y --force-yes install docker-ce=$DOCKER_PACKAGE_VERSION
   # Build image with building environment
   - sudo docker build --build-arg DOCKER_COMPOSE_VERSION=$DOCKER_COMPOSE_VERSION --tag=build-image .
