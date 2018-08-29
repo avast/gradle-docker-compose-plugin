@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile 'org.yaml:snakeyaml:1.21'
+    compile 'org.yaml:snakeyaml:1.23'
     testCompile gradleTestKit()
     testCompile ('org.spockframework:spock-core:1.1-groovy-2.4') {
         // Conflicting module versions: 2.4.7 vs. 2.4.1
