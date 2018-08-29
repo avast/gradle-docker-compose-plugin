@@ -12,10 +12,10 @@ class DockerExecutorTest extends Specification {
             f.project.exec { ExecSpec e ->
                 e.environment = f.extension.environment
                 def finalArgs = [f.extension.executable]
-                finalArgs.addAll(['ps'])
+                finalArgs.addAll(['version'])
                 e.commandLine finalArgs
                 e.standardOutput os
-                e.ignoreExitValue
+                e.ignoreExitValue = true
             }
             os.toString().trim()
         }
