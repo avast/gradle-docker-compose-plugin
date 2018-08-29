@@ -10,6 +10,9 @@ before_install:
   - sudo apt-get -y --force-yes install docker-ce=$DOCKER_PACKAGE_VERSION
   - sudo curl -L https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
   - sudo chmod +x /usr/local/bin/docker-compose
+  - docker version
+  - docker ps
+  - docker-compose version
 
 after_success:
   - test $TRAVIS_PULL_REQUEST == "false" && test "$TRAVIS_TAG" != "" && test $TRAVIS_REPO_SLUG == "avast/gradle-docker-compose-plugin" && test $DOCKER_VERSION == "18.03.1" && test $DOCKER_COMPOSE_VERSION == "1.22.0" && ./gradlew bintrayUpload publishPlugins -Pversion="$TRAVIS_TAG" --info --no-daemon
