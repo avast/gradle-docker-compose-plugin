@@ -29,7 +29,7 @@ class ComposeExecutor {
 
     private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, String... args) {
         def ex = this.settings
-        project.exec { ExecSpec e ->
+        def er = project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
                 e.setWorkingDir(settings.dockerComposeWorkingDirectory)
             }
@@ -45,7 +45,11 @@ class ComposeExecutor {
                 e.standardOutput = os
                 e.errorOutput = os
             }
-            e.ignoreExitValue = ignoreExitValue
+            e.ignoreExitValue = true
+        }
+        if (!ignoreExitValue && er.exitValue != 0) {
+            def stdout = os.toString().trim()
+            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable}, stdout: $stdout")
         }
     }
 

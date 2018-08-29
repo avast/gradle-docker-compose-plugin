@@ -18,14 +18,19 @@ class DockerExecutor {
 
     String execute(String... args) {
         new ByteArrayOutputStream().withStream { os ->
-            project.exec { ExecSpec e ->
+            def er = project.exec { ExecSpec e ->
                 e.environment = settings.environment
                 def finalArgs = [settings.dockerExecutable]
                 finalArgs.addAll(args)
                 e.commandLine finalArgs
-                e.standardOutput os
+                e.standardOutput = os
+                e.ignoreExitValue = true
             }
-            os.toString().trim()
+            def stdout = os.toString().trim()
+            if (er.exitValue != 0) {
+                throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.dockerExecutable}, stdout: $stdout")
+            }
+            stdout
         }
     }
 
