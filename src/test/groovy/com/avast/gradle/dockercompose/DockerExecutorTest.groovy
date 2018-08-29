@@ -6,13 +6,13 @@ import spock.lang.Specification
 class DockerExecutorTest extends Specification {
 
     def "executes without error"() {
-        def f = Fixture.plain()
+        def f = Fixture.withNginx()
         when:
         def output = new ByteArrayOutputStream().withStream { os ->
             f.project.exec { ExecSpec e ->
                 e.environment = f.extension.environment
-                def finalArgs = [f.extension.dockerExecutable]
-                finalArgs.addAll(['info'])
+                def finalArgs = [f.extension.executable]
+                finalArgs.addAll(['ps'])
                 e.commandLine finalArgs
                 e.standardOutput os
                 e.ignoreExitValue = true
