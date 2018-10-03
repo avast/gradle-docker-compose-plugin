@@ -156,7 +156,7 @@ class ComposeUp extends DefaultTask {
     void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         def start = Instant.now()
         servicesInfos.forEach { serviceInfo ->
-            serviceInfo.containerInfos..each { instanceName, containerInfo ->
+            serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 containerInfo.tcpPorts
                 .findAll { ep, fp -> !settings.tcpPortsToIgnoreWhenWaiting.any { it == ep } }
                 .forEach { exposedPort, forwardedPort ->
