@@ -157,7 +157,9 @@ class ComposeUp extends DefaultTask {
         def start = Instant.now()
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
-                containerInfo.tcpPorts.forEach { exposedPort, forwardedPort ->
+                containerInfo.tcpPorts
+                .findAll { ep, fp -> !settings.tcpPortsToIgnoreWhenWaiting.any { it == ep } }
+                .forEach { exposedPort, forwardedPort ->
                     logger.lifecycle("Probing TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}'")
                     while (true) {
                         try {

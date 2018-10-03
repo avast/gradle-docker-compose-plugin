@@ -35,6 +35,7 @@ class ComposeSettings {
     boolean buildBeforeUp = true
     boolean buildBeforePull = true
     boolean waitForTcpPorts = true
+    List<Integer> tcpPortsToIgnoreWhenWaiting = []
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
     Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
     Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
