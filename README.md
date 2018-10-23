@@ -129,7 +129,10 @@ test.doFirst {
 
 ## Nested configurations
 It is possible to create a new set of `ComposeUp`/`ComposeBuild`/`ComposePull`/`ComposeDown`/`ComposeDownForced`/`ComposePush` tasks using following syntax:
-```gradle
+<details open>
+<summary>Groovy</summary>
+
+```groovy
 dockerCompose {
     // settings as usual
     myNested {
@@ -138,6 +141,24 @@ dockerCompose {
     }
 }
 ```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+dockerCompose {
+    // settings as usual
+    createNested("myNested").apply {
+        useComposeFiles = listOf('docker-compose-for-integration-tests.yml')
+        isRequiredBy(project.tasks.named("myTask").get())
+    }
+}
+```
+    
+</details>
+
+
 * It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull`, `myNestedComposeDown`, `myNestedComposeDownForced` and `myNestedComposePush` tasks.
 * It's possible to use all the settings as in the main `dockerCompose` block.
 * Configuration of the nested settings defaults to the main `dockerCompose` settings.
