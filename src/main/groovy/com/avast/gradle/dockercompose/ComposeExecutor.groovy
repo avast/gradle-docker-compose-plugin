@@ -20,14 +20,14 @@ class ComposeExecutor {
     }
 
     void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
-        executeWithCustomOutput(os, false, true, args)
+        executeWithCustomOutput(os, false, true, true, args)
     }
 
     void executeWithCustomOutputNoExitValue(OutputStream os, String... args) {
-        executeWithCustomOutput(os, true, true, args)
+        executeWithCustomOutput(os, true, true, true, args)
     }
 
-    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, String... args) {
+    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
         def ex = this.settings
         def er = project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
@@ -46,7 +46,9 @@ class ComposeExecutor {
             e.commandLine finalArgs
             if (os != null) {
                 e.standardOutput = os
-                e.errorOutput = os
+                if (captureStderr) {
+                    e.errorOutput = os
+                }
             }
             e.ignoreExitValue = true
         }
@@ -58,14 +60,14 @@ class ComposeExecutor {
 
     String execute(String... args) {
         new ByteArrayOutputStream().withStream { os ->
-            executeWithCustomOutput(os, false, true, args)
+            executeWithCustomOutput(os, false, true, false, args)
             os.toString().trim()
         }
     }
 
     private String executeWithAnsi(String... args) {
         new ByteArrayOutputStream().withStream { os ->
-            executeWithCustomOutput(os, false, false, args)
+            executeWithCustomOutput(os, false, false, false, args)
             os.toString().trim()
         }
     }
@@ -105,7 +107,7 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, true, true, 'logs', '-f', '--no-color')
+                executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color')
             }
         })
         t.daemon = true
