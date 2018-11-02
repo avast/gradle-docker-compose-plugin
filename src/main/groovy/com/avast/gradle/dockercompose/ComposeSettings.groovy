@@ -115,19 +115,26 @@ class ComposeSettings {
         r.buildBeforeUp = this.buildBeforeUp
         r.buildBeforePull = this.buildBeforePull
         r.waitForTcpPorts = this.waitForTcpPorts
-        r.captureContainersOutput = this.captureContainersOutput
+        r.tcpPortsToIgnoreWhenWaiting = new ArrayList<>(this.tcpPortsToIgnoreWhenWaiting)
         r.waitAfterTcpProbeFailure = this.waitAfterTcpProbeFailure
         r.waitForTcpPortsTimeout = this.waitForTcpPortsTimeout
         r.waitForTcpPortsDisconnectionProbeTimeout = this.waitForTcpPortsDisconnectionProbeTimeout
         r.waitAfterHealthyStateProbeFailure = this.waitAfterHealthyStateProbeFailure
         r.waitForHealthyStateTimeout = this.waitForHealthyStateTimeout
 
+        r.captureContainersOutput = this.captureContainersOutput
+
+        r.removeOrphans = this.removeOrphans
+        r.forceRecreate = this.forceRecreate
+        r.buildAdditionalArgs = new ArrayList<>(this.buildAdditionalArgs)
+        r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
+        r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
+        r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
+        
         r.stopContainers = this.stopContainers
         r.removeContainers = this.removeContainers
         r.removeImages = this.removeImages
         r.removeVolumes = this.removeVolumes
-        r.removeOrphans = this.removeOrphans
-        r.forceRecreate = this.forceRecreate
 
         r.ignorePullFailure = this.ignorePullFailure
         r.ignorePushFailure = this.ignorePushFailure
