@@ -83,7 +83,7 @@ class ComposeExecutor {
         execute('ps', '-q', serviceName).readLines()
     }
 
-    void captureContainersOutput(Closure<Void> logMethod) {
+    void captureContainersOutput(Closure<Void> logMethod, String... services) {
         // execute daemon thread that executes `docker-compose logs -f --no-color`
         // the -f arguments means `follow` and so this command ends when docker-compose finishes
         def t = Executors.defaultThreadFactory().newThread(new Runnable() {
@@ -107,7 +107,7 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color')
+                executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
             }
         })
         t.daemon = true

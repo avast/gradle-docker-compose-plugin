@@ -91,6 +91,7 @@ dockerCompose {
     tcpPortsToIgnoreWhenWaiting = [1234] // list of TCP ports what will be ignored when waiting for exposed TCP ports opening; default: empty list
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
+    captureContainersOutputToFiles = '/path/to/directory' // sends output of all services to a dedicated log file in the directory specified, e.g. 'web.log' for service named 'log'
     composeLogToFile = project.file('build/my-logs.txt') // redirect output of composeUp and composeDown tasks to this file; default is null (ouput is not redirected)
     containerLogToDir = project.file('build/logs') // directory where composeLogs task stores output of the containers; default: build/containers-logs
 

@@ -67,4 +67,19 @@ class CaptureOutputTest extends Specification {
         f.project.tasks.composeDown.down()
         f.close()
     }
+
+    def "captures service output to separate file"() {
+        def f = Fixture.custom(composeFileContent)
+        def logDir = new File(f.project.projectDir, "logDir")
+        when:
+        f.extension.captureContainersOutputToFiles = logDir
+        f.project.tasks.composeUp.up()
+        then:
+        noExceptionThrown()
+        def logFile = logDir.toPath().resolve('web.log').toFile()
+        logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
+        cleanup:
+        f.project.tasks.composeDown.down()
+        f.close()
+    }
 }
