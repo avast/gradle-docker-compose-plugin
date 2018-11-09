@@ -10,8 +10,11 @@ class ServiceInfo {
 
     String getHost() { firstContainer.serviceHost.host }
     Map<Integer, Integer> getPorts() { firstContainer.tcpPorts }
-    Integer getPort() { ports.values().first() }
-    Integer getTcpPort() { firstContainer.tcpPorts.values().first() }
+    Map<Integer, Integer> getTcpPorts() { firstContainer.tcpPorts }
+    Map<Integer, Integer> getUdpPorts() { firstContainer.udpPorts }
+    Integer getPort() { firstContainer.port }
+    Integer getTcpPort() { firstContainer.tcpPort }
+    Integer getUdpPort() { firstContainer.udpPort }
     
     ContainerInfo getFirstContainer() {
         containerInfos.values().first()

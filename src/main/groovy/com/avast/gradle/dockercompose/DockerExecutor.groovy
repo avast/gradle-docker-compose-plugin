@@ -141,34 +141,42 @@ class DockerExecutor {
     }
 
     Map<Integer, Integer> getTcpPortsMapping(String serviceName, Map<String, Object> inspection, ServiceHost host) {
+        getPortsMapping("TCP", serviceName, inspection, host)
+    }
+
+    Map<Integer, Integer> getUdpPortsMapping(String serviceName, Map<String, Object> inspection, ServiceHost host) {
+        getPortsMapping("UDP", serviceName, inspection, host)
+    }
+
+    Map<Integer, Integer> getPortsMapping(String protocol, String serviceName, Map<String, Object> inspection, ServiceHost host) {
         Map<Integer, Integer> ports = [:]
         inspection.NetworkSettings.Ports.each { String exposedPortWithProtocol, forwardedPortsInfos ->
-            def (String exposedPortAsString, String protocol) = exposedPortWithProtocol.split('/')
-            if (!"tcp".equalsIgnoreCase(protocol)) {
+            def (String exposedPortAsString, String pr) = exposedPortWithProtocol.split('/')
+            if (!protocol.equalsIgnoreCase(pr)) {
                 return // from closure
             }
             int exposedPort = exposedPortAsString as int
             if (!forwardedPortsInfos || forwardedPortsInfos.isEmpty()) {
-                logger.debug("No forwarded TCP port for service '$serviceName:$exposedPort'")
+                logger.debug("No forwarded $protocol port for service '$serviceName:$exposedPort'")
             } else {
                 switch (host.type) {
                     case ServiceHostType.LocalHost:
                     case ServiceHostType.NetworkGateway:
                     case ServiceHostType.RemoteDockerHost:
                         if (forwardedPortsInfos.size() > 1) {
-                            logger.warn("More forwarded TCP ports for service '$serviceName:$exposedPort $forwardedPortsInfos'. Will use the first one.")
+                            logger.warn("More forwarded $protocol ports for service '$serviceName:$exposedPort $forwardedPortsInfos'. Will use the first one.")
                         }
                         def forwardedPortInfo = forwardedPortsInfos.first()
                         int forwardedPort = forwardedPortInfo.HostPort as int
-                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $forwardedPort")
+                        logger.info("Exposed $protocol port on service '$serviceName:$exposedPort' will be available as $forwardedPort")
                         ports.put(exposedPort, forwardedPort)
                         break
                     case ServiceHostType.Host:
-                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses HOST network")
+                        logger.info("Exposed $protocol port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses HOST network")
                         ports.put(exposedPort, exposedPort)
                         break;
                     case ServiceHostType.DirectContainerAccess:
-                        logger.info("Exposed TCP port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses direct access to the container")
+                        logger.info("Exposed $protocol port on service '$serviceName:$exposedPort' will be available as $exposedPort because it uses direct access to the container")
                         ports.put(exposedPort, exposedPort)
                         break;
                     default:

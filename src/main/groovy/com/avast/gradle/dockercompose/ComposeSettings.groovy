@@ -191,6 +191,7 @@ class ComposeSettings {
         environmentVariables.put("${variableName}_HOST".toString(), ci.host)
         environmentVariables.put("${variableName}_CONTAINER_HOSTNAME".toString(), ci.containerHostname)
         ci.tcpPorts.each { environmentVariables.put("${variableName}_TCP_${it.key}".toString(), it.value) }
+        ci.udpPorts.each { environmentVariables.put("${variableName}_UDP_${it.key}".toString(), it.value) }
         environmentVariables
     }
 
@@ -199,6 +200,7 @@ class ComposeSettings {
         systemProperties.put("${variableName}.host".toString(), ci.host)
         systemProperties.put("${variableName}.containerHostname".toString(), ci.containerHostname)
         ci.tcpPorts.each { systemProperties.put("${variableName}.tcp.${it.key}".toString(), it.value) }
+        ci.udpPorts.each { systemProperties.put("${variableName}.udp.${it.key}".toString(), it.value) }
         systemProperties
     }
 
