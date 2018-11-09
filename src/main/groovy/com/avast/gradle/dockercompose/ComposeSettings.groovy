@@ -45,6 +45,7 @@ class ComposeSettings {
 
     boolean captureContainersOutput = false
     File captureContainersOutputToFile = null
+    File captureContainersOutputToFiles = null
     File composeLogToFile = null
     File containerLogToDir
 
@@ -210,6 +211,14 @@ class ComposeSettings {
 
     void setCaptureContainersOutputToFile(File file) {
         captureContainersOutputToFile = file
+    }
+
+    void setCaptureContainersOutputToFiles(CharSequence path) {
+        captureContainersOutputToFiles = project.file(path)
+    }
+
+    void setCaptureContainersOutputToFiles(File file) {
+        captureContainersOutputToFiles = file
     }
 
     void setComposeLogToFile(CharSequence path) {

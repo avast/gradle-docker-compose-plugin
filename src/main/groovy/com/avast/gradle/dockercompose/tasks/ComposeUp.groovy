@@ -67,9 +67,9 @@ class ComposeUp extends DefaultTask {
               composeLog = new FileOutputStream(settings.composeLogToFile)
             }
             settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
-            startCapturing()
-            def servicesToLoad = settings.startedServices ?: settings.composeExecutor.getServiceNames()
+            def servicesToLoad = settings.composeExecutor.getServiceNames()
             servicesInfos = loadServicesInfo(servicesToLoad).collectEntries { [(it.name): (it)] }
+            startCapturing()
             waitForHealthyContainers(servicesInfos.values())
             if (settings.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
@@ -95,6 +95,15 @@ class ComposeUp extends DefaultTask {
             def logFile = settings.captureContainersOutputToFile
             logFile.parentFile.mkdirs()
             settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
+        }
+        if (settings.captureContainersOutputToFiles != null) {
+            def logDir = settings.captureContainersOutputToFiles
+            logDir.mkdirs()
+            logDir.listFiles().each { it.delete() }
+            servicesInfos.keySet().each {
+                def logFile = logDir.toPath().resolve("${it}.log").toFile()
+                settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') }, it)
+            }
         }
     }
 
