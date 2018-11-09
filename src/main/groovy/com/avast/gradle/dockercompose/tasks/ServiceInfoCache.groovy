@@ -55,6 +55,7 @@ class ServiceInfoCache {
 
     ContainerInfo deserializeContainerInfo(Map<String, Object> m) {
         Map<Integer, Integer> tcpPorts = m.tcpPorts.collectEntries { k, v -> [(Integer.parseInt(k)): v] }
-        new ContainerInfo(m.instanceName, new ServiceHost(m.serviceHost as HashMap), tcpPorts, m.inspection)
+        Map<Integer, Integer> udpPorts = m.udpPorts.collectEntries { k, v -> [(Integer.parseInt(k)): v] }
+        new ContainerInfo(m.instanceName, new ServiceHost(m.serviceHost as HashMap), tcpPorts, udpPorts, m.inspection)
     }
 }
