@@ -115,11 +115,13 @@ class ComposeUp extends DefaultTask {
         ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
         logger.info("Will use $host as host of service $serviceName")
         def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
+        def udpPorts = settings.dockerExecutor.getUdpPortsMapping(serviceName, inspection, host)
         String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
         [(instanceName): new ContainerInfo(
                 instanceName: instanceName,
                 serviceHost: host,
                 tcpPorts: tcpPorts,
+                udpPorts: udpPorts,
                 inspection: inspection)]
     }
 

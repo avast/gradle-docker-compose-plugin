@@ -9,6 +9,7 @@ class ContainerInfo {
     ServiceHost serviceHost
     /* Mapping from exposed to forwarded port. */
     Map<Integer, Integer> tcpPorts
+    Map<Integer, Integer> udpPorts
     /* Docker inspection */
     Map<String, Object> inspection
     String getContainerId() { inspection.Id }
@@ -18,4 +19,5 @@ class ContainerInfo {
     Map<Integer, Integer> getPorts() { tcpPorts }
     Integer getPort() { ports.values().first() }
     Integer getTcpPort() { tcpPorts.values().first() }
+    Integer getUdpPort() { udpPorts.values().first() }
 }

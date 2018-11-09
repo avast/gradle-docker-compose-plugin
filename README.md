@@ -123,7 +123,8 @@ test.doFirst {
     def webInfo = dockerCompose.servicesInfos.web.'web_1'
     // pass host and exposed TCP port 80 as custom-named Java System properties
     systemProperty 'myweb.host', webInfo.host
-    systemProperty 'myweb.port', webInfo.ports[80]    
+    systemProperty 'myweb.port', webInfo.ports[80]
+    // it's possible to read information about exposed UDP ports using webInfo.updPorts[1234]
 }
 ```
 

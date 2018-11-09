@@ -239,9 +239,11 @@ class DockerComposePluginTest extends Specification {
             test.environment.containsKey('WEB_HOST')
             test.environment.containsKey('WEB_CONTAINER_HOSTNAME')
             test.environment.containsKey('WEB_TCP_80')
+            test.environment.containsKey('WEB_UDP_81')
             test.systemProperties.containsKey('web.host')
             test.systemProperties.containsKey('web.containerHostname')
             test.systemProperties.containsKey('web.tcp.80')
+            test.systemProperties.containsKey('web.udp.81')
         cleanup:
             f.project.tasks.composeDown.down()
             f.close()
@@ -252,6 +254,7 @@ class DockerComposePluginTest extends Specification {
                 image: nginx:stable
                 ports:
                   - 80
+                  - 81/udp
         ''', '''
             version: '2'
             services:
@@ -259,6 +262,7 @@ class DockerComposePluginTest extends Specification {
                     image: nginx:stable
                     ports:
                       - 80
+                      - 81/udp
         ''']
     }
 
