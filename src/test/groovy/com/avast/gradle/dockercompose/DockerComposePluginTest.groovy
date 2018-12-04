@@ -220,6 +220,7 @@ class DockerComposePluginTest extends Specification {
     def "allows pull"() {
         def f = Fixture.withNginx()
         when:
+            f.project.dockerCompose.startedServices = ['web']
             f.project.tasks.composePull.pull()
         then:
             noExceptionThrown()
