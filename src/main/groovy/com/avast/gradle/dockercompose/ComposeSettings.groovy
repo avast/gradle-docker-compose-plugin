@@ -98,8 +98,7 @@ class ComposeSettings {
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
-        def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
-        this.projectName = fullPathMd5 + '_' + project.name + '_' + name
+        this.projectName = this.projectName ?: generateProjectName(project, name)
 
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
 
@@ -109,6 +108,11 @@ class ComposeSettings {
             this.executable = '/usr/local/bin/docker-compose'
             this.dockerExecutable = '/usr/local/bin/docker'
         }
+    }
+
+    private static String generateProjectName(Project project, String name) {
+        def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
+        "${fullPathMd5}_${project.name}_${name}"
     }
 
     ComposeSettings createNested(String name) {
