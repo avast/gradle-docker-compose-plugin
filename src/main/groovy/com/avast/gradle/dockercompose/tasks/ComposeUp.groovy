@@ -49,6 +49,8 @@ class ComposeUp extends DefaultTask {
         }
         if (settings.forceRecreate) {
             args += '--force-recreate'
+        } else if (settings.noRecreate) {
+            args += '--no-recreate'
         }
         if (settings.scale()) {
             args += settings.scale.collect { service, value ->

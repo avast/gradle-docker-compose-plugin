@@ -53,6 +53,7 @@ class ComposeSettings {
     Map<String, Integer> scale = [:]
     boolean removeOrphans = false
     boolean forceRecreate = false
+    boolean noRecreate = false
     List<String> buildAdditionalArgs = []
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
@@ -131,6 +132,7 @@ class ComposeSettings {
 
         r.removeOrphans = this.removeOrphans
         r.forceRecreate = this.forceRecreate
+        r.noRecreate = this.noRecreate
         r.buildAdditionalArgs = new ArrayList<>(this.buildAdditionalArgs)
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
