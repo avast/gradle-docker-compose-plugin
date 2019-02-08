@@ -77,6 +77,7 @@ dockerCompose {
     startedServices = ['web'] // list of services to execute when calling 'docker-compose up' or 'docker-compose pull' (when not specified, all services are executed)
     scale = [${serviceName1}: 5, ${serviceName2}: 2] // Pass docker compose --scale option like 'docker-compose up --scale serviceName1=5 --scale serviceName2=2'
     forceRecreate = false // pass '--force-recreate' when calling 'docker-compose up' when set to 'true`
+    noRecreate = false // pass '--no-recreate' when calling 'docker-compose up' when set to 'true`
     buildBeforeUp = true // performs 'docker-compose build' before calling the 'up' command; default is true
     buildBeforePull = true // performs 'docker-compose build' before calling the 'pull' command; default is true
     ignorePullFailure = false // when set to true, pass '--ignore-pull-failure' to 'docker-compose pull'
