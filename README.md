@@ -186,7 +186,7 @@ If you specify `stopContainers` to be `false` then the plugin automatically trie
 
 It's very handy in scenarios when you iterate quickly and e.g. don't want to wait for Postgres to start again and again.
 
-Because you don't want to check-in this change to your VCS, you can take advantage of [this init.gradle](/gradle.init) [initialization script](https://docs.gradle.org/5.2/userguide/init_scripts.html) (in short, copy [this file](/gradle.init) to your `USER_HOME/.gradle/` directory)
+Because you don't want to check-in this change to your VCS, you can take advantage of [this init.gradle](/init.gradle) [initialization script](https://docs.gradle.org/5.2/userguide/init_scripts.html) (in short, copy [this file](/init.gradle) to your `USER_HOME/.gradle/` directory).
 
 # Tips
 * You can call `dockerCompose.isRequiredBy(anyTask)` for any task, for example for your custom `integrationTest` task.
