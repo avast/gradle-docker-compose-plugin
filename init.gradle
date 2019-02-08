@@ -1,0 +1,9 @@
+allprojects {
+    afterEvaluate {
+        def dcExt = getExtensions().getByName('dockerCompose')
+        if (dcExt.hasProperty('stopContainers')) {
+            dcExt.stopContainers = false
+            logger.info("'stopContainers' property of 'dockerCompose' extension set to 'false' from 'init.gradle' script")
+        }
+    }
+}
