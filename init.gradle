@@ -1,7 +1,8 @@
+// File to be copied to USER_HOME/.gradle/ directory.
 allprojects {
     afterEvaluate {
-        def dcExt = getExtensions().getByName('dockerCompose')
-        if (dcExt.hasProperty('stopContainers')) {
+        def dcExt = getExtensions().findByName('dockerCompose')
+        if (dcExt && dcExt.hasProperty('stopContainers')) {
             dcExt.stopContainers = false
             logger.info("'stopContainers' property of 'dockerCompose' extension set to 'false' from 'init.gradle' script")
         }
