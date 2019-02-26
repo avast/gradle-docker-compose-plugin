@@ -17,7 +17,7 @@ class ContainerInfo {
 
     String getHost() { serviceHost.host }
     Map<Integer, Integer> getPorts() { tcpPorts }
-    Integer getPort() { ports.values().first() }
-    Integer getTcpPort() { tcpPorts.values().first() }
-    Integer getUdpPort() { udpPorts.values().first() }
+    Integer getPort() { ports.values().find() }
+    Integer getTcpPort() { tcpPorts.values().find() }
+    Integer getUdpPort() { udpPorts.values().find() }
 }

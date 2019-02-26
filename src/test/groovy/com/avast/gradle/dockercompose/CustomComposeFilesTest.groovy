@@ -21,7 +21,7 @@ class CustomComposeFilesTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
             assert webInfo.ports.containsKey(8080)
             assert webInfo.ports.containsKey(80)
@@ -30,7 +30,7 @@ class CustomComposeFilesTest extends Specification {
         extension.waitForTcpPorts = false // port 8080 is a fake
         extension.useComposeFiles = ['original.yml', 'override.yml']
         project.tasks.composeUp.up()
-        project.tasks.integrationTest.execute()
+        integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
         noExceptionThrown()
         cleanup:
@@ -60,13 +60,13 @@ class CustomComposeFilesTest extends Specification {
         '''
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
-        project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = project.tasks.create('integrationTest').doLast {
             assert project.dockerCompose.servicesInfos.web.firstContainer.ports.containsKey(80)
             assert project.dockerCompose.servicesInfos.devweb.firstContainer.ports.containsKey(80)
         }
         when:
         project.tasks.composeUp.up()
-        project.tasks.integrationTest.execute()
+        integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
         noExceptionThrown()
         cleanup:
@@ -101,7 +101,7 @@ class CustomComposeFilesTest extends Specification {
         def project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         project.plugins.apply 'docker-compose'
         def extension = (ComposeExtension) project.extensions.findByName('dockerCompose')
-        project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = project.dockerCompose.servicesInfos.web.firstContainer
             assert webInfo.ports.containsKey(8080)
             assert !webInfo.ports.containsKey(80)
@@ -111,7 +111,7 @@ class CustomComposeFilesTest extends Specification {
         extension.waitForTcpPorts = false // port 8080 is a fake
         extension.useComposeFiles = ['docker-compose.yml', 'docker-compose.prod.yml']
         project.tasks.composeUp.up()
-        project.tasks.integrationTest.execute()
+        integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
         noExceptionThrown()
         cleanup:

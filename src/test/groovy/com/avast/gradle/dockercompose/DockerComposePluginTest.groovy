@@ -166,7 +166,7 @@ class DockerComposePluginTest extends Specification {
 
     def "allows to read servicesInfos from another task"() {
         def f = Fixture.withNginx()
-        f.project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
             assert "http://${webInfo.host}:${webInfo.tcpPorts[80]}".toURL().text.contains('nginx')
             assert webInfo.ports == webInfo.tcpPorts
@@ -175,7 +175,7 @@ class DockerComposePluginTest extends Specification {
         }
         when:
             f.project.tasks.composeUp.up()
-            f.project.tasks.integrationTest.execute()
+            integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
             noExceptionThrown()
         cleanup:
@@ -303,7 +303,7 @@ class DockerComposePluginTest extends Specification {
                 ports:
                   - $MY_WEB_PORT
         ''')
-        f.project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
             assert webInfo.ports.containsKey(80)
         }
@@ -312,7 +312,7 @@ class DockerComposePluginTest extends Specification {
             f.extension.environment.put 'MY_WEB_PORT', 80
             f.extension.waitForTcpPorts = false  // checked in assert
             f.project.tasks.composeUp.up()
-            f.project.tasks.integrationTest.execute()
+            integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
             noExceptionThrown()
         cleanup:
@@ -337,7 +337,7 @@ class DockerComposePluginTest extends Specification {
     def "docker-compose scale option launches multiple instances of service"() {
         def f = Fixture.withNginx()
         f.extension.scale = ['web': 2]
-        f.project.tasks.create('integrationTest').doLast {
+        def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             def webInfos = project.dockerCompose.servicesInfos.web.containerInfos
             assert webInfos.size() == 2
             assert webInfos.containsKey('web_1')
@@ -345,7 +345,7 @@ class DockerComposePluginTest extends Specification {
         }
         when:
             f.project.tasks.composeUp.up()
-            f.project.tasks.integrationTest.execute()
+            integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
             noExceptionThrown()
         cleanup:
