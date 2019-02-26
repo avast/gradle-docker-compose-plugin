@@ -82,4 +82,20 @@ class CaptureOutputTest extends Specification {
         f.project.tasks.composeDown.down()
         f.close()
     }
+
+    def "captures up and down commands to single file"() {
+        def f = Fixture.custom(composeFileContent)
+        def logFile = new File(f.project.projectDir, "compose.log")
+        when:
+        f.extension.composeLogToFile = "${logFile.absolutePath}"
+        f.project.tasks.composeUp.up()
+        then:
+        f.project.tasks.composeDown.down()
+        noExceptionThrown()
+        logFile.text.contains("Creating")
+        logFile.text.contains("Removing")
+        cleanup:
+        f.project.tasks.composeDown.down()
+        f.close()
+    }
 }
