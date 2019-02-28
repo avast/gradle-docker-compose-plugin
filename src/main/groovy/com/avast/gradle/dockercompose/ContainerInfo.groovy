@@ -2,7 +2,7 @@ package com.avast.gradle.dockercompose
 
 import groovy.transform.Immutable
 
-@Immutable
+//@Immutable
 class ContainerInfo {
     /* For example serviceName_1 */
     String instanceName
