@@ -9,8 +9,6 @@ import org.gradle.util.VersionNumber
 class ComposeDownForced extends DefaultTask {
     ComposeSettings settings
 
-    List<String> dependentServices = [] // for testing
-
     ComposeDownForced() {
         group = 'docker'
         description = 'Stops and removes containers of docker-compose project'
@@ -19,6 +17,7 @@ class ComposeDownForced extends DefaultTask {
     @TaskAction
     void down() {
 
+        def dependentServices = []
         if(settings.removeDependents) {
             if(settings.startedServices)
             {

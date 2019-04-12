@@ -9,7 +9,7 @@ import org.yaml.snakeyaml.Yaml
 class ComposeConfigParser
 {
     /**
-     * Given the result of docker-compose config, parses through the output and builds a dependency graph between a service and the service's dependencies. The full graph is travers, such that children dependencies are calculated
+     * Given the result of docker-compose config, parses through the output and builds a dependency graph between a service and the service's dependencies. The full graph is traversed, such that child dependencies are calculated
      * @param composeConfigOutput the output of docker-compose config
      * @return a map of a service's dependencies keyed by the service.
      */

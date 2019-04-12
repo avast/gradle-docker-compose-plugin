@@ -18,7 +18,7 @@ class ComposeConfigParserTest extends Specification
                 depends_on:
                   slave0:
                     condition: service_healthy
-                  slave2:
+                  slave1:
                     condition: service_healthy
               slave0:
                 expose:
@@ -33,7 +33,7 @@ class ComposeConfigParserTest extends Specification
         def dependenciesMap = ComposeConfigParser.findServiceDependencies(configOutput)
 
         then: "master has two dependencies"
-        dependenciesMap["master"] == ["slave0", "slave2"] as Set
+        dependenciesMap["master"] == ["slave0", "slave1"] as Set
 
         and: "slave0 has no dependencies"
         dependenciesMap["slave0"].isEmpty()

@@ -425,7 +425,11 @@ class DockerComposePluginTest extends Specification {
         when:
         f.project.tasks.composeDown.down()
         then:
-        f.project.tasks.composeDown.dependentServices as Set == ['web0', 'web1'] as Set
+        def runningServices = f.project.dockerCompose.composeExecutor.execute('ps')
+        !runningServices.contains("webMaster")
+        !runningServices.contains("web0")
+        !runningServices.contains("web1")
+
         cleanup:
         f.close()
         where:
