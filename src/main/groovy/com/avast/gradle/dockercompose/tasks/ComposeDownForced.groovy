@@ -26,7 +26,7 @@ class ComposeDownForced extends DefaultTask {
             }
         }
 
-        def servicesToStop = [*settings.startedServices, *dependentServices]
+        def servicesToStop = [*settings.startedServices, *dependentServices].unique()
 
         settings.serviceInfoCache.clear()
         settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *servicesToStop])
