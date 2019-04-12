@@ -413,4 +413,59 @@ class DockerComposePluginTest extends Specification {
                       - 80
         ''']
     }
+
+    def "removeDependents calculates dependencies correctly"() {
+        def f = Fixture.custom(composeFileContent)
+        f.project.plugins.apply 'java'
+        f.project.dockerCompose.removeDependents = true
+        f.project.dockerCompose.startedServices = ['webMaster']
+        f.project.plugins.apply 'docker-compose'
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
+        when:
+        f.project.tasks.composeDown.down()
+        then:
+        f.project.tasks.composeDown.dependentServices as Set == ['web0', 'web1'] as Set
+        cleanup:
+        f.close()
+        where:
+        // test it for both compose file version 1 and 2
+        composeFileContent << ['''
+            web0:
+                image: nginx:stable
+                ports:
+                  - 80
+            web1:
+                image: nginx:stable
+                ports:
+                  - 80
+                links:
+                  - web0
+            webMaster:
+                image: nginx:stable
+                ports:
+                  - 80
+                links:
+                  - web1
+        ''', '''
+            version: '2'
+            services:
+                web0:
+                    image: nginx:stable
+                    ports:
+                      - 80
+                web1:
+                    image: nginx:stable
+                    ports:
+                      - 80
+                    links:
+                      - web0
+                webMaster:
+                    image: nginx:stable
+                    ports:
+                      - 80
+                    links:
+                      - web1
+        ''']
+    }
 }

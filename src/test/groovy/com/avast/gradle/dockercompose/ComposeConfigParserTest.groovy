@@ -16,8 +16,10 @@ class ComposeConfigParserTest extends Specification
             services:
               master:
                 depends_on:
-                  - slave0
-                  - slave2
+                  slave0:
+                    condition: service_healthy
+                  slave2:
+                    condition: service_healthy
               slave0:
                 expose:
                   - '22'
@@ -31,7 +33,7 @@ class ComposeConfigParserTest extends Specification
         def dependenciesMap = ComposeConfigParser.findServiceDependencies(configOutput)
 
         then: "master has two dependencies"
-        dependenciesMap["master"].size() == 2
+        dependenciesMap["master"] == ["slave0", "slave2"] as Set
 
         and: "slave0 has no dependencies"
         dependenciesMap["slave0"].isEmpty()
@@ -48,7 +50,7 @@ class ComposeConfigParserTest extends Specification
         master:
           links:
             - slave0
-            - slave2
+            - slave1
         slave0:
             expose:
               - '22'
@@ -61,7 +63,7 @@ class ComposeConfigParserTest extends Specification
         def dependenciesMap = ComposeConfigParser.findServiceDependencies(configOutput)
 
         then: "master has two dependencies"
-        dependenciesMap["master"].size() == 2
+        dependenciesMap["master"].size() == ["slave0", "slave1"] as Set
 
         and: "slave0 has no dependencies"
         dependenciesMap["slave0"].isEmpty()
@@ -88,11 +90,14 @@ class ComposeConfigParserTest extends Specification
                   - '8080'
               audit:
                 depends_on:
-                  - splunkForward
+                  splunkForward:
+                    condition: service_healthy
               ui:
                 depends_on:
-                  - dataService
-                  - audit
+                  dataService:
+                    condition: service_healthy
+                  audit:
+                    condition: service_healthy
                 expose:
                   - '23'
             version: '3.0'
@@ -103,6 +108,9 @@ class ComposeConfigParserTest extends Specification
 
         then: "ui has 4 dependencies (audit, splunkForward, dataService, db)"
         dependenciesMap["ui"] == ["audit", "splunkForward", "dataService", "db"] as Set
+
+        and: "deals with list dependencies"
+        dependenciesMap["dataService"] == ["db"] as Set
     }
 
     def "findServiceDependencies with a service 4 indirect dependencies in version 1" ()

@@ -31,7 +31,17 @@ class ComposeConfigParser
             def dependencies = []
             if (service.depends_on)
             {
-                dependencies.addAll(service.depends_on)
+                def serviceDeps = service.depends_on
+                // just a list of services without properties
+                if(serviceDeps instanceof  List)
+                {
+                    dependencies.addAll(serviceDeps)
+                }
+                // services that have properties
+                if(serviceDeps instanceof  Map)
+                {
+                    dependencies.addAll(serviceDeps.keySet())
+                }
             }
             // in version one, links established service names
             if (service.links)

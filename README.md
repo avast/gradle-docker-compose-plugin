@@ -101,6 +101,7 @@ dockerCompose {
     removeImages = "None" // Other accepted values are: "All" and "Local"
     removeVolumes = true
     removeOrphans = false // removes containers for services not defined in the Compose file
+    removeDependents = false // calculates services dependencies of startedServices and removes those as well
     
     projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)

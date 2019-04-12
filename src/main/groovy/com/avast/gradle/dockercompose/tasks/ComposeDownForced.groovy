@@ -9,6 +9,8 @@ import org.gradle.util.VersionNumber
 class ComposeDownForced extends DefaultTask {
     ComposeSettings settings
 
+    List<String> dependentServices = [] // for testing
+
     ComposeDownForced() {
         group = 'docker'
         description = 'Stops and removes containers of docker-compose project'
@@ -16,8 +18,19 @@ class ComposeDownForced extends DefaultTask {
 
     @TaskAction
     void down() {
+
+        if(settings.removeDependents) {
+            if(settings.startedServices)
+            {
+                dependentServices = settings.composeExecutor.getDependentServices(
+                        settings.startedServices).toList()
+            }
+        }
+
+        def servicesToStop = [*settings.startedServices, *dependentServices]
+
         settings.serviceInfoCache.clear()
-        settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *settings.startedServices])
+        settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *servicesToStop])
         if (settings.removeContainers) {
             if (settings.composeExecutor.version >= VersionNumber.parse('1.6.0')) {
                 String[] args = []
@@ -27,6 +40,13 @@ class ComposeDownForced extends DefaultTask {
                         args += ['-v']
                     }
                     args += settings.startedServices
+
+                    if(settings.removeDependents) {
+                        if(dependentServices) {
+                            args += dependentServices
+                        }
+                    }
+
                 } else {
                     args += ['down']
                     switch (settings.removeImages) {
@@ -54,7 +74,8 @@ class ComposeDownForced extends DefaultTask {
                 settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             } else {
                 if (!settings.startedServices.empty) {
-                    settings.composeExecutor.execute(*['rm', '-f', *settings.startedServices])
+                    // compute the shutdown bit
+                    settings.composeExecutor.execute(*['rm', '-f', *servicesToStop])
                 } else {
                     settings.composeExecutor.execute('rm', '-f')
                 }
