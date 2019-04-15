@@ -130,6 +130,27 @@ class ComposeExecutor {
         }
     }
 
+    /**
+     * Calculates dependent services for the given set of services. The full dependency graph will be calculated, such that transitive dependencies will be returned.
+     * @param serviceNames the name of services to calculate dependencies for
+     * @return the set of services that are dependencies of the given services
+     */
+    Iterable<String> getDependentServices(Iterable<String> serviceNames) {
+        def configOutput = execute('config')
+        def dependencyGraph = ComposeConfigParser.findServiceDependencies(configOutput)
+
+        def dependentServices = []
+
+        serviceNames.each { service ->
+            def serviceDeps = dependencyGraph[service]
+            if(serviceDeps) {
+                dependentServices.addAll(serviceDeps)
+            }
+        }
+
+        dependentServices
+    }
+
     Iterable<File> getStandardComposeFiles() {
         def res = []
         def f = findInParentDirectories('docker-compose.yml', project.projectDir)
