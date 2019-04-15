@@ -6,7 +6,7 @@ buildscript {
     dependencies {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.gradle.publish:plugin-publish-plugin:0.10.1'
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
+        classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
     }
 }
 
@@ -30,7 +30,7 @@ repositories {
 
 dependencies {
     compile gradleApi()
-    compile 'org.yaml:snakeyaml:1.23'
+    compile 'org.yaml:snakeyaml:1.24'
     testCompile gradleTestKit()
     testCompile 'org.spockframework:spock-core:1.2-groovy-2.5'
 }
