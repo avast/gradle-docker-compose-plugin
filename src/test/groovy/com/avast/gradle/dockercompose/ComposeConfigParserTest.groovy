@@ -3,12 +3,8 @@ package com.avast.gradle.dockercompose
 import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * Verifies behavior of ComposeConfigParser
- */
 class ComposeConfigParserTest extends Specification
 {
-
     def "findServiceDependencies with a service two direct dependencies in version 3" ()
     {
         given: "compose config output for a service"
@@ -150,7 +146,6 @@ class ComposeConfigParserTest extends Specification
     def "calculateDependenciesFromGraph computes dependencies for #service" ()
     {
         given: "a dependency graph"
-
         /**
          * services:
          *   a:

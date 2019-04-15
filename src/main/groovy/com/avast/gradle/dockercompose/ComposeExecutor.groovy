@@ -138,17 +138,7 @@ class ComposeExecutor {
     Iterable<String> getDependentServices(Iterable<String> serviceNames) {
         def configOutput = execute('config')
         def dependencyGraph = ComposeConfigParser.findServiceDependencies(configOutput)
-
-        def dependentServices = []
-
-        serviceNames.each { service ->
-            def serviceDeps = dependencyGraph[service]
-            if(serviceDeps) {
-                dependentServices.addAll(serviceDeps)
-            }
-        }
-
-        dependentServices
+        serviceNames.collectMany { dependencyGraph.getOrDefault(it, [].toSet()) }
     }
 
     Iterable<File> getStandardComposeFiles() {

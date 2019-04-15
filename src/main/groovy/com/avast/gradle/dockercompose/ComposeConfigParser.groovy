@@ -15,51 +15,35 @@ class ComposeConfigParser
      */
     static Map<String, Set<String>> findServiceDependencies (String composeConfigOutput)
     {
-        Yaml parser = new Yaml()
-        def result = parser.load(composeConfigOutput)
-
+        Map<String, Object> parsed = new Yaml().load(composeConfigOutput)
         // if there is 'version' on top-level then information about services is in 'services' sub-tree
-        def serviceList = result.version ? result.services : result
+        Map<String, Object> services = (parsed.version ? parsed.services : parsed)
+        Map<String, Set<String>> declaredServiceDependencies = services.collectEntries { [(it.key): getDirectServiceDependencies(it.value)] }
+        services.keySet().collectEntries { [(it): calculateDependenciesFromGraph(it, declaredServiceDependencies)] }
+    }
 
-        def declaredServiceDependencies = [:]
-        def services = serviceList.entrySet()
-
-        services.each { entry ->
-            def serviceName = entry.getKey()
-            def service = entry.getValue()
-
-            def dependencies = []
-            if (service.depends_on)
+    protected static Set<String> getDirectServiceDependencies(Map service) {
+        List<String> dependencies = []
+        if (service.depends_on)
+        {
+            def dependsOn = service.depends_on
+            // just a list of services without properties
+            if(dependsOn instanceof List)
             {
-                def serviceDeps = service.depends_on
-                // just a list of services without properties
-                if(serviceDeps instanceof  List)
-                {
-                    dependencies.addAll(serviceDeps)
-                }
-                // services that have properties
-                if(serviceDeps instanceof  Map)
-                {
-                    dependencies.addAll(serviceDeps.keySet())
-                }
+                dependencies.addAll(dependsOn)
             }
-            // in version one, links established service names
-            if (service.links)
+            // services that have properties
+            if(dependsOn instanceof Map)
             {
-                dependencies.addAll(service.links)
+                dependencies.addAll(dependsOn.keySet())
             }
-
-            declaredServiceDependencies.put(serviceName, dependencies)
         }
-
-        // compute the graph for each service
-        def serviceDependencySet = [:]
-        services.each { entry ->
-            def service = entry.getKey()
-            serviceDependencySet.put(service, calculateDependenciesFromGraph(service, declaredServiceDependencies))
+        // in version one, links established service names
+        if (service.links)
+        {
+            dependencies.addAll(service.links)
         }
-
-        return serviceDependencySet
+        dependencies.toSet()
     }
 
     /**
@@ -69,12 +53,9 @@ class ComposeConfigParser
      */
     @VisibleForTesting
     protected  static Set<String> calculateDependenciesFromGraph(String serviceName, Map<String, Set<String>> declaredDependencies) {
-
         def toVisit = []
         toVisit.add(serviceName)
-
         Set<String> serviceDependencies = []
-
         while(!toVisit.isEmpty()) {
             String visitedService = toVisit.removeAt(0)
             def dependents = declaredDependencies.get(visitedService)
@@ -83,7 +64,6 @@ class ComposeConfigParser
                 serviceDependencies.addAll(dependents)
             }
         }
-
         serviceDependencies
     }
 }

@@ -73,7 +73,6 @@ class ComposeDownForced extends DefaultTask {
                 settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
             } else {
                 if (!settings.startedServices.empty) {
-                    // compute the shutdown bit
                     settings.composeExecutor.execute(*['rm', '-f', *servicesToStop])
                 } else {
                     settings.composeExecutor.execute('rm', '-f')
