@@ -88,7 +88,7 @@ dockerCompose {
     upAdditionalArgs = ['--no-deps']
     downAdditionalArgs = ['--some-switch']
 
-    waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening
+    waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening; default is true
     tcpPortsToIgnoreWhenWaiting = [1234] // list of TCP ports what will be ignored when waiting for exposed TCP ports opening; default: empty list
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
@@ -96,12 +96,12 @@ dockerCompose {
     composeLogToFile = project.file('build/my-logs.txt') // redirect output of composeUp and composeDown tasks to this file; default is null (ouput is not redirected)
     containerLogToDir = project.file('build/logs') // directory where composeLogs task stores output of the containers; default: build/containers-logs
 
-    stopContainers = true // doesn't call `docker-compose down` - see below the paragraph about reconnecting
-    removeContainers = true
+    stopContainers = true // doesn't call `docker-compose down` if set to false - see below the paragraph about reconnecting; default is true
+    removeContainers = true // default is true
     removeImages = "None" // Other accepted values are: "All" and "Local"
-    removeVolumes = true
-    removeOrphans = false // removes containers for services not defined in the Compose file
-    removeDependents = false // calculates services dependencies of startedServices and removes those as well
+    removeVolumes = true // default is true
+    removeOrphans = false // removes containers for services not defined in the Compose file; default is false
+    removeDependents = false // calculates services dependencies of startedServices and removes those as well; default is false
     
     projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
