@@ -112,6 +112,7 @@ class ComposeExecutor {
         })
         t.daemon = true
         t.start()
+        project.gradle.buildFinished { t.interrupt() }
     }
 
     Iterable<String> getServiceNames() {
