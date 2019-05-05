@@ -414,10 +414,10 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
-    def "removeDependents calculates dependencies correctly"() {
+    def "includeDependencies calculates dependencies correctly"() {
         def f = Fixture.custom(composeFileContent)
         f.project.plugins.apply 'java'
-        f.project.dockerCompose.removeDependents = true
+        f.project.dockerCompose.includeDependencies = true
         f.project.dockerCompose.startedServices = ['webMaster']
         f.project.plugins.apply 'docker-compose'
         f.project.tasks.composeUp.up()

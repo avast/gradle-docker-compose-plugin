@@ -18,7 +18,7 @@ class ComposeDownForced extends DefaultTask {
     void down() {
 
         def dependentServices = []
-        if(settings.removeDependents) {
+        if(settings.includeDependencies) {
             if(settings.startedServices)
             {
                 dependentServices = settings.composeExecutor.getDependentServices(
@@ -40,7 +40,7 @@ class ComposeDownForced extends DefaultTask {
                     }
                     args += settings.startedServices
 
-                    if(settings.removeDependents) {
+                    if(settings.includeDependencies) {
                         if(dependentServices) {
                             args += dependentServices
                         }

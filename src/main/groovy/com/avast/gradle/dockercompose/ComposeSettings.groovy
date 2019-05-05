@@ -64,7 +64,7 @@ class ComposeSettings {
     boolean removeContainers = true
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
-    boolean removeDependents = false
+    boolean includeDependencies = false
 
     boolean ignorePullFailure = false
     boolean ignorePushFailure = false
@@ -143,7 +143,7 @@ class ComposeSettings {
         r.removeContainers = this.removeContainers
         r.removeImages = this.removeImages
         r.removeVolumes = this.removeVolumes
-        r.removeDependents = this.removeDependents
+        r.includeDependencies = this.includeDependencies
 
         r.ignorePullFailure = this.ignorePullFailure
         r.ignorePushFailure = this.ignorePushFailure
