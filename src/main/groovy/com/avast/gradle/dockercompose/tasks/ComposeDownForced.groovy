@@ -16,9 +16,7 @@ class ComposeDownForced extends DefaultTask {
 
     @TaskAction
     void down() {
-
         def servicesToStop = settings.composeExecutor.serviceNames
-
         settings.serviceInfoCache.clear()
         settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *servicesToStop])
         if (settings.removeContainers) {

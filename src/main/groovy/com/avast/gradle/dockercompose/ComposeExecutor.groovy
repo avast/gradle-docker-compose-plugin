@@ -116,13 +116,11 @@ class ComposeExecutor {
     }
 
     Iterable<String> getServiceNames() {
-        if (!settings.startedServices.empty){
+        if (!settings.startedServices.empty) {
             if(settings.includeDependencies)
             {
-                def dependentServices = settings.composeExecutor.getDependentServices(
-                        settings.startedServices).toList()
-
-                 [*settings.startedServices, *dependentServices].unique()
+                def dependentServices = getDependentServices(settings.startedServices).toList()
+                [*settings.startedServices, *dependentServices].unique()
             }
             else
             {
@@ -137,7 +135,6 @@ class ComposeExecutor {
                 // if there is 'version' on top-level then information about services is in 'services' sub-tree
                 compose.containsKey('version') ? ((Map) compose.get('services')).keySet() : compose.keySet()
             }.unique()
-
         }
     }
 

@@ -1,6 +1,5 @@
 package com.avast.gradle.dockercompose
 
-import org.gradle.api.tasks.testing.Test
 import spock.lang.Specification
 
 class DockerExecutorTest extends Specification {

@@ -5,9 +5,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class ComposeExecutorTest extends Specification
-{
-
+class ComposeExecutorTest extends Specification {
     @Shared
     def composeV1_webMasterWithDeps =
             '''
@@ -53,8 +51,7 @@ class ComposeExecutorTest extends Specification
             '''
 
     @Unroll
-    def "getServiceNames calculates service names correctly when includeDependencies is #includeDependencies" ()
-    {
+    def "getServiceNames calculates service names correctly when includeDependencies is #includeDependencies" () {
         def f = Fixture.custom(composeFile)
         f.project.plugins.apply 'java'
         f.project.dockerCompose.includeDependencies = includeDependencies
