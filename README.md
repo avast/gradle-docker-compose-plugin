@@ -95,13 +95,13 @@ dockerCompose {
     captureContainersOutputToFiles = '/path/to/directory' // sends output of all services to a dedicated log file in the directory specified, e.g. 'web.log' for service named 'log'
     composeLogToFile = project.file('build/my-logs.txt') // redirect output of composeUp and composeDown tasks to this file; default is null (ouput is not redirected)
     containerLogToDir = project.file('build/logs') // directory where composeLogs task stores output of the containers; default: build/containers-logs
+    includeDependencies = false // calculates services dependencies of startedServices and includes those when gathering logs or removing containers
 
     stopContainers = true // doesn't call `docker-compose down` if set to false - see below the paragraph about reconnecting; default is true
     removeContainers = true // default is true
     removeImages = "None" // Other accepted values are: "All" and "Local"
     removeVolumes = true // default is true
     removeOrphans = false // removes containers for services not defined in the Compose file; default is false
-    removeDependents = false // calculates services dependencies of startedServices and removes those as well; default is false
     
     projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)

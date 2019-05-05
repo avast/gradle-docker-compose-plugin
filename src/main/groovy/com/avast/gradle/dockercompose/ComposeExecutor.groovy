@@ -117,7 +117,17 @@ class ComposeExecutor {
 
     Iterable<String> getServiceNames() {
         if (!settings.startedServices.empty){
-            settings.startedServices
+            if(settings.includeDependencies)
+            {
+                def dependentServices = settings.composeExecutor.getDependentServices(
+                        settings.startedServices).toList()
+
+                 [*settings.startedServices, *dependentServices].unique()
+            }
+            else
+            {
+                settings.startedServices
+            }
         } else if (version >= VersionNumber.parse('1.6.0')) {
             execute('config', '--services').readLines()
         } else {

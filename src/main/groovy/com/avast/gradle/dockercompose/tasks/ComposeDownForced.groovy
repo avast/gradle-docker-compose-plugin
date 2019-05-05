@@ -17,16 +17,7 @@ class ComposeDownForced extends DefaultTask {
     @TaskAction
     void down() {
 
-        def dependentServices = []
-        if(settings.includeDependencies) {
-            if(settings.startedServices)
-            {
-                dependentServices = settings.composeExecutor.getDependentServices(
-                        settings.startedServices).toList()
-            }
-        }
-
-        def servicesToStop = [*settings.startedServices, *dependentServices].unique()
+        def servicesToStop = settings.composeExecutor.serviceNames
 
         settings.serviceInfoCache.clear()
         settings.composeExecutor.execute(*['stop', '--timeout', settings.dockerComposeStopTimeout.getSeconds().toString(), *servicesToStop])
@@ -38,14 +29,7 @@ class ComposeDownForced extends DefaultTask {
                     if (settings.removeVolumes) {
                         args += ['-v']
                     }
-                    args += settings.startedServices
-
-                    if(settings.includeDependencies) {
-                        if(dependentServices) {
-                            args += dependentServices
-                        }
-                    }
-
+                    args += servicesToStop
                 } else {
                     args += ['down']
                     switch (settings.removeImages) {
