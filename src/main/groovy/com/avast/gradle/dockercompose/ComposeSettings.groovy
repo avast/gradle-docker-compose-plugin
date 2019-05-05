@@ -64,7 +64,7 @@ class ComposeSettings {
     boolean removeContainers = true
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
-    boolean removeDependents = false
+    boolean includeDependencies = false
 
     boolean ignorePullFailure = false
     boolean ignorePushFailure = false
@@ -131,6 +131,8 @@ class ComposeSettings {
 
         r.captureContainersOutput = this.captureContainersOutput
 
+        r.includeDependencies = this.includeDependencies
+
         r.removeOrphans = this.removeOrphans
         r.forceRecreate = this.forceRecreate
         r.noRecreate = this.noRecreate
@@ -138,12 +140,11 @@ class ComposeSettings {
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
         r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
-        
+
         r.stopContainers = this.stopContainers
         r.removeContainers = this.removeContainers
         r.removeImages = this.removeImages
         r.removeVolumes = this.removeVolumes
-        r.removeDependents = this.removeDependents
 
         r.ignorePullFailure = this.ignorePullFailure
         r.ignorePushFailure = this.ignorePushFailure
