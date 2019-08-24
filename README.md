@@ -154,7 +154,7 @@ dockerCompose {
 dockerCompose {
     // settings as usual
     createNested("myNested").apply {
-        useComposeFiles = listOf('docker-compose-for-integration-tests.yml')
+        useComposeFiles = listOf("docker-compose-for-integration-tests.yml")
         isRequiredBy(project.tasks.named("myTask").get())
     }
 }
