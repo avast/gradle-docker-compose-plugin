@@ -49,6 +49,7 @@ class ComposeUp extends DefaultTask {
         }
         if (settings.forceRecreate) {
             args += '--force-recreate'
+            args += '--renew-anon-volumes'
         } else if (settings.noRecreate) {
             args += '--no-recreate'
         }
