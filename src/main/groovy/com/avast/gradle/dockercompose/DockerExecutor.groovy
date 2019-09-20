@@ -41,7 +41,7 @@ class DockerExecutor {
     }
 
     String getDockerPlatform() {
-        String osType = getDockerInfo().find { it.startsWith('OSType:') }
+        String osType = getDockerInfo().collect { it.trim() }.find { it.startsWith('OSType:') }
         osType.empty ? System.getProperty("os.name") : osType.substring('OSType:'.length()).trim()
     }
 
