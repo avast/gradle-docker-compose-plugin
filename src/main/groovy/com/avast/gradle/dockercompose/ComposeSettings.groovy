@@ -10,6 +10,7 @@ import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
@@ -20,13 +21,13 @@ import java.security.MessageDigest
 import java.time.Duration
 
 class ComposeSettings {
-    final ComposeUp upTask
-    final ComposeDown downTask
-    final ComposeDownForced downForcedTask
-    final ComposeBuild buildTask
-    final ComposePull pullTask
-    final ComposeLogs logsTask
-    final ComposePush pushTask
+    final TaskProvider<ComposeUp> upTask
+    final TaskProvider<ComposeDown> downTask
+    final TaskProvider<ComposeDownForced> downForcedTask
+    final TaskProvider<ComposeBuild> buildTask
+    final TaskProvider<ComposePull> pullTask
+    final TaskProvider<ComposeLogs> logsTask
+    final TaskProvider<ComposePush> pushTask
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
@@ -81,20 +82,13 @@ class ComposeSettings {
     ComposeSettings(Project project, String name = '') {
         this.project = project
 
-        upTask = project.tasks.create(name ? "${name}ComposeUp" : 'composeUp', ComposeUp)
-        upTask.settings = this
-        buildTask = project.tasks.create(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild)
-        buildTask.settings = this
-        pullTask = project.tasks.create(name ? "${name}ComposePull" : 'composePull', ComposePull)
-        pullTask.settings = this
-        downTask = project.tasks.create(name ? "${name}ComposeDown" : 'composeDown', ComposeDown)
-        downTask.settings = this
-        downForcedTask = project.tasks.create(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced)
-        downForcedTask.settings = this
-        logsTask = project.tasks.create(name ? "${name}ComposeLogs" : 'composeLogs', ComposeLogs)
-        logsTask.settings = this
-        pushTask = project.tasks.create(name ? "${name}ComposePush" : 'composePush', ComposePush)
-        pushTask.settings = this
+        upTask = project.tasks.register(name ? "${name}ComposeUp" : 'composeUp', ComposeUp, { it.settings = this })
+        buildTask = project.tasks.register(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild, { it.settings = this })
+        pullTask = project.tasks.register(name ? "${name}ComposePull" : 'composePull', ComposePull, { it.settings = this })
+        downTask = project.tasks.register(name ? "${name}ComposeDown" : 'composeDown', ComposeDown, { it.settings = this })
+        downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced, { it.settings = this })
+        logsTask = project.tasks.register(name ? "${name}ComposeLogs" : 'composeLogs', ComposeLogs, { it.settings = this })
+        pushTask = project.tasks.register(name ? "${name}ComposePush" : 'composePush', ComposePush, { it.settings = this })
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
@@ -162,16 +156,15 @@ class ComposeSettings {
     void isRequiredBy(Task task) {
         task.dependsOn upTask
         task.finalizedBy downTask
-        def ut = upTask // to access private field from closure
         task.getTaskDependencies().getDependencies(task)
                 .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
-                .each { ut.shouldRunAfter it }
+                .each { dep -> upTask.configure { it.shouldRunAfter dep } }
         if (task instanceof ProcessForkOptions) task.doFirst { exposeAsEnvironment(task as ProcessForkOptions) }
         if (task instanceof JavaForkOptions) task.doFirst { exposeAsSystemProperties(task as JavaForkOptions) }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
-        upTask.servicesInfos
+        upTask.get().servicesInfos
     }
 
     void exposeAsEnvironment(ProcessForkOptions task) {
