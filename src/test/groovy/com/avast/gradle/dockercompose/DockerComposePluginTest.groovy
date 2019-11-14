@@ -8,6 +8,7 @@ import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import org.gradle.api.Task
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
@@ -111,7 +112,7 @@ class DockerComposePluginTest extends Specification {
         when:
             project.dockerCompose.isRequiredBy(task)
         then:
-            task.dependsOn.contains(project.tasks.composeUp)
+            task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.composeUp }
             task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
 
@@ -127,7 +128,7 @@ class DockerComposePluginTest extends Specification {
             }
         }
         then:
-        task.dependsOn.contains(project.tasks.nestedComposeUp)
+        task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.nestedComposeUp }
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.nestedComposeDown }
     }
 
@@ -149,7 +150,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.integrationTestComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.integrationTestComposeUp
         up.settings.useComposeFiles == ['test.yml']
-        task.dependsOn.contains(project.tasks.integrationTestComposeUp)
+        task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.integrationTestComposeUp }
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.integrationTestComposeDown }
     }
 

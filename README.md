@@ -58,6 +58,8 @@ You could easily ensure that `docker-compose up` is called before your tests but
 # Usage
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposes that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed and available in `PATH`.
 
+> Starting from plugin version _0.10.0_, Gradle 4.9 or newer is required (because it uses [Task Configuration Avoidance API](https://docs.gradle.org/current/userguide/task_configuration_avoidance.html)).
+
 ```gradle
 buildscript {
     repositories {
