@@ -15,7 +15,7 @@ apply plugin: 'com.github.ben-manes.versions'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'com.gradle.plugin-publish'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
