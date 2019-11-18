@@ -116,6 +116,18 @@ class DockerComposePluginTest extends Specification {
             task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
     }
 
+    def "isRequiredBy() adds dependencies when using TaskProvider"() {
+        def project = ProjectBuilder.builder().build()
+        project.plugins.apply 'docker-compose'
+        TaskProvider<Task> taskProvider = project.tasks.register('integrationTest')
+        when:
+        project.dockerCompose.isRequiredBy(taskProvider)
+        Task task = taskProvider.get()
+        then:
+        task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.composeUp }
+        task.getFinalizedBy().getDependencies(task).any { it == project.tasks.composeDown }
+    }
+
     def "isRequiredBy() adds dependencies for nested settings"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'

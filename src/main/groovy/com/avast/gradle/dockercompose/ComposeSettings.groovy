@@ -163,6 +163,10 @@ class ComposeSettings {
         if (task instanceof JavaForkOptions) task.doFirst { exposeAsSystemProperties(task as JavaForkOptions) }
     }
 
+    void isRequiredBy(TaskProvider<Task> taskProvider) {
+        taskProvider.configure { isRequiredBy(it) }
+    }
+
     Map<String, ServiceInfo> getServicesInfos() {
         upTask.get().servicesInfos
     }
