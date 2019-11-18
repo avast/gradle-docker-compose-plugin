@@ -15,6 +15,7 @@ apply plugin: 'com.github.ben-manes.versions'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 apply plugin: 'com.gradle.plugin-publish'
 
@@ -47,14 +48,19 @@ task sourcesJar(type: Jar) {
     archiveClassifier = 'sources'
 }
 
-artifacts {
-    archives sourcesJar
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+        }
+    }
 }
 
 bintray {
     user = System.getenv('BINTRAY_USER')
     key = System.getenv('BINTRAY_KEY')
-    configurations = ['archives']
+    publications = ['maven']
     publish = true
     pkg {
         repo = 'maven'
