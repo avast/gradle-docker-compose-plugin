@@ -3,11 +3,13 @@ package com.avast.gradle.dockercompose.tasks
 import com.avast.gradle.dockercompose.ComposeSettings
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 @CompileStatic
 class ComposePull extends DefaultTask {
 
+    @Internal
     ComposeSettings settings
 
     ComposePull() {

@@ -5,18 +5,22 @@ import com.avast.gradle.dockercompose.ContainerInfo
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceInfo
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 import java.time.Instant
 
 class ComposeUp extends DefaultTask {
 
+    @Internal
     Boolean wasReconnected = false // for tests
 
+    @Internal
     ComposeSettings settings
 
     private Map<String, ServiceInfo> servicesInfos = [:]
 
+    @Internal
     Map<String, ServiceInfo> getServicesInfos() {
         servicesInfos
     }
@@ -110,6 +114,7 @@ class ComposeUp extends DefaultTask {
         }
     }
 
+    @Internal
     protected def getStateForCache() {
         settings.composeExecutor.execute('ps')
     }

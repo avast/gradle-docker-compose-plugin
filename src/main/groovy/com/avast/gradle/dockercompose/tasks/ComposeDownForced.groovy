@@ -3,10 +3,12 @@ package com.avast.gradle.dockercompose.tasks
 import com.avast.gradle.dockercompose.ComposeSettings
 import com.avast.gradle.dockercompose.RemoveImages
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.util.VersionNumber
 
 class ComposeDownForced extends DefaultTask {
+    @Internal
     ComposeSettings settings
 
     ComposeDownForced() {

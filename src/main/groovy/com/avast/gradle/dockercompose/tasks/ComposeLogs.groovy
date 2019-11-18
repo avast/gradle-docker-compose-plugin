@@ -2,10 +2,12 @@ package com.avast.gradle.dockercompose.tasks
 
 import com.avast.gradle.dockercompose.ComposeSettings
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 class ComposeLogs extends DefaultTask {
 
+  @Internal
   ComposeSettings settings
 
   ComposeLogs() {
