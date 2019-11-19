@@ -8,6 +8,7 @@ import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
+import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
@@ -153,18 +154,29 @@ class ComposeSettings {
         r
     }
 
-    void isRequiredBy(Task task) {
+    @PackageScope
+    void isRequiredByCore(Task task, boolean fromConfigure) {
         task.dependsOn upTask
         task.finalizedBy downTask
         task.getTaskDependencies().getDependencies(task)
                 .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
-                .each { dep -> upTask.configure { it.shouldRunAfter dep } }
+                .each { dep ->
+                    if (fromConfigure) {
+                        upTask.get().shouldRunAfter dep
+                    } else {
+                        upTask.configure { it.shouldRunAfter dep }
+                    }
+                }
         if (task instanceof ProcessForkOptions) task.doFirst { exposeAsEnvironment(task as ProcessForkOptions) }
         if (task instanceof JavaForkOptions) task.doFirst { exposeAsSystemProperties(task as JavaForkOptions) }
     }
 
+    void isRequiredBy(Task task) {
+        isRequiredByCore(task, false)
+    }
+
     void isRequiredBy(TaskProvider<Task> taskProvider) {
-        taskProvider.configure { isRequiredBy(it) }
+        taskProvider.configure { isRequiredByCore(it, true) }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
