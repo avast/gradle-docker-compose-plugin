@@ -27,7 +27,7 @@ class ComposeExecutor {
         executeWithCustomOutput(os, true, true, true, args)
     }
 
-    private void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
+    void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
         def ex = this.settings
         def er = project.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
@@ -84,6 +84,7 @@ class ComposeExecutor {
     }
 
     void captureContainersOutput(Closure<Void> logMethod, String... services) {
+        ComposeExecutor executor = this
         // execute daemon thread that executes `docker-compose logs -f --no-color`
         // the -f arguments means `follow` and so this command ends when docker-compose finishes
         def t = Executors.defaultThreadFactory().newThread(new Runnable() {
@@ -107,7 +108,7 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
+                executor.executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
             }
         })
         t.daemon = true
