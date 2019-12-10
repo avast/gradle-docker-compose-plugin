@@ -105,7 +105,7 @@ dockerCompose {
     removeVolumes = true // default is true
     removeOrphans = false // removes containers for services not defined in the Compose file; default is false
     
-    projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project), set to null to Docker Compose default (directory name)
+    projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project and nested settings name), set to null to Docker Compose default (directory name)
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
@@ -167,7 +167,7 @@ dockerCompose {
 
 * It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull`, `myNestedComposeDown`, `myNestedComposeDownForced` and `myNestedComposePush` tasks.
 * It's possible to use all the settings as in the main `dockerCompose` block.
-* Configuration of the nested settings defaults to the main `dockerCompose` settings (declared before the nested settings).
+* Configuration of the nested settings defaults to the main `dockerCompose` settings (declared before the nested settings), except `projectName`, `startedServices`, and few other properties.
 
 When exposing service info from `myNestedComposeUp` task into your task you should use following syntax:
 ```
