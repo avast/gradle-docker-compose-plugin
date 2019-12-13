@@ -107,7 +107,13 @@ class ComposeExecutor {
                         }
                     }
                 }
-                executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
+                try {
+                    executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
+                } catch (InterruptedException e) {
+                    logger.trace("Thread capturing container output has been interrupted, this is not an error", e)
+                } finally {
+                    os.close()
+                }
             }
         })
         t.daemon = true
