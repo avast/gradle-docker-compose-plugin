@@ -92,6 +92,7 @@ dockerCompose {
 
     waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening; default is true
     tcpPortsToIgnoreWhenWaiting = [1234] // list of TCP ports what will be ignored when waiting for exposed TCP ports opening; default: empty list
+    waitForHealthyStateTimeout = Duration.ofMinutes(15) // how long to wait until a container becomes healthy; default is 15 minutes
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
     captureContainersOutputToFiles = '/path/to/directory' // sends output of all services to a dedicated log file in the directory specified, e.g. 'web.log' for service named 'log'
