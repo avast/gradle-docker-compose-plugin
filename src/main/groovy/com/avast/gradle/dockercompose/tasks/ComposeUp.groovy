@@ -39,6 +39,7 @@ class ComposeUp extends DefaultTask {
                 logger.lifecycle('Cached services infos loaded while \'stopContainers\' is set to \'false\'.')
                 wasReconnected = true
                 startCapturing()
+                printExposedPorts()
                 return
             }
         }
@@ -81,6 +82,7 @@ class ComposeUp extends DefaultTask {
             if (settings.waitForTcpPorts) {
                 waitForOpenTcpPorts(servicesInfos.values())
             }
+            printExposedPorts()
             if (!settings.stopContainers) {
                 settings.serviceInfoCache.set(servicesInfos, getStateForCache())
             } else {
@@ -91,6 +93,29 @@ class ComposeUp extends DefaultTask {
             logger.debug("Failed to start-up Docker containers", e)
             settings.downForcedTask.get().down()
             throw e
+        }
+    }
+
+    protected void printExposedPorts() {
+        if (!servicesInfos.values().any { si -> si.tcpPorts.any() }) {
+            return
+        }
+        int nameMaxLength = Math.max('Name'.length(), servicesInfos.values().collect { it.containerInfos.values().collect { it.instanceName.length() } }.flatten().max())
+        int containerPortMaxLenght = 'Container Port'.length()
+        int mappingMaxLength = Math.max('Mapping'.length(), servicesInfos.values().collect { it.containerInfos.values().collect { ci -> ci.tcpPorts.collect { p -> "${ci.host}:${p.value}".length() } } }.flatten().max())
+        logger.lifecycle('+-' + '-'.multiply(nameMaxLength) + '-+-' + '-'.multiply(containerPortMaxLenght) + '-+-' + '-'.multiply(mappingMaxLength) + '-+')
+        logger.lifecycle('| Name' + ' '.multiply(nameMaxLength - 'Name'.length()) + ' | Container Port' + ' '.multiply(containerPortMaxLenght - 'Container Port'.length()) + ' | Mapping' + ' '.multiply(mappingMaxLength - 'Mapping'.length()) + ' |')
+        logger.lifecycle('+-' + '-'.multiply(nameMaxLength) + '-+-' + '-'.multiply(containerPortMaxLenght) + '-+-' + '-'.multiply(mappingMaxLength) + '-+')
+        servicesInfos.values().forEach { si ->
+            if (si.containerInfos.values().any { it.tcpPorts.any() }) {
+                si.containerInfos.values().forEach { ci ->
+                    ci.tcpPorts.entrySet().forEach { p ->
+                        String mapping = "${ci.host}:${p.value}".toString()
+                        logger.lifecycle('| ' + ci.instanceName + ' '.multiply(nameMaxLength - ci.instanceName.length()) + ' | ' + p.key + ' '.multiply(containerPortMaxLenght - p.key.toString().length()) + ' | ' + mapping + ' '.multiply(mappingMaxLength - mapping.length()) + ' |')
+                    }
+                }
+                logger.lifecycle('+-' + '-'.multiply(nameMaxLength) + '-+-' + '-'.multiply(containerPortMaxLenght) + '-+-' + '-'.multiply(mappingMaxLength) + '-+')
+            }
         }
     }
 
