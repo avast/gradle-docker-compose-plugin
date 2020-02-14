@@ -2,6 +2,7 @@ package com.avast.gradle.dockercompose
 
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.internal.UncheckedException
 import org.gradle.process.ExecSpec
 import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
@@ -111,6 +112,13 @@ class ComposeExecutor {
                     executeWithCustomOutput(os, true, true, true, 'logs', '-f', '--no-color', *services)
                 } catch (InterruptedException e) {
                     logger.trace("Thread capturing container output has been interrupted, this is not an error", e)
+                } catch (UncheckedException ue) {
+                    if (ue.cause instanceof InterruptedException) {
+                        // Gradle < 5.0 incorrectly wrapped InterruptedException to UncheckedException
+                        logger.trace("Thread capturing container output has been interrupted, this is not an error", ue)
+                    } else {
+                        throw ue
+                    }
                 } finally {
                     os.close()
                 }
