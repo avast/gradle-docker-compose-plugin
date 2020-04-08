@@ -188,6 +188,9 @@ class ComposeUp extends DefaultTask {
                         logger.debug("Service ${instanceName} or this version of Docker doesn't support healthchecks")
                         break
                     }
+                    if (settings.checkContainersRunning && !"running".equalsIgnoreCase(inspectionState.Status)) {
+                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                    }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
                         throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
@@ -235,6 +238,10 @@ class ComposeUp extends DefaultTask {
                             }
                             logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
                             sleep(settings.waitAfterTcpProbeFailure.toMillis())
+                            def inspection = settings.dockerExecutor.getInspection(containerInfo.containerId)
+                            if (settings.checkContainersRunning && !"running".equalsIgnoreCase(inspection.State.Status)) {
+                                throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                            }
                         }
                     }
                 }

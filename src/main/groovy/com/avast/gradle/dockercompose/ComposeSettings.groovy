@@ -36,6 +36,7 @@ class ComposeSettings {
 
     boolean buildBeforeUp = true
     boolean buildBeforePull = true
+
     boolean waitForTcpPorts = true
     List<Integer> tcpPortsToIgnoreWhenWaiting = []
     Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
@@ -43,6 +44,8 @@ class ComposeSettings {
     Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
     Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
     Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
+    boolean checkContainersRunning = true
+
     List<String> useComposeFiles = []
 
     boolean captureContainersOutput = false
@@ -116,6 +119,7 @@ class ComposeSettings {
         def r = new ComposeSettings(project, name)
         r.buildBeforeUp = this.buildBeforeUp
         r.buildBeforePull = this.buildBeforePull
+
         r.waitForTcpPorts = this.waitForTcpPorts
         r.tcpPortsToIgnoreWhenWaiting = new ArrayList<>(this.tcpPortsToIgnoreWhenWaiting)
         r.waitAfterTcpProbeFailure = this.waitAfterTcpProbeFailure
@@ -123,6 +127,7 @@ class ComposeSettings {
         r.waitForTcpPortsDisconnectionProbeTimeout = this.waitForTcpPortsDisconnectionProbeTimeout
         r.waitAfterHealthyStateProbeFailure = this.waitAfterHealthyStateProbeFailure
         r.waitForHealthyStateTimeout = this.waitForHealthyStateTimeout
+        r.checkContainersRunning = this.checkContainersRunning
 
         r.captureContainersOutput = this.captureContainersOutput
 
