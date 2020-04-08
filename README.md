@@ -90,7 +90,8 @@ dockerCompose {
     upAdditionalArgs = ['--no-deps']
     downAdditionalArgs = ['--some-switch']
 
-    waitForTcpPorts = true // turns off the waiting for exposed TCP ports opening; default is true
+    waitForTcpPorts = true // turns on/off the waiting for exposed TCP ports opening; default is true
+    waitForTcpPortsTimeout = Duration.ofMinutes(15) // how long to wait until all exposed TCP become open; default is 15 minutes
     tcpPortsToIgnoreWhenWaiting = [1234] // list of TCP ports what will be ignored when waiting for exposed TCP ports opening; default: empty list
     waitForHealthyStateTimeout = Duration.ofMinutes(15) // how long to wait until a container becomes healthy; default is 15 minutes
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
