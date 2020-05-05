@@ -109,7 +109,8 @@ dockerCompose {
     removeVolumes = true // default is true
     removeOrphans = false // removes containers for services not defined in the Compose file; default is false
     
-    projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project and nested settings name), set to null to Docker Compose default (directory name)
+    projectName = 'my-project' // allow to set custom docker-compose project name (defaults to projectNamePrefix-project.name-nested_project.name), set to null to Docker Compose default (directory name)
+    projectNamePrefix = 'build-88' // used to create a safe projectName. if empty it will be derived from absolute path of the project
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'

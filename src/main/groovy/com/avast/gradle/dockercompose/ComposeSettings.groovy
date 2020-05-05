@@ -64,6 +64,7 @@ class ComposeSettings {
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
     String projectName
+    String projectNamePrefix
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -98,7 +99,7 @@ class ComposeSettings {
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
-        this.projectName = this.projectName ?: generateProjectName(project, name)
+        this.projectName = this.projectName ?: generateProjectName(project, name, this.projectNamePrefix)
 
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
 
@@ -110,9 +111,10 @@ class ComposeSettings {
         }
     }
 
-    private static String generateProjectName(Project project, String name) {
-        def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
-        "${fullPathMd5}_${project.name}_${name}"
+    private static String generateProjectName(Project project, String name, String prefix) {
+        def safe_prefix = prefix ?: MessageDigest.getInstance("MD5")
+                .digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
+        "${safe_prefix}_${project.name}_${name}"
     }
 
     ComposeSettings createNested(String name) {
