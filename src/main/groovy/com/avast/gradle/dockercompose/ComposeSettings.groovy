@@ -63,8 +63,9 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
-    String projectName
-    String projectNamePrefix
+    String projectName = ""
+    String projectNamePrefix = ""
+    String projectNestedName
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -86,6 +87,7 @@ class ComposeSettings {
 
     ComposeSettings(Project project, String name = '') {
         this.project = project
+        this.projectNestedName = name
 
         upTask = project.tasks.register(name ? "${name}ComposeUp" : 'composeUp', ComposeUp, { it.settings = this })
         buildTask = project.tasks.register(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild, { it.settings = this })
@@ -99,8 +101,6 @@ class ComposeSettings {
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
-        this.projectName = this.projectName ?: generateProjectName(project, name, this.projectNamePrefix)
-
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
 
         if (OperatingSystem.current().isMacOsX()) {
@@ -111,10 +111,10 @@ class ComposeSettings {
         }
     }
 
-    private static String generateProjectName(Project project, String name, String prefix) {
-        def safe_prefix = prefix ?: MessageDigest.getInstance("MD5")
+    String generateProjectName() {
+        def safe_prefix = this.projectNamePrefix ?: MessageDigest.getInstance("MD5")
                 .digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
-        "${safe_prefix}_${project.name}_${name}"
+        "${safe_prefix}_${this.project.name}_${this.projectNestedName}"
     }
 
     ComposeSettings createNested(String name) {
@@ -142,6 +142,7 @@ class ComposeSettings {
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
         r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
+        r.projectNamePrefix = this.projectNamePrefix
 
         r.stopContainers = this.stopContainers
         r.removeContainers = this.removeContainers
