@@ -8,16 +8,16 @@ class ServiceInfo {
     /* Key is instance name, for example service_1 */
     Map<String, ContainerInfo> containerInfos = [:]
 
-    String getHost() { firstContainer.serviceHost.host }
-    Map<Integer, Integer> getPorts() { firstContainer.tcpPorts }
-    Map<Integer, Integer> getTcpPorts() { firstContainer.tcpPorts }
-    Map<Integer, Integer> getUdpPorts() { firstContainer.udpPorts }
-    Integer getPort() { firstContainer.port }
-    Integer getTcpPort() { firstContainer.tcpPort }
-    Integer getUdpPort() { firstContainer.udpPort }
-    
+    String getHost() { firstContainer?.serviceHost.host }
+    Map<Integer, Integer> getPorts() { tcpPorts }
+    Map<Integer, Integer> getTcpPorts() { firstContainer?.tcpPorts ?: [:] }
+    Map<Integer, Integer> getUdpPorts() { firstContainer?.udpPorts ?: [:] }
+    Integer getPort() { firstContainer?.port }
+    Integer getTcpPort() { firstContainer?.tcpPort }
+    Integer getUdpPort() { firstContainer?.udpPort }
+
     ContainerInfo getFirstContainer() {
-        containerInfos.values().first()
+        containerInfos.values()?.find()
     }
 
     def propertyMissing(String name) {

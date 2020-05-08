@@ -404,6 +404,32 @@ class DockerComposePluginTest extends Specification {
             f.close()
     }
 
+    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
+    def "docker-compose scale to 0 does not cause exceptions because of missing first container"() {
+        def f = Fixture.custom('''
+            web:
+                image: nginx:stable
+                ports:
+                  - 80
+            z:
+                image: nginx:stable
+                ports: []
+        ''')
+        f.extension.scale = ['web': 0]
+        def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
+            def webInfos = project.dockerCompose.servicesInfos.web.containerInfos
+            assert webInfos.size() == 0
+        }
+        when:
+            f.project.tasks.composeUp.up()
+            integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
+        then:
+            noExceptionThrown()
+        cleanup:
+            f.project.tasks.composeDown.down()
+            f.close()
+    }
+
     def "exposes environment variables and system properties for container with custom name"() {
         def f = Fixture.custom(composeFileContent)
         f.project.plugins.apply 'java'
