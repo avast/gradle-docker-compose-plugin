@@ -360,7 +360,7 @@ class DockerComposePluginTest extends Specification {
             f.close()
     }
 
-    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
+    @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') != null && parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale option launches multiple instances of service"() {
         def f = Fixture.withNginx()
         f.extension.scale = ['web': 2]
@@ -380,7 +380,7 @@ class DockerComposePluginTest extends Specification {
             f.close()
     }
 
-    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
+    @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') != null && parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "environment variables and system properties exposed for all scaled containers"() {
         def f = Fixture.withNginx()
         f.project.plugins.apply 'java'
@@ -404,7 +404,7 @@ class DockerComposePluginTest extends Specification {
             f.close()
     }
 
-    @IgnoreIf({ parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
+    @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') != null && parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale to 0 does not cause exceptions because of missing first container"() {
         def f = Fixture.custom('''
             web:
