@@ -63,7 +63,27 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
-    String projectName
+
+    protected String customProjectName
+    protected Boolean customProjectNameSet
+    void setProjectName(String customProjectName)
+    {
+        this.customProjectName = customProjectName
+        this.customProjectNameSet = true
+    }
+    String getProjectName() {
+        if (customProjectNameSet) {
+            return customProjectName
+        }
+        else if (projectNamePrefix) {
+            return "${projectNamePrefix}_${nestedName}"
+        }
+        else {
+            return "${generateSafeProjectNamePrefix(project)}_${nestedName}"
+        }
+    }
+    String projectNamePrefix
+    protected String nestedName
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -85,6 +105,7 @@ class ComposeSettings {
 
     ComposeSettings(Project project, String name = '') {
         this.project = project
+        this.nestedName = name
 
         upTask = project.tasks.register(name ? "${name}ComposeUp" : 'composeUp', ComposeUp, { it.settings = this })
         buildTask = project.tasks.register(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild, { it.settings = this })
@@ -98,8 +119,6 @@ class ComposeSettings {
         this.composeExecutor = new ComposeExecutor(this)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
-        this.projectName = this.projectName ?: generateProjectName(project, name)
-
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
 
         if (OperatingSystem.current().isMacOsX()) {
@@ -110,9 +129,9 @@ class ComposeSettings {
         }
     }
 
-    private static String generateProjectName(Project project, String name) {
+    private static String generateSafeProjectNamePrefix(Project project) {
         def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
-        "${fullPathMd5}_${project.name}_${name}"
+        "${fullPathMd5}_${project.name}"
     }
 
     ComposeSettings createNested(String name) {
@@ -140,6 +159,8 @@ class ComposeSettings {
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
         r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
+
+        r.projectNamePrefix = this.projectNamePrefix
 
         r.stopContainers = this.stopContainers
         r.removeContainers = this.removeContainers

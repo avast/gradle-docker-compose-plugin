@@ -40,8 +40,9 @@ class ComposeExecutor {
                 finalArgs.add('--no-ansi')
             }
             finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
-            if (ex.projectName) {
-                finalArgs.addAll(['-p', ex.projectName])
+            String pn = ex.projectName
+            if (pn) {
+                finalArgs.addAll(['-p', pn])
             }
             finalArgs.addAll(args)
             e.commandLine finalArgs
