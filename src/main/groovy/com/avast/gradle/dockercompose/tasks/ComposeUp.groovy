@@ -148,10 +148,10 @@ class ComposeUp extends DefaultTask {
         // this code is little bit complicated - the aim is to execute `docker inspect` just once (for all the containers)
         Map<String, Iterable<String>> serviceToContainersIds = servicesNames.collectEntries { [(it) : settings.composeExecutor.getContainerIds(it)] }
         Map<String, Map<String, Object>> inspections = settings.dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
-        serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collectEntries { createContainerInfo(inspections.get(it), pair.key) } ) }
+        serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collect { createContainerInfo(inspections.get(it), pair.key) }.collectEntries { [(it.instanceName): it] } ) }
     }
 
-    protected def createContainerInfo(Map<String, Object> inspection, String serviceName) {
+    protected ContainerInfo createContainerInfo(Map<String, Object> inspection, String serviceName) {
         String containerId = inspection.Id
         logger.info("Container ID of service $serviceName is $containerId")
         ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
@@ -159,12 +159,12 @@ class ComposeUp extends DefaultTask {
         def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
         def udpPorts = settings.dockerExecutor.getUdpPortsMapping(serviceName, inspection, host)
         String instanceName = inspection.Name.find(/${serviceName}_\d+/) ?: inspection.Name - '/'
-        [(instanceName): new ContainerInfo(
+        new ContainerInfo(
                 instanceName: instanceName,
                 serviceHost: host,
                 tcpPorts: tcpPorts,
                 udpPorts: udpPorts,
-                inspection: inspection)]
+                inspection: inspection)
     }
 
     void waitForHealthyContainers(Iterable<ServiceInfo> servicesInfos) {
