@@ -189,10 +189,10 @@ class ComposeUp extends DefaultTask {
                         break
                     }
                     if (settings.checkContainersRunning && !"running".equalsIgnoreCase(inspectionState.Status)) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
                     if (start.plus(settings.waitForHealthyStateTimeout) < Instant.now()) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
                     firstIteration = false
                 }
@@ -207,10 +207,11 @@ class ComposeUp extends DefaultTask {
                 containerInfo.tcpPorts
                 .findAll { ep, fp -> !settings.tcpPortsToIgnoreWhenWaiting.any { it == ep } }
                 .forEach { exposedPort, forwardedPort ->
-                    logger.lifecycle("Probing TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}'")
+                    logger.lifecycle("Probing TCP socket on ${containerInfo.host}:${forwardedPort} of '${instanceName}'")
+                    Integer portToCheck = forwardedPort
                     while (true) {
                         try {
-                            def s = new Socket(containerInfo.host, forwardedPort)
+                            def s = new Socket(containerInfo.host, portToCheck)
                             s.setSoTimeout(settings.waitForTcpPortsDisconnectionProbeTimeout.toMillis() as int)
                             try {
                                 // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
@@ -223,24 +224,31 @@ class ComposeUp extends DefaultTask {
                                     logger.debug("An exception when reading from socket", e) // expected exception
                                 }
                                 if (disconnected) {
-                                    throw new RuntimeException("TCP connection on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' was disconnected right after connected")
+                                    throw new RuntimeException("TCP connection on ${containerInfo.host}:${portToCheck} of '${instanceName}' was disconnected right after connected")
                                 }
                             }
                             finally {
                                 s.close()
                             }
-                            logger.lifecycle("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is ready")
+                            logger.lifecycle("TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' is ready")
                             break
                         }
                         catch (Exception e) {
                             if (start.plus(settings.waitForTcpPortsTimeout) < Instant.now()) {
-                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                             }
-                            logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${forwardedPort} of service '${instanceName}' (${e.message})")
+                            logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' (${e.message})")
                             sleep(settings.waitAfterTcpProbeFailure.toMillis())
                             def inspection = settings.dockerExecutor.getInspection(containerInfo.containerId)
                             if (settings.checkContainersRunning && !"running".equalsIgnoreCase(inspection.State.Status)) {
-                                throw new RuntimeException("Container ${containerInfo.containerId} of service ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                                throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                            }
+                            ContainerInfo newContainerInfo = createContainerInfo(inspection, serviceInfo.name)
+                            Integer newForwardedPort = newContainerInfo.tcpPorts.get(exposedPort)
+                            if (newForwardedPort != portToCheck) {
+                                logger.lifecycle("Going to replace container information of '${instanceName}' because port $exposedPort was exposed as $forwardedPort but is $newForwardedPort now")
+                                serviceInfo.containerInfos.replace(instanceName, newContainerInfo)
+                                portToCheck = newForwardedPort
                             }
                         }
                     }
