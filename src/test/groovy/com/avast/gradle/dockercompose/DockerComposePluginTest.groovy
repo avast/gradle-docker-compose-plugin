@@ -533,7 +533,7 @@ class DockerComposePluginTest extends Specification {
         when:
         f.project.tasks.composeUp.up()
         then:
-        f.project.dockerCompose.servicesInfos.nginx.host == 'localhost'
+        f.project.dockerCompose.servicesInfos.nginx.host == f.project.dockerCompose.servicesInfos.gw.host
         ServiceInfo gwServiceInfo = f.project.dockerCompose.servicesInfos.gw
         "http://${gwServiceInfo.host}:${gwServiceInfo.tcpPorts[80]}".toURL().text.contains('nginx')
         cleanup:
