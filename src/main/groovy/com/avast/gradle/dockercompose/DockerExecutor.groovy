@@ -101,43 +101,50 @@ class DockerExecutor {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
             return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
         }
-        Map<String, Object> networkSettings = inspection.NetworkSettings
-        Map<String, Object> networks = networkSettings.Networks
-        Map.Entry<String, Object> firstNetworkPair = networks.find()
         String dockerHost = settings.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
-            new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
-        } else if (isWindows() && getContainerPlatform(inspection).toLowerCase().contains('win') && "nat".equalsIgnoreCase(getNetworkDriver(firstNetworkPair.key))) {
+            return new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
+        }
+        Map<String, Object> networkSettings = inspection.NetworkSettings
+        Map<String, Object> networks = networkSettings.Networks
+        Map.Entry<String, Object> firstNetworkPair = networks.find()
+        if (isWindows() && getContainerPlatform(inspection).toLowerCase().contains('win') && firstNetworkPair && "nat".equalsIgnoreCase(getNetworkDriver(firstNetworkPair.key))) {
             logger.lifecycle("Will use direct access to the container of $serviceName")
             return new ServiceHost(host: firstNetworkPair.value.IPAddress, type: ServiceHostType.DirectContainerAccess)
-        } else if (isMac() || isWindows()) {
-            logger.lifecycle("Will use localhost as host of $serviceName")
-            new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
-        } else {
-            // read gateway of first containers network
-            String gateway
-            if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
-                gateway = 'localhost'
-                logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
-                return new ServiceHost(host: 'localhost', type: ServiceHostType.Host)
-            } else if (networks && networks.size() > 0) {
-                gateway = firstNetworkPair.value.Gateway
-                if (!gateway) {
-                    logger.lifecycle("Gateway cannot be read from container inspection - trying to read from network inspection (network '${firstNetworkPair.key}')")
-                    gateway = getNetworkGateway(firstNetworkPair.key)
-                }
-                logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
-            } else { // networks not specified (older Docker versions)
-                gateway = networkSettings.Gateway
-                logger.lifecycle("Will use $gateway as host of $serviceName")
-            }
-            if (!gateway) {
-                throw new RuntimeException('Gateway cannot be obtained')
-            }
-            new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
         }
+        if (isMac() || isWindows()) {
+            logger.lifecycle("Will use localhost as host of $serviceName")
+            return new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
+        }
+        String networkMode = (String)inspection.HostConfig.NetworkMode ?: ''
+        if (networkMode.startsWith('container:')) {
+            String linkedContainerId = networkMode.substring('container:'.length())
+            logger.lifecycle("Reading container host of $serviceName from linked container $linkedContainerId")
+            return getContainerHost(getInspection(linkedContainerId), linkedContainerId, logger)
+        }
+        String gateway
+        if (networks && networks.every { it.key.toLowerCase().equals("host") }) {
+            gateway = 'localhost'
+            logger.lifecycle("Will use $gateway as host of $serviceName because it is using HOST network")
+            return new ServiceHost(host: gateway, type: ServiceHostType.Host)
+        } else if (networks && networks.size() > 0) {
+            gateway = firstNetworkPair.value.Gateway
+            if (!gateway) {
+                logger.lifecycle("Gateway cannot be read from container inspection - trying to read from network inspection (network '${firstNetworkPair.key}')")
+                gateway = getNetworkGateway(firstNetworkPair.key)
+            }
+            logger.lifecycle("Will use $gateway (network ${firstNetworkPair.key}) as host of $serviceName")
+            return new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
+        }
+        if (networkSettings.Gateway) { // networks not specified (older Docker versions)
+            gateway = networkSettings.Gateway
+            logger.lifecycle("Will use $gateway as host of $serviceName")
+            return new ServiceHost(host: gateway, type: ServiceHostType.NetworkGateway)
+        }
+        logger.warn("Will use 'localhost' as host of $serviceName (as a fallback)")
+        return new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
     }
 
     Map<Integer, Integer> getTcpPortsMapping(String serviceName, Map<String, Object> inspection, ServiceHost host) {

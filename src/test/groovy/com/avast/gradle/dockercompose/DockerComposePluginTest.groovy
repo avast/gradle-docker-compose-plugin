@@ -525,4 +525,33 @@ class DockerComposePluginTest extends Specification {
                       - web1
         ''']
     }
+
+    def "works as expected for container with network from another container"() {
+        def f = Fixture.custom(composeFileContent)
+        f.project.plugins.apply 'java'
+        f.project.plugins.apply 'docker-compose'
+        when:
+        f.project.tasks.composeUp.up()
+        then:
+        f.project.dockerCompose.servicesInfos.nginx.host == 'localhost'
+        ServiceInfo gwServiceInfo = f.project.dockerCompose.servicesInfos.gw
+        "http://${gwServiceInfo.host}:${gwServiceInfo.tcpPorts[80]}".toURL().text.contains('nginx')
+        cleanup:
+        f.project.tasks.composeDown.down()
+        f.close()
+        where:
+        composeFileContent << ['''
+            version: '2.0'
+            services:
+              gw:
+                image: alpine:3.9.6
+                entrypoint: /bin/sleep
+                command: 1h
+                ports:
+                  - 80
+              nginx:
+                image: nginx:stable
+                network_mode: service:gw
+        ''']
+    }
 }
