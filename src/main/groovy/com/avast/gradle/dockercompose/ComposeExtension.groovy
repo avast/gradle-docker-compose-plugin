@@ -5,7 +5,7 @@ import org.gradle.util.ConfigureUtil
 
 class ComposeExtension extends ComposeSettings {
     ComposeExtension(Project project) {
-        super(project, '')
+        super(project, '', '')
     }
 
     private HashMap<String, ComposeSettings> settings = [:]

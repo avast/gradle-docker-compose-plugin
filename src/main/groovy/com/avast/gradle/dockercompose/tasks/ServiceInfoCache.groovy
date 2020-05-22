@@ -17,8 +17,8 @@ class ServiceInfoCache {
 
     ServiceInfoCache(ComposeSettings settings) {
         this.settings = settings
-        this.servicesInfosFile = new File(settings.project.buildDir, "dockerCompose/servicesInfos.json")
-        this.stateFile = new File(settings.project.buildDir, "dockerCompose/state.txt")
+        this.servicesInfosFile = new File(settings.project.buildDir, "dockerCompose/${settings.nestedName}servicesInfos.json")
+        this.stateFile = new File(settings.project.buildDir, "dockerCompose/${settings.nestedName}state.txt")
     }
 
     Map<String, ServiceInfo> get(Supplier<String> stateSupplier) {

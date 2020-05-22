@@ -83,7 +83,7 @@ class ComposeSettings {
         }
     }
     String projectNamePrefix
-    protected String nestedName
+    String nestedName
 
     boolean stopContainers = true
     boolean removeContainers = true
@@ -103,9 +103,9 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
-    ComposeSettings(Project project, String name = '') {
+    ComposeSettings(Project project, String name = '', String parentName = '') {
         this.project = project
-        this.nestedName = name
+        this.nestedName = parentName + name
 
         upTask = project.tasks.register(name ? "${name}ComposeUp" : 'composeUp', ComposeUp, { it.settings = this })
         buildTask = project.tasks.register(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild, { it.settings = this })
@@ -135,7 +135,7 @@ class ComposeSettings {
     }
 
     ComposeSettings createNested(String name) {
-        def r = new ComposeSettings(project, name)
+        def r = new ComposeSettings(project, name, this.nestedName)
         r.buildBeforeUp = this.buildBeforeUp
         r.buildBeforePull = this.buildBeforePull
 
