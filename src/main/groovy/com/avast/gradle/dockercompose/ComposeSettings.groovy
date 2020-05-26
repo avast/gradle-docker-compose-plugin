@@ -150,8 +150,6 @@ class ComposeSettings {
 
         r.captureContainersOutput = this.captureContainersOutput
 
-        r.includeDependencies = this.includeDependencies
-
         r.removeOrphans = this.removeOrphans
         r.forceRecreate = this.forceRecreate
         r.noRecreate = this.noRecreate
@@ -166,6 +164,7 @@ class ComposeSettings {
         r.removeContainers = this.removeContainers
         r.removeImages = this.removeImages
         r.removeVolumes = this.removeVolumes
+        r.includeDependencies = this.includeDependencies
 
         r.ignorePullFailure = this.ignorePullFailure
         r.ignorePushFailure = this.ignorePushFailure

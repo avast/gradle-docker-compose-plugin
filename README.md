@@ -172,7 +172,7 @@ dockerCompose {
 
 * It creates `myNestedComposeUp`, `myNestedComposeBuild`, `myNestedComposePull`, `myNestedComposeDown`, `myNestedComposeDownForced` and `myNestedComposePush` tasks.
 * It's possible to use all the settings as in the main `dockerCompose` block.
-* Configuration of the nested settings defaults to the main `dockerCompose` settings (declared before the nested settings), except `projectName`, `startedServices`, and few other properties.
+* Configuration of the nested settings defaults to the main `dockerCompose` settings (declared before the nested settings), except following properties: `projectName`, `startedServices`, `useComposeFiles`, `scale`, `captureContainersOutputToFile`, `captureContainersOutputToFiles`, `composeLogToFile`, `containerLogToDir`, `pushServices`
 
 When exposing service info from `myNestedComposeUp` task into your task you should use following syntax:
 ```
