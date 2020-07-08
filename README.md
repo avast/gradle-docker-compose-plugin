@@ -92,9 +92,11 @@ dockerCompose {
 
     waitForTcpPorts = true // turns on/off the waiting for exposed TCP ports opening; default is true
     waitForTcpPortsTimeout = Duration.ofMinutes(15) // how long to wait until all exposed TCP become open; default is 15 minutes
+    waitAfterTcpProbeFailure = Duration.ofSeconds(1) // how long to sleep before next attempt to check if a TCP is open; default is 1 second
     tcpPortsToIgnoreWhenWaiting = [1234] // list of TCP ports what will be ignored when waiting for exposed TCP ports opening; default: empty list
     waitForHealthyStateTimeout = Duration.ofMinutes(15) // how long to wait until a container becomes healthy; default is 15 minutes
-    boolean checkContainersRunning = true // turns on/off checking if container is running (during waiting for open TCP port and healthy state); default is true
+    waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5) // how long to sleep before next attempt to check healthy status; default is 5 seconds
+    checkContainersRunning = true // turns on/off checking if container is running (during waiting for open TCP port and healthy state); default is true
 
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
     captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
