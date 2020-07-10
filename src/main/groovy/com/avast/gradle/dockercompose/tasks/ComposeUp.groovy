@@ -141,7 +141,7 @@ class ComposeUp extends DefaultTask {
 
     @Internal
     protected def getStateForCache() {
-        settings.composeExecutor.execute('ps') + settings.composeExecutor.execute('config')
+        settings.composeExecutor.execute('ps') + settings.composeExecutor.execute('config') + settings.startedServices.join(',')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
