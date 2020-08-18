@@ -14,6 +14,8 @@ class ComposeDown extends ComposeDownForced {
     void down() {
         if (settings.stopContainers) {
             super.down()
+        } else {
+            logger.lifecycle('You\'re trying to stop the containers, but stopContainers is set to false. Please use composeDownForced task instead.')
         }
     }
 }
