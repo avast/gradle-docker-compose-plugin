@@ -200,7 +200,7 @@ class ComposeSettings {
         isRequiredByCore(task, false)
     }
 
-    void isRequiredBy(TaskProvider<Task> taskProvider) {
+    void isRequiredBy(TaskProvider<? extends Task> taskProvider) {
         taskProvider.configure { isRequiredByCore(it, true) }
     }
 
