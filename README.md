@@ -89,6 +89,7 @@ dockerCompose {
     pullAdditionalArgs = ['--ignore-pull-failures']
     upAdditionalArgs = ['--no-deps']
     downAdditionalArgs = ['--some-switch']
+    composeAdditionalArgs = ['--context', 'remote', '--verbose', "--log-level, "DEBUG"] // for adding more [options] in docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
 
     waitForTcpPorts = true // turns on/off the waiting for exposed TCP ports opening; default is true
     waitForTcpPortsTimeout = Duration.ofMinutes(15) // how long to wait until all exposed TCP become open; default is 15 minutes

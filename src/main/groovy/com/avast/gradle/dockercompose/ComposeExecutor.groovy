@@ -36,6 +36,7 @@ class ComposeExecutor {
             }
             e.environment = ex.environment
             def finalArgs = [ex.executable]
+            finalArgs.addAll(ex.composeAdditionalArgs)
             if (noAnsi && version >= VersionNumber.parse("1.16.0")) {
                 finalArgs.add('--no-ansi')
             }

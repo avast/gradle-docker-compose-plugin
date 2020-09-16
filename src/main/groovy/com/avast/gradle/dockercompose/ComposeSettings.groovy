@@ -63,6 +63,7 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
+    List<String> composeAdditionalArgs = []
 
     protected String customProjectName
     protected Boolean customProjectNameSet
@@ -157,6 +158,7 @@ class ComposeSettings {
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
         r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
+        r.composeAdditionalArgs = new ArrayList<>(this.composeAdditionalArgs)
 
         r.projectNamePrefix = this.projectNamePrefix
 
