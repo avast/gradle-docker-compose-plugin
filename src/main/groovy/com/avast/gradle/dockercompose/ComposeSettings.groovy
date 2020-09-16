@@ -103,6 +103,8 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
+    List<String> dockerComposeAdditionalOptions = []
+
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.project = project
         this.nestedName = parentName + name
@@ -176,6 +178,9 @@ class ComposeSettings {
 
         r.dockerComposeWorkingDirectory = this.dockerComposeWorkingDirectory
         r.dockerComposeStopTimeout = this.dockerComposeStopTimeout
+
+        r.dockerComposeAdditionalOptions = new ArrayList<>(this.dockerComposeAdditionalOptions)
+
         r
     }
 
