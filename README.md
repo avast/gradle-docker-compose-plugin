@@ -89,6 +89,7 @@ dockerCompose {
     pullAdditionalArgs = ['--ignore-pull-failures']
     upAdditionalArgs = ['--no-deps']
     downAdditionalArgs = ['--some-switch']
+    composeAdditionalArgs = ['--context', 'remote', '--verbose', "--log-level, "DEBUG"] // for adding more [options] in docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
 
     waitForTcpPorts = true // turns on/off the waiting for exposed TCP ports opening; default is true
     waitForTcpPortsTimeout = Duration.ofMinutes(15) // how long to wait until all exposed TCP become open; default is 15 minutes
@@ -117,8 +118,6 @@ dockerCompose {
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
-    dockerComposeAdditionalOptions = ['--context', 'remote', '--verbose', "--log-level, "DEBUG"] // for adding more [options] in docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
-
     environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
 }
 

@@ -63,6 +63,7 @@ class ComposeSettings {
     List<String> pullAdditionalArgs = []
     List<String> upAdditionalArgs = []
     List<String> downAdditionalArgs = []
+    List<String> composeAdditionalArgs = []
 
     protected String customProjectName
     protected Boolean customProjectNameSet
@@ -102,8 +103,6 @@ class ComposeSettings {
 
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
-
-    List<String> dockerComposeAdditionalOptions = []
 
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.project = project
@@ -159,6 +158,7 @@ class ComposeSettings {
         r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
         r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
         r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
+        r.composeAdditionalArgs = new ArrayList<>(this.composeAdditionalArgs)
 
         r.projectNamePrefix = this.projectNamePrefix
 
@@ -178,9 +178,6 @@ class ComposeSettings {
 
         r.dockerComposeWorkingDirectory = this.dockerComposeWorkingDirectory
         r.dockerComposeStopTimeout = this.dockerComposeStopTimeout
-
-        r.dockerComposeAdditionalOptions = new ArrayList<>(this.dockerComposeAdditionalOptions)
-
         r
     }
 
