@@ -118,7 +118,7 @@ dockerCompose {
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
     dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
-    environment.put 'BACKEND_ADDRESS', '192.168.1.100' // Pass environment variable to 'docker-compose' for substitution in compose file
+    environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
 }
 
 test.doFirst {
