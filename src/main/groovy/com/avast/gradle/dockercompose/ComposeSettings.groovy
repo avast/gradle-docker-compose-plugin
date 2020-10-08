@@ -185,13 +185,12 @@ class ComposeSettings {
     void isRequiredByCore(Task task, boolean fromConfigure) {
         task.dependsOn upTask
         task.finalizedBy downTask
-        task.getTaskDependencies().getDependencies(task)
-                .findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
-                .each { dep ->
+        project.tasks.findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
+                .each { classesTask ->
                     if (fromConfigure) {
-                        upTask.get().shouldRunAfter dep
+                        upTask.get().shouldRunAfter classesTask
                     } else {
-                        upTask.configure { it.shouldRunAfter dep }
+                        upTask.configure { it.shouldRunAfter classesTask }
                     }
                 }
         if (task instanceof ProcessForkOptions) task.doFirst { exposeAsEnvironment(task as ProcessForkOptions) }
