@@ -80,7 +80,7 @@ class ComposeUp extends DefaultTask {
             startCapturing()
             waitForHealthyContainers(servicesInfos.values())
             if (settings.waitForTcpPorts) {
-                waitForOpenTcpPorts(servicesInfos.values())
+                servicesInfos = waitForOpenTcpPorts(servicesInfos.values()).collectEntries { [(it.name): (it)] }
             }
             printExposedPorts()
             if (!settings.stopContainers) {
@@ -200,8 +200,9 @@ class ComposeUp extends DefaultTask {
         }
     }
 
-    void waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
+    Iterable<ServiceInfo> waitForOpenTcpPorts(Iterable<ServiceInfo> servicesInfos) {
         def start = Instant.now()
+        Map<String, ContainerInfo> newContainerInfos = [:]
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 containerInfo.tcpPorts
@@ -247,7 +248,7 @@ class ComposeUp extends DefaultTask {
                             Integer newForwardedPort = newContainerInfo.tcpPorts.get(exposedPort)
                             if (newForwardedPort != portToCheck) {
                                 logger.lifecycle("Going to replace container information of '${instanceName}' because port $exposedPort was exposed as $forwardedPort but is $newForwardedPort now")
-                                serviceInfo.containerInfos.replace(instanceName, newContainerInfo)
+                                newContainerInfos.put(instanceName, newContainerInfo)
                                 portToCheck = newForwardedPort
                             }
                         }
@@ -255,5 +256,6 @@ class ComposeUp extends DefaultTask {
                 }
             }
         }
+        servicesInfos.collect { it -> it.copyWith(containerInfos: it.containerInfos.values().collect { newContainerInfos.getOrDefault(it.instanceName, it) }.collectEntries { [(it.instanceName): it] }) }
     }
 }
