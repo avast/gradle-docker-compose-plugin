@@ -37,8 +37,12 @@ class ComposeExecutor {
             e.environment = ex.environment
             def finalArgs = [ex.executable]
             finalArgs.addAll(ex.composeAdditionalArgs)
-            if (noAnsi && version >= VersionNumber.parse("1.16.0")) {
-                finalArgs.add('--no-ansi')
+            if (noAnsi) {
+                if (version >= VersionNumber.parse('1.28.0')) {
+                    finalArgs.addAll(['--ansi', 'never'])
+                } else if (version >= VersionNumber.parse('1.16.0')) {
+                    finalArgs.add('--no-ansi')
+                }
             }
             finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
             String pn = ex.projectName
