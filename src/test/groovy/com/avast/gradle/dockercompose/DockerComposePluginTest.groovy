@@ -305,8 +305,6 @@ class DockerComposePluginTest extends Specification {
                 web:
                     image: nginx:stable
                     network_mode: host
-                    ports:
-                      - 80
         ''')
         f.project.plugins.apply 'java'
         f.extension.projectName = 'test'
