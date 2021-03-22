@@ -1,5 +1,4 @@
-# gradle-docker-compose-plugin
-[![Build Status](https://travis-ci.org/avast/gradle-docker-compose-plugin.svg?branch=master)](https://travis-ci.org/avast/gradle-docker-compose-plugin) [![Download](https://api.bintray.com/packages/avast/maven/gradle-docker-compose-plugin/images/download.svg) ](https://bintray.com/avast/maven/gradle-docker-compose-plugin/_latestVersion)
+# gradle-docker-compose-plugin [![Build](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml) [![Version](https://badgen.net/maven/v/maven-central/com.avast.gradle/gradle-docker-compose-plugin/)](https://repo1.maven.org/maven2/com/avast/gradle/gradle-docker-compose-plugin/)
 
 Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
@@ -21,7 +20,7 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 ```gradle
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "com.avast.gradle:gradle-docker-compose-plugin:$versionHere"
@@ -63,7 +62,7 @@ The plugin must be applied on project that contains `docker-compose.yml` file. I
 ```gradle
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "com.avast.gradle:gradle-docker-compose-plugin:$versionHere"

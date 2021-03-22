@@ -1,23 +1,13 @@
-buildscript {
-    repositories {
-        jcenter()
-        maven { url 'https://plugins.gradle.org/m2/' }
-    }
-    dependencies {
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5'
-        classpath 'com.gradle.publish:plugin-publish-plugin:0.13.0'
-        classpath 'com.github.ben-manes:gradle-versions-plugin:0.38.0'
-    }
+plugins {
+    id 'signing'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
+    id 'com.gradle.plugin-publish' version '0.13.0'
 }
-
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'com.github.ben-manes.versions'
 
 apply plugin: 'groovy'
 apply plugin: 'java'
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
-apply plugin: 'com.gradle.plugin-publish'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 
@@ -26,7 +16,7 @@ archivesBaseName = 'gradle-docker-compose-plugin'
 version = version == 'unspecified' ? 'DEVELOPER-SNAPSHOT' : version
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 dependencies {
@@ -43,41 +33,57 @@ test {
     }
 }
 
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    archiveClassifier = 'sources'
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 publishing {
     publications {
-        maven(MavenPublication) {
-            from components.java
-            artifact sourcesJar
+        mavenJava(MavenPublication) {
+            from(components.java)
+            artifactId = archivesBaseName
+            pom {
+                name = 'Gradle Docker Compose plugin'
+                description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
+                url = 'https://github.com/avast/gradle-docker-compose-plugin'
+                licenses {
+                    license {
+                        name = 'The MIT License'
+                        url = 'http://www.opensource.org/licenses/mit-license.php'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'augi'
+                        name = 'Michal Augustýn'
+                        email = 'augustyn.michal@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/avast/gradle-docker-compose-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com/avast/gradle-docker-compose-plugin.git'
+                    url = 'https://github.com/avast/gradle-docker-compose-plugin'
+                }
+            }
         }
     }
 }
 
-bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
-    publications = ['maven']
-    publish = true
-    pkg {
-        repo = 'maven'
-        name = 'gradle-docker-compose-plugin'
-        desc = 'Simplifies usage of Docker Compose for local development and integration testing in Gradle environment.'
-        userOrg = 'avast'
-        licenses = ['MIT']
-        vcsUrl = 'https://github.com/avast/gradle-docker-compose-plugin.git'
-        websiteUrl = 'https://github.com/avast/gradle-docker-compose-plugin'
-        issueTrackerUrl = 'https://github.com/avast/gradle-docker-compose-plugin/issues'
-        labels = ['docker', 'docker-compose', 'gradle']
-        version {
-            name = project.version
-            vcsTag = project.version
-        }
+signing {
+    String base64Key = System.getenv('SIGNING_KEY')
+    if (base64Key) {
+        useInMemoryPgpKeys(new String(Base64.decoder.decode(base64Key)), System.getenv('SIGNING_PASSWORD'))
+        sign publishing.publications
     }
 }
+
+nexusPublishing {
+    repositories {
+        sonatype()
+    }
+}
+
 
 project.ext.set('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
 project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
