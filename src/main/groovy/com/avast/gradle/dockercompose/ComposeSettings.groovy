@@ -135,7 +135,7 @@ class ComposeSettings {
         "${fullPathMd5}_${project.name}"
     }
 
-    ComposeSettings createNested(String name) {
+    protected ComposeSettings cloneAsNested(String name) {
         def r = new ComposeSettings(project, name, this.nestedName)
         r.buildBeforeUp = this.buildBeforeUp
         r.buildBeforePull = this.buildBeforePull

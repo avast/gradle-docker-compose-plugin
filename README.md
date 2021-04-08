@@ -162,13 +162,13 @@ dockerCompose {
 ```kotlin
 dockerCompose {
     // settings as usual
-    createNested("myNested").apply {
+    nested("myNested").apply {
         useComposeFiles = listOf("docker-compose-for-integration-tests.yml")
         isRequiredBy(project.tasks.named("myTask").get())
     }
 }
-```
-    
+```    
+
 </details>
 
 
@@ -177,11 +177,22 @@ dockerCompose {
 * Configuration of the nested settings defaults to the main `dockerCompose` settings (declared before the nested settings), except following properties: `projectName`, `startedServices`, `useComposeFiles`, `scale`, `captureContainersOutputToFile`, `captureContainersOutputToFiles`, `composeLogToFile`, `containerLogToDir`, `pushServices`
 
 When exposing service info from `myNestedComposeUp` task into your task you should use following syntax:
-```
+```groovy
 test.doFirst {
-    dockerCompose.myNested.exposeAsEnvironment(test)  
+    dockerCompose.myNested.exposeAsEnvironment(test)
 }
 ```
+
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+test.doFirst {
+    dockerCompose.nested("myNested").exposeAsEnvironment(project.tasks.named("test").get())
+}
+```    
+
+</details>
 
 It's also possible to use this simplified syntax:
 ```gradle
