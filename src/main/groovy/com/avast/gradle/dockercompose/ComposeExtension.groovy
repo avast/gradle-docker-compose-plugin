@@ -11,7 +11,15 @@ class ComposeExtension extends ComposeSettings {
     private HashMap<String, ComposeSettings> settings = [:]
 
     private ComposeSettings getOrCreateNested(String name) {
-        settings.computeIfAbsent(name, { createNested(name) })
+        settings.computeIfAbsent(name, { cloneAsNested(name) })
+    }
+
+    ComposeSettings createNested(String name) {
+        getOrCreateNested(name)
+    }
+
+    ComposeSettings nested(String name) {
+        getOrCreateNested(name)
     }
 
     def propertyMissing(String name) {
