@@ -188,7 +188,7 @@ test.doFirst {
 
 ```kotlin
 test.doFirst {
-    dockerCompose.nested("myNested").exposeAsEnvironment(test)
+    dockerCompose.nested("myNested").exposeAsEnvironment(project.tasks.named("test").get())
 }
 ```    
 
