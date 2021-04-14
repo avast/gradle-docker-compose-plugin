@@ -1,7 +1,7 @@
 package com.avast.gradle.dockercompose
 
 import org.gradle.api.Project
-import org.gradle.api.internal.file.TmpDirTemporaryFileProvider
+import org.gradle.api.internal.file.temp.GradleUserHomeTemporaryFileProvider
 import org.gradle.testfixtures.ProjectBuilder
 
 class Fixture implements AutoCloseable {
@@ -36,7 +36,7 @@ class Fixture implements AutoCloseable {
 
     private Fixture(String composeFileContent = null) {
         if (composeFileContent) {
-            projectDir = new TmpDirTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+            projectDir = new GradleUserHomeTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
             new File(projectDir, 'docker-compose.yml') << composeFileContent
             project = ProjectBuilder.builder().withProjectDir(projectDir).build()
         } else {
