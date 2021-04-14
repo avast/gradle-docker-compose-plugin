@@ -1,12 +1,11 @@
 package com.avast.gradle.dockercompose
 
-import org.gradle.api.internal.file.temp.GradleUserHomeTemporaryFileProvider
 import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.Specification
 
 class CustomComposeFilesTest extends Specification {
     def "can specify compose files to use"() {
-        def projectDir = new GradleUserHomeTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'original.yml') << '''
             web:
                 image: nginx:stable
@@ -44,7 +43,7 @@ class CustomComposeFilesTest extends Specification {
     }
 
     def "docker-compose.override.yml file honoured when no files specified"() {
-        def projectDir = new GradleUserHomeTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx:stable
@@ -79,7 +78,7 @@ class CustomComposeFilesTest extends Specification {
     }
 
     def "docker-compose.override.yml file ignored when files are specified"() {
-        def projectDir = new GradleUserHomeTemporaryFileProvider().createTemporaryDirectory("gradle", "projectDir")
+        def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
             web:
                 image: nginx:stable
