@@ -109,6 +109,7 @@ class ComposeExecutorTest extends Specification {
         assert f.project.dockerCompose.composeExecutor.getContainerIds('double_fail').isEmpty()
 
         cleanup:
+        f.project.tasks.composeDownForced.down()
         f.close()
 
         where:
