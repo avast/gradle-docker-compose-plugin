@@ -165,6 +165,7 @@ class ComposeSettings {
 
         r.stopContainers = this.stopContainers
         r.removeContainers = this.removeContainers
+        r.retainContainersOnStartupFailure = this.retainContainersOnStartupFailure
         r.removeImages = this.removeImages
         r.removeVolumes = this.removeVolumes
         r.includeDependencies = this.includeDependencies
