@@ -107,6 +107,7 @@ dockerCompose {
 
     stopContainers = true // doesn't call `docker-compose down` if set to false - see below the paragraph about reconnecting; default is true
     removeContainers = true // default is true
+    retainContainersOnStartupFailure = false // if set to true, skips running ComposeDownForced task when ComposeUp fails - useful for troubleshooting; default is false
     removeImages = "None" // Other accepted values are: "All" and "Local"
     removeVolumes = true // default is true
     removeOrphans = false // removes containers for services not defined in the Compose file; default is false
@@ -218,3 +219,5 @@ Because you don't want to check-in this change to your VCS, you can take advanta
 * Check [ContainerInfo.groovy](/src/main/groovy/com/avast/gradle/dockercompose/ContainerInfo.groovy) to see what you can know about running containers.
 * You can determine the Docker host in your Gradle build (i.e. `docker-machine start`) and set the `DOCKER_HOST` environment variable for compose to use: `dockerCompose { environment.put 'DOCKER_HOST', '192.168.64.9' }`
 * If the services executed by `docker-compose` are running on a specific host (different than Docker, like in CirceCI 2.0), then `SERVICES_HOST` environment variable can be used. This value will be used as the hostname where the services are expected to be listening.
+* If you need to troubleshoot a failing ComposeUp task, set `retainContainersOnStartupFailure` to prevent containers from begin forcibly deleted. Does not override `removeContainers`, so if you run `ComposeDown`, it will not be affected.
+

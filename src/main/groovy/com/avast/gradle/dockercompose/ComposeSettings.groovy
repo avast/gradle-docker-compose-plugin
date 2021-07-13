@@ -88,6 +88,7 @@ class ComposeSettings {
 
     boolean stopContainers = true
     boolean removeContainers = true
+    boolean retainContainersOnStartupFailure = false
     RemoveImages removeImages = RemoveImages.None
     boolean removeVolumes = true
     boolean includeDependencies = false
