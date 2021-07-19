@@ -8,6 +8,7 @@ import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
 import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
+import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
 
+@CompileStatic
 class ComposeSettings {
     final TaskProvider<ComposeUp> upTask
     final TaskProvider<ComposeDown> downTask
@@ -109,13 +111,13 @@ class ComposeSettings {
         this.project = project
         this.nestedName = parentName + name
 
-        upTask = project.tasks.register(name ? "${name}ComposeUp" : 'composeUp', ComposeUp, { it.settings = this })
-        buildTask = project.tasks.register(name ? "${name}ComposeBuild" : 'composeBuild', ComposeBuild, { it.settings = this })
-        pullTask = project.tasks.register(name ? "${name}ComposePull" : 'composePull', ComposePull, { it.settings = this })
-        downTask = project.tasks.register(name ? "${name}ComposeDown" : 'composeDown', ComposeDown, { it.settings = this })
-        downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced" : 'composeDownForced', ComposeDownForced, { it.settings = this })
-        logsTask = project.tasks.register(name ? "${name}ComposeLogs" : 'composeLogs', ComposeLogs, { it.settings = this })
-        pushTask = project.tasks.register(name ? "${name}ComposePush" : 'composePush', ComposePush, { it.settings = this })
+        upTask = project.tasks.register(name ? "${name}ComposeUp".toString() : 'composeUp', ComposeUp, { it.settings = this })
+        buildTask = project.tasks.register(name ? "${name}ComposeBuild".toString() : 'composeBuild', ComposeBuild, { it.settings = this })
+        pullTask = project.tasks.register(name ? "${name}ComposePull".toString() : 'composePull', ComposePull, { it.settings = this })
+        downTask = project.tasks.register(name ? "${name}ComposeDown".toString() : 'composeDown', ComposeDown, { it.settings = this })
+        downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced".toString() : 'composeDownForced', ComposeDownForced, { it.settings = this })
+        logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs, { it.settings = this })
+        pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush, { it.settings = this })
 
         this.dockerExecutor = new DockerExecutor(this)
         this.composeExecutor = new ComposeExecutor(this)
