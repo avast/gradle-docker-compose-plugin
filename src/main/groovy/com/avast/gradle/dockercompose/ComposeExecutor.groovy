@@ -1,23 +1,34 @@
 package com.avast.gradle.dockercompose
 
-import org.gradle.api.Project
+import org.gradle.api.internal.file.FileOperations
+import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
 import org.gradle.internal.UncheckedException
+import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
+import javax.inject.Inject
 import java.util.concurrent.Executors
 
 class ComposeExecutor {
     private final ComposeSettings settings
-    private final Project project
-    private final Logger logger
+    private final File projectDir
+    private final ExecOperations exec
+    private final FileOperations fileOps
+    private final Gradle gradle
 
-    ComposeExecutor(ComposeSettings settings) {
+    private static final Logger logger = Logging.getLogger(ComposeExecutor.class);
+
+    @Inject
+    ComposeExecutor(ComposeSettings settings, File projectDir, ExecOperations exec, FileOperations fileOps, Gradle gradle) {
         this.settings = settings
-        this.project = settings.project
-        this.logger = settings.project.logger
+        this.projectDir = projectDir
+        this.exec = exec
+        this.fileOps = fileOps
+        this.gradle = gradle
     }
 
     void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
@@ -29,14 +40,14 @@ class ComposeExecutor {
     }
 
     void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
-        def ex = this.settings
-        def er = project.exec { ExecSpec e ->
+        def settings = this.settings
+        def er = exec.exec { ExecSpec e ->
             if (settings.dockerComposeWorkingDirectory) {
                 e.setWorkingDir(settings.dockerComposeWorkingDirectory)
             }
-            e.environment = ex.environment
-            def finalArgs = [ex.executable]
-            finalArgs.addAll(ex.composeAdditionalArgs)
+            e.environment = settings.environment
+            def finalArgs = [settings.executable]
+            finalArgs.addAll(settings.composeAdditionalArgs)
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
                     finalArgs.addAll(['--ansi', 'never'])
@@ -44,8 +55,8 @@ class ComposeExecutor {
                     finalArgs.add('--no-ansi')
                 }
             }
-            finalArgs.addAll(ex.useComposeFiles.collectMany { ['-f', it].asCollection() })
-            String pn = ex.projectName
+            finalArgs.addAll(settings.useComposeFiles.collectMany { ['-f', it].asCollection() })
+            String pn = settings.projectName
             if (pn) {
                 finalArgs.addAll(['-p', pn])
             }
@@ -132,7 +143,7 @@ class ComposeExecutor {
         })
         t.daemon = true
         t.start()
-        project.gradle.buildFinished { t.interrupt() }
+        gradle.buildFinished { t.interrupt() }
     }
 
     Iterable<String> getServiceNames() {
@@ -151,7 +162,7 @@ class ComposeExecutor {
         } else {
             def composeFiles = settings.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
             composeFiles.collectMany { composeFile ->
-                def compose = (Map<String, Object>) (new Yaml().load(project.file(composeFile).text))
+                def compose = (Map<String, Object>) (new Yaml().load(fileOps.file(composeFile).text))
                 // if there is 'version' on top-level then information about services is in 'services' sub-tree
                 compose.containsKey('version') ? ((Map) compose.get('services')).keySet() : compose.keySet()
             }.unique()
@@ -171,16 +182,16 @@ class ComposeExecutor {
 
     Iterable<File> getStandardComposeFiles() {
         def res = []
-        def f = findInParentDirectories('docker-compose.yml', project.projectDir)
+        def f = findInParentDirectories('docker-compose.yml', projectDir)
         if (f != null) res.add(f)
-        f = findInParentDirectories('docker-compose.override.yml', project.projectDir)
+        f = findInParentDirectories('docker-compose.override.yml', projectDir)
         if (f != null) res.add(f)
         res
     }
 
     Iterable<File> getCustomComposeFiles() {
         settings.useComposeFiles.collect {
-            def f = project.file(it)
+            def f = fileOps.file(it)
             if (!f.exists()) {
                 throw new IllegalArgumentException("Custom Docker Compose file not found: $f")
             }

@@ -18,6 +18,7 @@ import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
 import org.gradle.util.VersionNumber
 
+import javax.inject.Inject
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.time.Duration
@@ -107,6 +108,7 @@ class ComposeSettings {
     String dockerComposeWorkingDirectory = null
     Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
 
+    @Inject
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.project = project
         this.nestedName = parentName + name
@@ -119,8 +121,8 @@ class ComposeSettings {
         logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs, { it.settings = this })
         pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush, { it.settings = this })
 
-        this.dockerExecutor = new DockerExecutor(this)
-        this.composeExecutor = new ComposeExecutor(this)
+        this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
+        this.composeExecutor = project.objects.newInstance(ComposeExecutor, this, project.projectDir)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
@@ -139,7 +141,7 @@ class ComposeSettings {
     }
 
     protected ComposeSettings cloneAsNested(String name) {
-        def r = new ComposeSettings(project, name, this.nestedName)
+        def r = project.objects.newInstance(ComposeSettings, project, name, this.nestedName)
         r.buildBeforeUp = this.buildBeforeUp
         r.buildBeforePull = this.buildBeforePull
 

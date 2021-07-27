@@ -1,24 +1,30 @@
 package com.avast.gradle.dockercompose
 
-import org.gradle.api.Project
 import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
 import org.yaml.snakeyaml.Yaml
 
+import javax.inject.Inject
+
 class DockerExecutor {
     private final ComposeSettings settings
-    private final Project project
-    private final Logger logger
+    private final ExecOperations exec
 
-    DockerExecutor(ComposeSettings settings) {
+    private static final Logger logger = Logging.getLogger(DockerExecutor.class);
+
+    @Inject
+    DockerExecutor(ComposeSettings settings, ExecOperations exec) {
         this.settings = settings
-        this.project = settings.project
-        this.logger = settings.project.logger
+        this.exec = exec
     }
 
     String execute(String... args) {
+        def exec = this.exec
+        def settings = this.settings
         new ByteArrayOutputStream().withStream { os ->
-            def er = project.exec { ExecSpec e ->
+            def er = exec.exec { ExecSpec e ->
                 e.environment = settings.environment
                 def finalArgs = [settings.dockerExecutable]
                 finalArgs.addAll(args)
