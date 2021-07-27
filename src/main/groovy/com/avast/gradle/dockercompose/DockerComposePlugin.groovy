@@ -6,6 +6,6 @@ import org.gradle.api.Project
 class DockerComposePlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
-        project.extensions.create('dockerCompose', ComposeExtension, project)
+        project.extensions.create('dockerCompose', ComposeExtension)
     }
 }
