@@ -1,5 +1,6 @@
 package com.avast.gradle.dockercompose
 
+import org.gradle.api.file.ProjectLayout
 import org.gradle.api.internal.file.FileOperations
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logger
@@ -15,7 +16,7 @@ import java.util.concurrent.Executors
 
 class ComposeExecutor {
     private final ComposeSettings settings
-    private final File projectDir
+    private final ProjectLayout layout
     private final ExecOperations exec
     private final FileOperations fileOps
     private final Gradle gradle
@@ -23,9 +24,9 @@ class ComposeExecutor {
     private static final Logger logger = Logging.getLogger(ComposeExecutor.class);
 
     @Inject
-    ComposeExecutor(ComposeSettings settings, File projectDir, ExecOperations exec, FileOperations fileOps, Gradle gradle) {
+    ComposeExecutor(ComposeSettings settings, ProjectLayout layout, ExecOperations exec, FileOperations fileOps, Gradle gradle) {
         this.settings = settings
-        this.projectDir = projectDir
+        this.layout = layout
         this.exec = exec
         this.fileOps = fileOps
         this.gradle = gradle
@@ -182,9 +183,9 @@ class ComposeExecutor {
 
     Iterable<File> getStandardComposeFiles() {
         def res = []
-        def f = findInParentDirectories('docker-compose.yml', projectDir)
+        def f = findInParentDirectories('docker-compose.yml', layout.projectDirectory.getAsFile())
         if (f != null) res.add(f)
-        f = findInParentDirectories('docker-compose.override.yml', projectDir)
+        f = findInParentDirectories('docker-compose.override.yml', layout.projectDirectory.getAsFile())
         if (f != null) res.add(f)
         res
     }

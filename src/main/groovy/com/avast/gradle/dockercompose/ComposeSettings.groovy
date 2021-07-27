@@ -122,7 +122,7 @@ class ComposeSettings {
         pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush, { it.settings = this })
 
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
-        this.composeExecutor = project.objects.newInstance(ComposeExecutor, this, project.projectDir)
+        this.composeExecutor = project.objects.newInstance(ComposeExecutor, this)
         this.serviceInfoCache = new ServiceInfoCache(this)
 
         this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
