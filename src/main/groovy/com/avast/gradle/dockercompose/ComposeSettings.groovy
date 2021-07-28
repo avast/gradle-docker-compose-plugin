@@ -24,7 +24,7 @@ import java.security.MessageDigest
 import java.time.Duration
 
 @CompileStatic
-class ComposeSettings {
+abstract class ComposeSettings {
     final TaskProvider<ComposeUp> upTask
     final TaskProvider<ComposeDown> downTask
     final TaskProvider<ComposeDownForced> downForcedTask

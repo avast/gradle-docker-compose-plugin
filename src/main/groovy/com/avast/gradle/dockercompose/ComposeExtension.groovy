@@ -5,7 +5,7 @@ import org.gradle.util.ConfigureUtil
 
 import javax.inject.Inject
 
-class ComposeExtension extends ComposeSettings {
+abstract class ComposeExtension extends ComposeSettings {
     @Inject
     ComposeExtension(Project project) {
         super(project, '', '')
