@@ -19,15 +19,15 @@ class ComposePull extends DefaultTask {
 
     @TaskAction
     void pull() {
-        if (settings.buildBeforePull) {
+        if (settings.buildBeforePull.get()) {
             settings.buildTask.get().build()
         }
         String[] args = ['pull']
-        if (settings.ignorePullFailure) {
+        if (settings.ignorePullFailure.get()) {
             args += '--ignore-pull-failures'
         }
-        args += settings.pullAdditionalArgs
-        args += settings.startedServices
+        args += (List<String>)settings.pullAdditionalArgs.get()
+        args += (List<String>)settings.startedServices.get()
         settings.composeExecutor.execute(args)
     }
 }

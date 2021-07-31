@@ -58,7 +58,7 @@ class CaptureOutputTest extends Specification {
         def f = Fixture.custom(composeFileContent)
         def logFile = new File(f.project.projectDir, "web.log")
         when:
-        f.extension.captureContainersOutputToFile = "${logFile.absolutePath}"
+        f.extension.captureContainersOutputToFile = f.project.file("${logFile.absolutePath}")
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -87,7 +87,7 @@ class CaptureOutputTest extends Specification {
         def f = Fixture.custom(composeFileContent)
         def logFile = new File(f.project.projectDir, "compose.log")
         when:
-        f.extension.composeLogToFile = "${logFile.absolutePath}"
+        f.extension.composeLogToFile = f.project.file("${logFile.absolutePath}")
         f.project.tasks.composeUp.up()
         then:
         f.project.tasks.composeDown.down()

@@ -20,10 +20,10 @@ class ComposePush extends DefaultTask {
     @TaskAction
     void push() {
         String[] args = ['push']
-        if (settings.ignorePushFailure) {
+        if (settings.ignorePushFailure.get()) {
             args += '--ignore-push-failures'
         }
-        args += settings.pushServices
+        args += (List<String>)settings.pushServices.get()
         settings.composeExecutor.execute(args)
     }
 }

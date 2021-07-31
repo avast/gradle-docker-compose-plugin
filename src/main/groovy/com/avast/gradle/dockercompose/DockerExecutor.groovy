@@ -25,8 +25,8 @@ class DockerExecutor {
         def settings = this.settings
         new ByteArrayOutputStream().withStream { os ->
             def er = exec.exec { ExecSpec e ->
-                e.environment = settings.environment
-                def finalArgs = [settings.dockerExecutable]
+                e.environment = settings.environment.get()
+                def finalArgs = [settings.dockerExecutable.get()]
                 finalArgs.addAll(args)
                 e.commandLine finalArgs
                 e.standardOutput = os
@@ -34,7 +34,7 @@ class DockerExecutor {
             }
             def stdout = os.toString().trim()
             if (er.exitValue != 0) {
-                throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.dockerExecutable}, stdout: $stdout")
+                throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.dockerExecutable.get()}, stdout: $stdout")
             }
             stdout
         }
@@ -102,12 +102,12 @@ class DockerExecutor {
     }
 
     ServiceHost getContainerHost(Map<String, Object> inspection, String serviceName, Logger logger = this.logger) {
-        String servicesHost = settings.environment['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
+        String servicesHost = settings.environment.get()['SERVICES_HOST'] ?: System.getenv('SERVICES_HOST')
         if (servicesHost) {
             logger.lifecycle("SERVICES_HOST environment variable detected - will be used as hostname of service $serviceName ($servicesHost)'")
             return new ServiceHost(host: servicesHost, type: ServiceHostType.RemoteDockerHost)
         }
-        String dockerHost = settings.environment['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
+        String dockerHost = settings.environment.get()['DOCKER_HOST'] ?: System.getenv('DOCKER_HOST')
         if (dockerHost) {
             def host = dockerHost.toURI().host ?: 'localhost'
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")

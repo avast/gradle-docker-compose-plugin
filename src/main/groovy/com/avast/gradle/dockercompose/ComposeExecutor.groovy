@@ -8,7 +8,7 @@ import org.gradle.api.logging.Logging
 import org.gradle.internal.UncheckedException
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
-import org.gradle.util.VersionNumber
+import org.gradle.util.internal.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import javax.inject.Inject
@@ -43,12 +43,12 @@ class ComposeExecutor {
     void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
         def settings = this.settings
         def er = exec.exec { ExecSpec e ->
-            if (settings.dockerComposeWorkingDirectory) {
-                e.setWorkingDir(settings.dockerComposeWorkingDirectory)
+            if (settings.dockerComposeWorkingDirectory.isPresent()) {
+                e.setWorkingDir(settings.dockerComposeWorkingDirectory.get().asFile)
             }
-            e.environment = settings.environment
-            def finalArgs = [settings.executable]
-            finalArgs.addAll(settings.composeAdditionalArgs)
+            e.environment = settings.environment.get()
+            def finalArgs = [settings.executable.get()]
+            finalArgs.addAll(settings.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
                     finalArgs.addAll(['--ansi', 'never'])
@@ -56,7 +56,7 @@ class ComposeExecutor {
                     finalArgs.add('--no-ansi')
                 }
             }
-            finalArgs.addAll(settings.useComposeFiles.collectMany { ['-f', it].asCollection() })
+            finalArgs.addAll(settings.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
             String pn = settings.projectName
             if (pn) {
                 finalArgs.addAll(['-p', pn])
@@ -73,7 +73,7 @@ class ComposeExecutor {
         }
         if (!ignoreExitValue && er.exitValue != 0) {
             def stdout = os != null ? os.toString().trim() : "N/A"
-            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable}, stdout: $stdout")
+            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable.get()}, stdout: $stdout")
         }
     }
 
@@ -149,20 +149,20 @@ class ComposeExecutor {
     }
 
     Iterable<String> getServiceNames() {
-        if (!settings.startedServices.empty) {
-            if(settings.includeDependencies)
+        if (!settings.startedServices.get().empty) {
+            if(settings.includeDependencies.get())
             {
-                def dependentServices = getDependentServices(settings.startedServices).toList()
-                [*settings.startedServices, *dependentServices].unique()
+                def dependentServices = getDependentServices(settings.startedServices.get()).toList()
+                [*settings.startedServices.get(), *dependentServices].unique()
             }
             else
             {
-                settings.startedServices
+                settings.startedServices.get()
             }
         } else if (version >= VersionNumber.parse('1.6.0')) {
             execute('config', '--services').readLines()
         } else {
-            def composeFiles = settings.useComposeFiles.empty ? getStandardComposeFiles() : getCustomComposeFiles()
+            def composeFiles = settings.useComposeFiles.get().empty ? getStandardComposeFiles() : getCustomComposeFiles()
             composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(fileOps.file(composeFile).text))
                 // if there is 'version' on top-level then information about services is in 'services' sub-tree
@@ -193,7 +193,7 @@ class ComposeExecutor {
     }
 
     Iterable<File> getCustomComposeFiles() {
-        settings.useComposeFiles.collect {
+        settings.useComposeFiles.get().collect {
             def f = fileOps.file(it)
             if (!f.exists()) {
                 throw new IllegalArgumentException("Custom Docker Compose file not found: $f")

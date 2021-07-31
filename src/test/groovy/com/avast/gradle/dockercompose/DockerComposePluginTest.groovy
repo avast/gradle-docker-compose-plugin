@@ -14,7 +14,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static org.gradle.util.VersionNumber.parse
+import static org.gradle.util.internal.VersionNumber.parse
 
 class DockerComposePluginTest extends Specification {
     def "add tasks and extension to the project"() {
@@ -67,7 +67,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.nestedComposeBuild instanceof ComposeBuild
         project.tasks.nestedComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.nestedComposeUp
-        up.settings.useComposeFiles == ['test.yml']
+        up.settings.useComposeFiles.get() == ['test.yml']
     }
 
     def "is possible to access servicesInfos of nested setting"() {
@@ -97,12 +97,12 @@ class DockerComposePluginTest extends Specification {
             }
         }
         then:
-        project.dockerCompose.nested.removeVolumes == false
-        project.dockerCompose.removeVolumes == true
-        project.dockerCompose.ignorePullFailure == false
-        project.dockerCompose.ignorePushFailure == false
-        project.dockerCompose.nested.ignorePullFailure == true
-        project.dockerCompose.nested.ignorePushFailure == true
+        project.dockerCompose.nested.removeVolumes.get() == false
+        project.dockerCompose.removeVolumes.get() == true
+        project.dockerCompose.ignorePullFailure.get() == false
+        project.dockerCompose.ignorePushFailure.get() == false
+        project.dockerCompose.nested.ignorePullFailure.get() == true
+        project.dockerCompose.nested.ignorePushFailure.get() == true
     }
 
     def "isRequiredBy() adds dependencies"() {
@@ -175,7 +175,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.integrationTestComposeBuild instanceof ComposeBuild
         project.tasks.integrationTestComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.integrationTestComposeUp
-        up.settings.useComposeFiles == ['test.yml']
+        up.settings.useComposeFiles.get() == ['test.yml']
         task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.integrationTestComposeUp }
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.integrationTestComposeDown }
     }
