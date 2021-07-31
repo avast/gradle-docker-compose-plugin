@@ -183,10 +183,11 @@ class ComposeExecutor {
     }
 
     Iterable<File> getStandardComposeFiles() {
+        File searchDirectory = fileOps.file(settings.dockerComposeWorkingDirectory) ?: layout.projectDirectory.getAsFile()
         def res = []
-        def f = findInParentDirectories('docker-compose.yml', layout.projectDirectory.getAsFile())
+        def f = findInParentDirectories('docker-compose.yml', searchDirectory)
         if (f != null) res.add(f)
-        f = findInParentDirectories('docker-compose.override.yml', layout.projectDirectory.getAsFile())
+        f = findInParentDirectories('docker-compose.override.yml', searchDirectory)
         if (f != null) res.add(f)
         res
     }
