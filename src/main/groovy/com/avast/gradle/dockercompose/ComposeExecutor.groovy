@@ -95,7 +95,8 @@ class ComposeExecutor {
 
     VersionNumber getVersion() {
         if (cachedVersion) return cachedVersion
-        cachedVersion = VersionNumber.parse(executeWithAnsi('version', '--short'))
+        String rawVersion = executeWithAnsi('version', '--short')
+        cachedVersion = VersionNumber.parse(rawVersion.startsWith('v') ? rawVersion.substring(1) : rawVersion)
     }
 
     Iterable<String> getContainerIds(String serviceName) {
