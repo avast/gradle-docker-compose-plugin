@@ -12,6 +12,11 @@ import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
@@ -37,39 +42,52 @@ abstract class ComposeSettings {
     final ComposeExecutor composeExecutor
     final ServiceInfoCache serviceInfoCache
 
-    boolean buildBeforeUp = true
-    boolean buildBeforePull = true
+    abstract ListProperty<String> getUseComposeFiles()
+    abstract ListProperty<String> getStartedServices()
+    abstract Property<Boolean> getIncludeDependencies()
+    abstract MapProperty<String, Integer> getScale()
 
-    boolean waitForTcpPorts = true
-    List<Integer> tcpPortsToIgnoreWhenWaiting = []
-    Duration waitAfterTcpProbeFailure = Duration.ofSeconds(1)
-    Duration waitForTcpPortsTimeout = Duration.ofMinutes(15)
-    Duration waitForTcpPortsDisconnectionProbeTimeout = Duration.ofMillis(1000)
-    Duration waitAfterHealthyStateProbeFailure = Duration.ofSeconds(5)
-    Duration waitForHealthyStateTimeout = Duration.ofMinutes(15)
-    boolean checkContainersRunning = true
+    abstract ListProperty<String> getBuildAdditionalArgs()
+    abstract ListProperty<String> getPullAdditionalArgs()
+    abstract ListProperty<String> getUpAdditionalArgs()
+    abstract ListProperty<String> getDownAdditionalArgs()
+    abstract ListProperty<String> getComposeAdditionalArgs()
 
-    List<String> useComposeFiles = []
+    abstract Property<Boolean> getBuildBeforeUp()
+    abstract Property<Boolean> getBuildBeforePull()
 
-    boolean captureContainersOutput = false
-    File captureContainersOutputToFile = null
-    File captureContainersOutputToFiles = null
-    File composeLogToFile = null
-    File containerLogToDir
+    abstract Property<Boolean> getRemoveOrphans()
+    abstract Property<Boolean> getForceRecreate()
+    abstract Property<Boolean> getNoRecreate()
 
-    List<String> startedServices = []
-    Map<String, Integer> scale = [:]
-    boolean removeOrphans = false
-    boolean forceRecreate = false
-    boolean noRecreate = false
-    List<String> buildAdditionalArgs = []
-    List<String> pullAdditionalArgs = []
-    List<String> upAdditionalArgs = []
-    List<String> downAdditionalArgs = []
-    List<String> composeAdditionalArgs = []
+    abstract Property<Boolean> getStopContainers()
+    abstract Property<Boolean> getRemoveContainers()
+    abstract Property<Boolean> getRetainContainersOnStartupFailure()
+    abstract Property<RemoveImages> getRemoveImages()
+    abstract Property<Boolean> getRemoveVolumes()
+
+    abstract Property<Boolean> getIgnorePullFailure()
+    abstract Property<Boolean> getIgnorePushFailure()
+    abstract ListProperty<String> getPushServices()
+
+    abstract Property<Boolean> getWaitForTcpPorts()
+    abstract ListProperty<Integer> getTcpPortsToIgnoreWhenWaiting()
+    abstract Property<Duration> getWaitAfterTcpProbeFailure()
+    abstract Property<Duration> getWaitForTcpPortsTimeout()
+    abstract Property<Duration> getWaitForTcpPortsDisconnectionProbeTimeout()
+    abstract Property<Duration> getWaitAfterHealthyStateProbeFailure()
+    abstract Property<Duration> getWaitForHealthyStateTimeout()
+    abstract Property<Boolean> getCheckContainersRunning()
+
+    abstract Property<Boolean> getCaptureContainersOutput()
+    abstract RegularFileProperty getCaptureContainersOutputToFile()
+    abstract DirectoryProperty getCaptureContainersOutputToFiles()
+    abstract RegularFileProperty getComposeLogToFile()
+    abstract DirectoryProperty getContainerLogToDir()
 
     protected String customProjectName
     protected Boolean customProjectNameSet
+    protected String safeProjectNamePrefix
     void setProjectName(String customProjectName)
     {
         this.customProjectName = customProjectName
@@ -83,35 +101,77 @@ abstract class ComposeSettings {
             return "${projectNamePrefix}_${nestedName}"
         }
         else {
-            return "${generateSafeProjectNamePrefix(project)}_${nestedName}"
+            return "${safeProjectNamePrefix}_${nestedName}"
         }
     }
     String projectNamePrefix
     String nestedName
 
-    boolean stopContainers = true
-    boolean removeContainers = true
-    boolean retainContainersOnStartupFailure = false
-    RemoveImages removeImages = RemoveImages.None
-    boolean removeVolumes = true
-    boolean includeDependencies = false
+    abstract Property<String> getExecutable()
+    abstract Property<String> getDockerExecutable()
+    abstract MapProperty<String, Object> getEnvironment()
 
-    boolean ignorePullFailure = false
-    boolean ignorePushFailure = false
-    List<String> pushServices = []
-
-    String executable = 'docker-compose'
-    Map<String, Object> environment = new HashMap<String, Object>(System.getenv())
-
-    String dockerExecutable = 'docker'
-
-    String dockerComposeWorkingDirectory = null
-    Duration dockerComposeStopTimeout = Duration.ofSeconds(10)
+    abstract DirectoryProperty getDockerComposeWorkingDirectory()
+    abstract Property<Duration> getDockerComposeStopTimeout()
 
     @Inject
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.project = project
         this.nestedName = parentName + name
+        this.safeProjectNamePrefix = generateSafeProjectNamePrefix(project)
+
+        useComposeFiles.empty()
+        startedServices.empty()
+        includeDependencies.set(false)
+        scale.empty()
+
+        buildAdditionalArgs.empty()
+        pullAdditionalArgs.empty()
+        upAdditionalArgs.empty()
+        downAdditionalArgs.empty()
+        composeAdditionalArgs.empty()
+
+        buildBeforeUp.set(true)
+        buildBeforePull.set(true)
+
+        removeOrphans.set(false)
+        forceRecreate.set(false)
+        noRecreate.set(false)
+
+        stopContainers.set(true)
+        removeContainers.set(true)
+        retainContainersOnStartupFailure.set(false)
+        removeImages.set(RemoveImages.None)
+        removeVolumes.set(true)
+
+        ignorePullFailure.set(false)
+        ignorePushFailure.set(false)
+        pushServices.empty()
+
+        waitForTcpPorts.set(true)
+        tcpPortsToIgnoreWhenWaiting.empty()
+        waitAfterTcpProbeFailure.set(Duration.ofSeconds(1))
+        waitForTcpPortsTimeout.set(Duration.ofMinutes(15))
+        waitForTcpPortsDisconnectionProbeTimeout.set(Duration.ofMillis(1000))
+        waitAfterHealthyStateProbeFailure.set(Duration.ofSeconds(5))
+        waitForHealthyStateTimeout.set(Duration.ofMinutes(15))
+        checkContainersRunning.set(true)
+
+        captureContainersOutput.set(false)
+
+        if (OperatingSystem.current().isMacOsX()) {
+            // Default installation is inaccessible from path, so set sensible
+            // defaults for this platform.
+            executable.set('/usr/local/bin/docker-compose')
+            dockerExecutable.set('/usr/local/bin/docker')
+        } else {
+            executable.set('docker-compose')
+            dockerExecutable.set('docker')
+        }
+        environment.set(System.getenv())
+        dockerComposeStopTimeout.set(Duration.ofSeconds(10))
+
+        this.containerLogToDir.set(project.buildDir.toPath().resolve('containers-logs').toFile())
 
         upTask = project.tasks.register(name ? "${name}ComposeUp".toString() : 'composeUp', ComposeUp, { it.settings = this })
         buildTask = project.tasks.register(name ? "${name}ComposeBuild".toString() : 'composeBuild', ComposeBuild, { it.settings = this })
@@ -124,15 +184,6 @@ abstract class ComposeSettings {
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
         this.composeExecutor = project.objects.newInstance(ComposeExecutor, this)
         this.serviceInfoCache = new ServiceInfoCache(this)
-
-        this.containerLogToDir = project.buildDir.toPath().resolve('containers-logs').toFile()
-
-        if (OperatingSystem.current().isMacOsX()) {
-            // Default installation is inaccessible from path, so set sensible
-            // defaults for this platform.
-            this.executable = '/usr/local/bin/docker-compose'
-            this.dockerExecutable = '/usr/local/bin/docker'
-        }
     }
 
     private static String generateSafeProjectNamePrefix(Project project) {
@@ -142,48 +193,50 @@ abstract class ComposeSettings {
 
     protected ComposeSettings cloneAsNested(String name) {
         def r = project.objects.newInstance(ComposeSettings, project, name, this.nestedName)
-        r.buildBeforeUp = this.buildBeforeUp
-        r.buildBeforePull = this.buildBeforePull
 
-        r.waitForTcpPorts = this.waitForTcpPorts
-        r.tcpPortsToIgnoreWhenWaiting = new ArrayList<>(this.tcpPortsToIgnoreWhenWaiting)
-        r.waitAfterTcpProbeFailure = this.waitAfterTcpProbeFailure
-        r.waitForTcpPortsTimeout = this.waitForTcpPortsTimeout
-        r.waitForTcpPortsDisconnectionProbeTimeout = this.waitForTcpPortsDisconnectionProbeTimeout
-        r.waitAfterHealthyStateProbeFailure = this.waitAfterHealthyStateProbeFailure
-        r.waitForHealthyStateTimeout = this.waitForHealthyStateTimeout
-        r.checkContainersRunning = this.checkContainersRunning
+        r.includeDependencies.set(includeDependencies.get())
 
-        r.captureContainersOutput = this.captureContainersOutput
+        r.buildAdditionalArgs.set(new ArrayList<String>(this.buildAdditionalArgs.get()))
+        r.pullAdditionalArgs.set(new ArrayList<String>(this.pullAdditionalArgs.get()))
+        r.upAdditionalArgs.set(new ArrayList<String>(this.upAdditionalArgs.get()))
+        r.downAdditionalArgs.set(new ArrayList<String>(this.downAdditionalArgs.get()))
+        r.composeAdditionalArgs.set(new ArrayList<String>(this.composeAdditionalArgs.get()))
 
-        r.removeOrphans = this.removeOrphans
-        r.forceRecreate = this.forceRecreate
-        r.noRecreate = this.noRecreate
-        r.buildAdditionalArgs = new ArrayList<>(this.buildAdditionalArgs)
-        r.pullAdditionalArgs = new ArrayList<>(this.pullAdditionalArgs)
-        r.upAdditionalArgs = new ArrayList<>(this.upAdditionalArgs)
-        r.downAdditionalArgs = new ArrayList<>(this.downAdditionalArgs)
-        r.composeAdditionalArgs = new ArrayList<>(this.composeAdditionalArgs)
+        r.buildBeforeUp.set(this.buildBeforeUp.get())
+        r.buildBeforePull.set(this.buildBeforePull.get())
+
+        r.removeOrphans.set(this.removeOrphans.get())
+        r.forceRecreate.set(this.forceRecreate.get())
+        r.noRecreate.set(this.noRecreate.get())
+
+        r.stopContainers.set(stopContainers.get())
+        r.removeContainers.set(removeContainers.get())
+        r.retainContainersOnStartupFailure.set(retainContainersOnStartupFailure.get())
+        r.removeImages.set(removeImages.get())
+        r.removeVolumes.set(removeVolumes.get())
+
+        r.ignorePullFailure.set(ignorePullFailure.get())
+        r.ignorePushFailure.set(ignorePushFailure.get())
+
+        r.waitForTcpPorts.set(this.waitForTcpPorts.get())
+        r.tcpPortsToIgnoreWhenWaiting.set(new ArrayList<Integer>(this.tcpPortsToIgnoreWhenWaiting.get()))
+        r.waitAfterTcpProbeFailure.set(waitAfterTcpProbeFailure.get())
+        r.waitForTcpPortsTimeout.set(waitForTcpPortsTimeout.get())
+        r.waitForTcpPortsDisconnectionProbeTimeout.set(waitForTcpPortsDisconnectionProbeTimeout.get())
+        r.waitAfterHealthyStateProbeFailure.set(waitAfterHealthyStateProbeFailure.get())
+        r.waitForHealthyStateTimeout.set(waitForHealthyStateTimeout.get())
+        r.checkContainersRunning.set(checkContainersRunning.get())
+
+        r.captureContainersOutput.set(captureContainersOutput.get())
 
         r.projectNamePrefix = this.projectNamePrefix
 
-        r.stopContainers = this.stopContainers
-        r.removeContainers = this.removeContainers
-        r.retainContainersOnStartupFailure = this.retainContainersOnStartupFailure
-        r.removeImages = this.removeImages
-        r.removeVolumes = this.removeVolumes
-        r.includeDependencies = this.includeDependencies
+        r.executable.set(this.executable.get())
+        r.dockerExecutable.set(this.dockerExecutable.get())
+        r.environment.set(new HashMap<String, Object>(this.environment.get()))
 
-        r.ignorePullFailure = this.ignorePullFailure
-        r.ignorePushFailure = this.ignorePushFailure
-
-        r.executable = this.executable
-        r.environment = new HashMap<>(this.environment)
-
-        r.dockerExecutable = this.dockerExecutable
-
-        r.dockerComposeWorkingDirectory = this.dockerComposeWorkingDirectory
-        r.dockerComposeStopTimeout = this.dockerComposeStopTimeout
+        r.dockerComposeWorkingDirectory.set(this.dockerComposeWorkingDirectory.getOrNull())
+        r.dockerComposeStopTimeout.set(this.dockerComposeStopTimeout.get())
         r
     }
 
@@ -255,32 +308,8 @@ abstract class ComposeSettings {
         systemProperties
     }
 
-    void setCaptureContainersOutputToFile(CharSequence path) {
-        captureContainersOutputToFile = project.file(path)
-    }
-
-    void setCaptureContainersOutputToFile(File file) {
-        captureContainersOutputToFile = file
-    }
-
-    void setCaptureContainersOutputToFiles(CharSequence path) {
-        captureContainersOutputToFiles = project.file(path)
-    }
-
-    void setCaptureContainersOutputToFiles(File file) {
-        captureContainersOutputToFiles = file
-    }
-
-    void setComposeLogToFile(CharSequence path) {
-        composeLogToFile = project.file(path)
-    }
-
-    void setComposeLogToFile(File file) {
-        composeLogToFile = file
-    }
-
     boolean removeOrphans() {
-        composeExecutor.version >= VersionNumber.parse('1.7.0') && this.removeOrphans
+        composeExecutor.version >= VersionNumber.parse('1.7.0') && this.removeOrphans.get()
     }
 
     boolean scale() {
@@ -288,7 +317,7 @@ abstract class ComposeSettings {
         if (v < VersionNumber.parse('1.13.0') && this.scale) {
             throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
         }
-        this.scale
+        !this.scale.get().isEmpty()
     }
 }
 

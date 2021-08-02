@@ -12,7 +12,7 @@ class ComposeDown extends ComposeDownForced {
 
     @TaskAction
     void down() {
-        if (settings.stopContainers) {
+        if (settings.stopContainers.get()) {
             super.down()
         } else {
             logger.lifecycle('You\'re trying to stop the containers, but stopContainers is set to false. Please use composeDownForced task instead.')

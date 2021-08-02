@@ -20,8 +20,8 @@ class ComposeBuild extends DefaultTask {
     @TaskAction
     void build() {
         String[] args = ['build']
-        args += settings.buildAdditionalArgs
-        args += settings.startedServices
+        args += (List<String>)settings.buildAdditionalArgs.get()
+        args += (List<String>)settings.startedServices.get()
         settings.composeExecutor.execute(args)
     }
 }
