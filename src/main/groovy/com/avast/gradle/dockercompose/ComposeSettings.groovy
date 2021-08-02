@@ -233,7 +233,7 @@ abstract class ComposeSettings {
 
         r.executable.set(this.executable.get())
         r.dockerExecutable.set(this.dockerExecutable.get())
-        r.environment.set(new HashMap<>(this.environment.get()))
+        r.environment.set(new HashMap<String, Object>(this.environment.get()))
 
         r.dockerComposeWorkingDirectory.set(this.dockerComposeWorkingDirectory.getOrNull())
         r.dockerComposeStopTimeout.set(this.dockerComposeStopTimeout.get())
