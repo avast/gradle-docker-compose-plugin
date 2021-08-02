@@ -6,6 +6,7 @@ import org.gradle.api.Project
 class DockerComposePlugin implements Plugin<Project> {
     @Override
     void apply(Project project) {
-        project.extensions.create('dockerCompose', ComposeExtension)
+        // project parameter is no required for later Gradle version but we want to support also older Gradle versions
+        project.extensions.create('dockerCompose', ComposeExtension, project)
     }
 }
