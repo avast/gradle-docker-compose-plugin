@@ -21,7 +21,7 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
-import org.gradle.util.internal.VersionNumber
+import org.gradle.util.VersionNumber
 
 import javax.inject.Inject
 import java.nio.charset.StandardCharsets

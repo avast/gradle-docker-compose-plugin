@@ -14,7 +14,7 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static org.gradle.util.internal.VersionNumber.parse
+import static org.gradle.util.internal.parse
 
 class DockerComposePluginTest extends Specification {
     def "add tasks and extension to the project"() {

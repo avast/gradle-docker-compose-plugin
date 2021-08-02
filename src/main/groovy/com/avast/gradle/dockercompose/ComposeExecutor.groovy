@@ -8,7 +8,7 @@ import org.gradle.api.logging.Logging
 import org.gradle.internal.UncheckedException
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
-import org.gradle.util.internal.VersionNumber
+import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import javax.inject.Inject
