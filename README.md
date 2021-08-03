@@ -99,8 +99,8 @@ dockerCompose {
     checkContainersRunning = true // turns on/off checking if container is running or restarting (during waiting for open TCP port and healthy state); default is true
 
     captureContainersOutput = false // if true, prints output of all containers to Gradle output - very useful for debugging; default is false
-    captureContainersOutputToFile = '/path/to/logFile' // sends output of all containers to a log file
-    captureContainersOutputToFiles = '/path/to/directory' // sends output of all services to a dedicated log file in the directory specified, e.g. 'web.log' for service named 'log'
+    captureContainersOutputToFile = project.file('/path/to/logFile') // sends output of all containers to a log file
+    captureContainersOutputToFiles = project.file('/path/to/directory') // sends output of all services to a dedicated log file in the directory specified, e.g. 'web.log' for service named 'log'
     composeLogToFile = project.file('build/my-logs.txt') // redirect output of composeUp and composeDown tasks to this file; default is null (ouput is not redirected)
     containerLogToDir = project.file('build/logs') // directory where composeLogs task stores output of the containers; default: build/containers-logs
     includeDependencies = false // calculates services dependencies of startedServices and includes those when gathering logs or removing containers; default is false
@@ -116,7 +116,7 @@ dockerCompose {
     projectNamePrefix = 'my_prefix_' // allow to set custom prefix of docker-compose project name, the final project name has nested configuration name appended
     executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
-    dockerComposeWorkingDirectory = '/path/where/docker-compose/is/invoked/from'
+    dockerComposeWorkingDirectory = project.file('/path/where/docker-compose/is/invoked/from')
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
 }
