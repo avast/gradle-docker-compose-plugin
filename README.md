@@ -108,7 +108,7 @@ dockerCompose {
     stopContainers = true // doesn't call `docker-compose down` if set to false - see below the paragraph about reconnecting; default is true
     removeContainers = true // default is true
     retainContainersOnStartupFailure = false // if set to true, skips running ComposeDownForced task when ComposeUp fails - useful for troubleshooting; default is false
-    removeImages = "None" // Other accepted values are: "All" and "Local"
+    removeImages = com.avast.gradle.dockercompose.RemoveImages.None // Other accepted values are All and Local
     removeVolumes = true // default is true
     removeOrphans = false // removes containers for services not defined in the Compose file; default is false
     
