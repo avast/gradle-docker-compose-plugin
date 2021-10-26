@@ -3,6 +3,7 @@ package com.avast.gradle.dockercompose
 import com.avast.gradle.dockercompose.tasks.ComposeBuild
 import com.avast.gradle.dockercompose.tasks.ComposeDown
 import com.avast.gradle.dockercompose.tasks.ComposeDownForced
+import com.avast.gradle.dockercompose.tasks.ComposeExec
 import com.avast.gradle.dockercompose.tasks.ComposeLogs
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
@@ -37,6 +38,7 @@ abstract class ComposeSettings {
     final TaskProvider<ComposePull> pullTask
     final TaskProvider<ComposeLogs> logsTask
     final TaskProvider<ComposePush> pushTask
+    final TaskProvider<ComposeExec> execTask
     final Project project
     final DockerExecutor dockerExecutor
     final ComposeExecutor composeExecutor
@@ -84,6 +86,7 @@ abstract class ComposeSettings {
     abstract DirectoryProperty getCaptureContainersOutputToFiles()
     abstract RegularFileProperty getComposeLogToFile()
     abstract DirectoryProperty getContainerLogToDir()
+    abstract Property<Boolean> getNoTty()
 
     protected String customProjectName
     protected Boolean customProjectNameSet
@@ -158,6 +161,7 @@ abstract class ComposeSettings {
         checkContainersRunning.set(true)
 
         captureContainersOutput.set(false)
+        noTty.set(false)
 
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
@@ -180,6 +184,7 @@ abstract class ComposeSettings {
         downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced".toString() : 'composeDownForced', ComposeDownForced, { it.settings = this })
         logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs, { it.settings = this })
         pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush, { it.settings = this })
+        execTask = project.tasks.register(name ? "${name}ComposeExec".toString() : 'composeExec', ComposeExec, { it.settings = this })
 
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
         this.composeExecutor = project.objects.newInstance(ComposeExecutor, this)
@@ -237,6 +242,7 @@ abstract class ComposeSettings {
 
         r.dockerComposeWorkingDirectory.set(this.dockerComposeWorkingDirectory.getOrNull())
         r.dockerComposeStopTimeout.set(this.dockerComposeStopTimeout.get())
+        r.noTty.set(this.noTty.get())
         r
     }
 

@@ -16,6 +16,8 @@ Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for 
 
 `composeLogs` task stores logs from all containers to files in `containerLogToDir` directory.
 
+`composeExec` task execute a command in a running container. Use `--service` argument to pass service name. 
+
 ## Quick start
 ```gradle
 buildscript {
@@ -119,6 +121,8 @@ dockerCompose {
     dockerComposeWorkingDirectory = project.file('/path/where/docker-compose/is/invoked/from')
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
+    
+    noTty = false // disable pseudo-TTY allocation. By default docker compose exec allocates a TTY.
 }
 
 test.doFirst {
