@@ -92,7 +92,7 @@ pluginBundle {
     website = 'https://github.com/avast/gradle-docker-compose-plugin'
     vcsUrl = 'https://github.com/avast/gradle-docker-compose-plugin'
     description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
-    tags = ['docker', 'docker-compose', 'gradle']
+    tags = ['docker', 'docker-compose']
     plugins {
         dockerComposePlugin {
             id = 'com.avast.gradle.docker-compose'
