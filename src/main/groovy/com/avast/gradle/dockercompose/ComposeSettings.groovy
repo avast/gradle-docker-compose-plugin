@@ -271,7 +271,7 @@ abstract class ComposeSettings {
     void exposeAsEnvironment(ProcessForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, si ->
-                if (instanceName.endsWith('_1')) {
+                if (instanceName.endsWith('_1') || instanceName.endsWith('-1')) {
                     task.environment << createEnvironmentVariables(serviceInfo.name.toUpperCase(), si)
                 }
                 task.environment << createEnvironmentVariables(instanceName.toUpperCase(), si)
@@ -282,7 +282,7 @@ abstract class ComposeSettings {
     void exposeAsSystemProperties(JavaForkOptions task) {
         servicesInfos.values().each { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, si ->
-                if(instanceName.endsWith('_1')) {
+                if(instanceName.endsWith('_1') || instanceName.endsWith('-1')) {
                     task.systemProperties << createSystemProperties(serviceInfo.name, si)
                 }
                 task.systemProperties << createSystemProperties(instanceName, si)

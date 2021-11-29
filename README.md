@@ -40,7 +40,8 @@ dockerCompose.isRequiredBy(test)
 * If the provided task (`test` in the example above) executes a new process then environment variables and Java system properties are provided.
   * The name of environment variable is `${serviceName}_HOST` and `${serviceName}_TCP_${exposedPort}` (e.g. `WEB_HOST` and `WEB_TCP_80`).
   * The name of Java system property is `${serviceName}.host` and `${serviceName}.tcp.${exposedPort}` (e.g. `web.host` and `web.tcp.80`).
-  * If the service is scaled then the `serviceName` has `_1`, `_2`... suffix (e.g. `WEB_1_HOST` and `WEB_1_TCP_80`, `web_1.host` and `web_1.tcp.80`)
+  * If the service is scaled then the `serviceName` has `_1`, `_2`... suffix (e.g. `WEB_1_HOST` and `WEB_1_TCP_80`, `web_1.host` and `web_1.tcp.80`).
+    * Please note that in Docker Compose v2, the suffix contains `-` instead of `_`
 
 ## Why to use Docker Compose?
 1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done - e.g. the database is running. 
