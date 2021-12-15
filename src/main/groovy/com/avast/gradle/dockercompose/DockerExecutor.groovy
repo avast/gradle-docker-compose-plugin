@@ -113,6 +113,9 @@ class DockerExecutor {
             logger.lifecycle("DOCKER_HOST environment variable detected - will be used as hostname of service $serviceName ($host)'")
             return new ServiceHost(host: host, type: ServiceHostType.RemoteDockerHost)
         }
+        if (isWSL()) {
+            return new ServiceHost(host: 'localhost', type: ServiceHostType.LocalHost)
+        }
         Map<String, Object> networkSettings = inspection.NetworkSettings
         Map<String, Object> networks = networkSettings.Networks
         Map.Entry<String, Object> firstNetworkPair = networks.find()
@@ -207,5 +210,9 @@ class DockerExecutor {
 
     private static boolean isWindows() {
         System.getProperty("os.name").toLowerCase().startsWith("win")
+    }
+
+    private static boolean isWSL() {
+        System.getProperty("os.version").toLowerCase().contains('wsl')
     }
 }
