@@ -83,6 +83,9 @@ nexusPublishing {
     repositories {
         sonatype()
     }
+    transitionCheckOptions {
+        maxRetries.set(256)
+    }
 }
 
 
