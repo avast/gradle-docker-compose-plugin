@@ -99,10 +99,8 @@ class ComposeExecutorTest extends Specification {
         f.project.tasks.composeUp.up()
 
         then:
-        def zooKeeperIds = f.project.dockerCompose.composeExecutor.getContainerIds('zookeeper')
-        zooKeeperIds
-        def kafkaIds = f.project.dockerCompose.composeExecutor.getContainerIds('kafka')
-        kafkaIds
+        def configuredServices = f.project.dockerCompose.composeExecutor.getServiceNames()
+        configuredServices.containsAll('zookeeper', 'kafka')
 
         cleanup:
         f.project.tasks.composeDownForced.down()
