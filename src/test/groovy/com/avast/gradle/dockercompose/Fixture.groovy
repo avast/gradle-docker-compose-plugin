@@ -29,15 +29,15 @@ class Fixture implements AutoCloseable {
         new Fixture()
     }
 
-    static custom(String composeFileContent) {
-        new Fixture(composeFileContent)
+    static custom(String composeFileContent, projectName = "test") {
+        new Fixture(composeFileContent, projectName)
     }
 
-    private Fixture(String composeFileContent = null) {
+    private Fixture(String composeFileContent = null, String projectName = "test") {
         if (composeFileContent) {
             projectDir = File.createTempDir("gradle", "projectDir")
             new File(projectDir, 'docker-compose.yml') << composeFileContent
-            project = ProjectBuilder.builder().withProjectDir(projectDir).build()
+            project = ProjectBuilder.builder().withName(projectName).withProjectDir(projectDir).build()
         } else {
             project = ProjectBuilder.builder().build()
         }

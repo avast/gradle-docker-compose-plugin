@@ -64,6 +64,54 @@ class ComposeExecutorTest extends Specification {
                             condition: service_completed_successfully
             '''
 
+    def composeWithConfluentKafka = '''
+            version: '3.9'
+            services:
+                zookeeper:
+                    image: zookeeper:3.5.9
+                    hostname: zookeeper
+                    environment:
+                      ZOO_MY_ID: 1
+                kafka:
+                    image: confluentinc/cp-kafka:5.4.6
+                    ports:
+                        - "9092:9092"
+                    environment:
+                        KAFKA_BROKER_ID: 1
+                        KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+                        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1\'
+                        KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true\'
+                        KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092\'
+                        KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN"
+                    depends_on:
+                        - zookeeper
+            '''
+
+    @Unroll
+    def "should start docker compose with confluent Kafka and root project name: #rootProjectName"() {
+        setup:
+        def f = Fixture.custom(composeWithConfluentKafka, rootProjectName)
+        f.project.plugins.apply 'java'
+        f.project.plugins.apply 'docker-compose'
+        f.project.dockerCompose.waitForTcpPorts = true
+
+        when:
+        f.project.tasks.composeUp.up()
+
+        then:
+        def zooKeeperIds = f.project.dockerCompose.composeExecutor.getContainerIds('zookeeper')
+        zooKeeperIds
+        def kafkaIds = f.project.dockerCompose.composeExecutor.getContainerIds('kafka')
+        kafkaIds
+
+        cleanup:
+        f.project.tasks.composeDownForced.down()
+        f.close()
+
+        where:
+        rootProjectName << ['lorem', 'lorem-ipsum', 'lorem-ipsum-dolor', 'lorem-ipsum-dolor-sit', 'lorem-ipsum-dolor-sit-amet']
+    }
+
     @Unroll
     def "getServiceNames calculates service names correctly when includeDependencies is #includeDependencies" () {
         def f = Fixture.custom(composeFile)
