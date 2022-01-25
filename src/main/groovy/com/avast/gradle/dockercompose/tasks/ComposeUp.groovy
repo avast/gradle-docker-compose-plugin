@@ -159,6 +159,7 @@ class ComposeUp extends DefaultTask {
         logger.info("Will use $host as host of service $serviceName")
         def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
         def udpPorts = settings.dockerExecutor.getUdpPortsMapping(serviceName, inspection, host)
+        // docker-compose v1 uses an underscore as a separator.  v2 uses a hyphen.
         String instanceName = inspection.Name.find(/${serviceName}_\d+$/) ?:
                 inspection.Name.find(/${serviceName}-\d+$/) ?:
                 inspection.Name - '/'
