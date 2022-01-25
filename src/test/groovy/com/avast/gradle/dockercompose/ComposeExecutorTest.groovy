@@ -64,7 +64,8 @@ class ComposeExecutorTest extends Specification {
                             condition: service_completed_successfully
             '''
 
-    def composeWithConfluentKafka = '''
+    def placeholder = '<CONFLUENT_KAFKA_VERSION>'
+    def composeWithConfluentKafka = """
             version: '3.9'
             services:
                 zookeeper:
@@ -73,7 +74,7 @@ class ComposeExecutorTest extends Specification {
                     environment:
                       ZOO_MY_ID: 1
                 kafka:
-                    image: confluentinc/cp-kafka:5.4.6
+                    image: confluentinc/cp-kafka:$placeholder
                     ports:
                         - "9092:9092"
                     environment:
@@ -88,12 +89,13 @@ class ComposeExecutorTest extends Specification {
                         KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN"
                     depends_on:
                         - zookeeper
-            '''
+            """
 
     @Unroll
-    def "should start docker compose with confluent Kafka and root project name: #rootProjectName"() {
-        setup:
-        def f = Fixture.custom(composeWithConfluentKafka, rootProjectName)
+    def "should start docker compose with project name: #projectName and Kafka: #confluentKafkaVersion"() {
+        given:
+        def withVersion = composeWithConfluentKafka.replace(placeholder, confluentKafkaVersion)
+        def f = Fixture.custom(withVersion, projectName)
         f.project.plugins.apply 'java'
         f.project.plugins.apply 'docker-compose'
 
@@ -109,14 +111,17 @@ class ComposeExecutorTest extends Specification {
         f.close()
 
         where:
-        rootProjectName << [
-            'lorem-ipsum-dolor',
-            'loremipsumdolorsitamet'
-        ]
+        projectName              | confluentKafkaVersion
+        'lorem-ipsum-dolor'      | '5.4.6'
+        'loremipsumdolorsitamet' | '5.4.6' // this version of Confluent Kafka fails with longer project name
+        'loremipsumdolorsitamet' | '5.5.7'
+        'loremipsumdolorsitamet' | '6.0.5'
+        'loremipsumdolorsitamet' | '6.2.2'
+        'loremipsumdolorsitamet' | '7.0.1'
     }
 
     @Unroll
-    def "getServiceNames calculates service names correctly when includeDependencies is #includeDependencies" () {
+    def "getServiceNames calculates service names correctly when includeDependencies is #includeDependencies"(){
         def f = Fixture.custom(composeFile)
         f.project.plugins.apply 'java'
         f.project.dockerCompose.includeDependencies = includeDependencies
