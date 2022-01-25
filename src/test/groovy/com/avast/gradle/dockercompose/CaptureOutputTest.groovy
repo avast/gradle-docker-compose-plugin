@@ -10,11 +10,13 @@ import spock.lang.Specification
 class CaptureOutputTest extends Specification {
 
     private String composeFileContent = '''
-            web:
-                image: nginx:stable
-                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
+            version: '2'
+            services:
+                web:
+                    image: nginx:stable
+                    command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
+                    ports:
+                      - 80
         '''
 
     def "captures container output to stdout"() {
