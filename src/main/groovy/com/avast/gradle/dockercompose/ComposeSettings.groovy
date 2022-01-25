@@ -291,20 +291,22 @@ abstract class ComposeSettings {
     }
 
     protected Map<String, Object> createEnvironmentVariables(String variableName, ContainerInfo ci) {
+        def serviceName = variableName.replaceAll('-', '_')
         Map<String, Object> environmentVariables = [:]
-        environmentVariables.put("${variableName}_HOST".toString(), ci.host)
-        environmentVariables.put("${variableName}_CONTAINER_HOSTNAME".toString(), ci.containerHostname)
-        ci.tcpPorts.each { environmentVariables.put("${variableName}_TCP_${it.key}".toString(), it.value) }
-        ci.udpPorts.each { environmentVariables.put("${variableName}_UDP_${it.key}".toString(), it.value) }
+        environmentVariables.put("${serviceName}_HOST".toString(), ci.host)
+        environmentVariables.put("${serviceName}_CONTAINER_HOSTNAME".toString(), ci.containerHostname)
+        ci.tcpPorts.each { environmentVariables.put("${serviceName}_TCP_${it.key}".toString(), it.value) }
+        ci.udpPorts.each { environmentVariables.put("${serviceName}_UDP_${it.key}".toString(), it.value) }
         environmentVariables
     }
 
     protected Map<String, Object> createSystemProperties(String variableName, ContainerInfo ci) {
+        def serviceName = variableName.replaceAll('-', '_')
         Map<String, Object> systemProperties = [:]
-        systemProperties.put("${variableName}.host".toString(), ci.host)
-        systemProperties.put("${variableName}.containerHostname".toString(), ci.containerHostname)
-        ci.tcpPorts.each { systemProperties.put("${variableName}.tcp.${it.key}".toString(), it.value) }
-        ci.udpPorts.each { systemProperties.put("${variableName}.udp.${it.key}".toString(), it.value) }
+        systemProperties.put("${serviceName}.host".toString(), ci.host)
+        systemProperties.put("${serviceName}.containerHostname".toString(), ci.containerHostname)
+        ci.tcpPorts.each { systemProperties.put("${serviceName}.tcp.${it.key}".toString(), it.value) }
+        ci.udpPorts.each { systemProperties.put("${serviceName}.udp.${it.key}".toString(), it.value) }
         systemProperties
     }
 

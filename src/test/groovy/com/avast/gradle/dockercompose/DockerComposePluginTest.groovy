@@ -360,8 +360,8 @@ class DockerComposePluginTest extends Specification {
         def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             def webInfos = project.dockerCompose.servicesInfos.web.containerInfos
             assert webInfos.size() == 2
-            assert webInfos.containsKey('web_1')
-            assert webInfos.containsKey('web_2')
+            assert webInfos.containsKey('web_1') || webInfos.containsKey('web-1')
+            assert webInfos.containsKey('web_2') || webInfos.containsKey('web-2')
         }
         when:
             f.project.tasks.composeUp.up()
