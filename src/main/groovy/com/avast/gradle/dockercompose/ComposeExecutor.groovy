@@ -100,7 +100,11 @@ class ComposeExecutor {
     }
 
     Iterable<String> getContainerIds(String serviceName) {
-        execute('ps', '-q', serviceName).readLines()
+        try {
+            execute('ps', '-q', serviceName).readLines()
+        } catch (RuntimeException ignored) {
+            return []
+        }
     }
 
     void captureContainersOutput(Closure<Void> logMethod, String... services) {
