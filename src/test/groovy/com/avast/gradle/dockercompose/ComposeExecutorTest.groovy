@@ -93,7 +93,6 @@ class ComposeExecutorTest extends Specification {
         def f = Fixture.custom(composeWithConfluentKafka, rootProjectName)
         f.project.plugins.apply 'java'
         f.project.plugins.apply 'docker-compose'
-        f.project.dockerCompose.waitForTcpPorts = true
 
         when:
         f.project.tasks.composeUp.up()
@@ -107,7 +106,10 @@ class ComposeExecutorTest extends Specification {
         f.close()
 
         where:
-        rootProjectName << ['lorem', 'lorem-ipsum', 'lorem-ipsum-dolor', 'lorem-ipsum-dolor-sit', 'lorem-ipsum-dolor-sit-amet']
+        rootProjectName << [
+            'lorem-ipsum-dolor',
+            'loremipsumdolorsitamet'
+        ]
     }
 
     @Unroll
