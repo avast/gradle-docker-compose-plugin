@@ -78,10 +78,13 @@ class ComposeExecutorTest extends Specification {
                         - "9092:9092"
                     environment:
                         KAFKA_BROKER_ID: 1
-                        KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+                        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
                         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1\'
                         KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true\'
-                        KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092\'
+                        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+                        KAFKA_LISTENERS: INSIDE://:9093,OUTSIDE://:9092
+                        KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://localhost:9092
+                        KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
                         KAFKA_LOG4J_LOGGERS: "kafka.controller=WARN,kafka.producer.async.DefaultEventHandler=WARN,state.change.logger=WARN"
                     depends_on:
                         - zookeeper
