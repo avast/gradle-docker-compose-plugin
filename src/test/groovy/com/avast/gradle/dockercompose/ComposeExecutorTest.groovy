@@ -64,7 +64,7 @@ class ComposeExecutorTest extends Specification {
                             condition: service_completed_successfully
             '''
 
-    def placeholder = '<CONFLUENT_KAFKA_VERSION>'
+    def placeholder = '<KAFKA_DOCKER_IMAGE>'
     def composeWithConfluentKafka = """
             version: '3.9'
             services:
@@ -74,7 +74,7 @@ class ComposeExecutorTest extends Specification {
                     environment:
                       ZOO_MY_ID: 1
                 kafka:
-                    image: confluentinc/cp-kafka:$placeholder
+                    image: $placeholder
                     ports:
                         - "9092:9092"
                     environment:
@@ -92,9 +92,9 @@ class ComposeExecutorTest extends Specification {
             """
 
     @Unroll
-    def "should start docker compose with project name: #projectName and Kafka: #confluentKafkaVersion"() {
+    def "should start docker compose with project name: #projectName and Kafka: #dockerImage"() {
         given:
-        def withVersion = composeWithConfluentKafka.replace(placeholder, confluentKafkaVersion)
+        def withVersion = composeWithConfluentKafka.replace(placeholder, dockerImage)
         def f = Fixture.custom(withVersion, projectName)
         f.project.plugins.apply 'java'
         f.project.plugins.apply 'docker-compose'
@@ -111,13 +111,16 @@ class ComposeExecutorTest extends Specification {
         f.close()
 
         where:
-        projectName              | confluentKafkaVersion
-        'lorem-ipsum-dolor'      | '5.4.6'
-        'loremipsumdolorsitamet' | '5.4.6' // this version of Confluent Kafka fails with longer project name
-        'loremipsumdolorsitamet' | '5.5.7'
-        'loremipsumdolorsitamet' | '6.0.5'
-        'loremipsumdolorsitamet' | '6.2.2'
-        'loremipsumdolorsitamet' | '7.0.1'
+        projectName              | dockerImage
+        'lorem-ipsum-dolor'      | 'confluentinc/cp-kafka:5.4.6'
+        'lorem-ipsum-dolor'      | 'wurstmeister/kafka:2.12-2.4.1'
+        'loremipsumdolorsitamet' | 'confluentinc/cp-kafka:5.4.6' // this version of Confluent Kafka fails with longer project name
+        'loremipsumdolorsitamet' | 'wurstmeister/kafka:2.12-2.4.1'
+        // newer kafka versions
+        'loremipsumdolorsitamet' | 'confluentinc/cp-kafka:5.5.7'
+        'loremipsumdolorsitamet' | 'confluentinc/cp-kafka:6.0.5'
+        'loremipsumdolorsitamet' | 'confluentinc/cp-kafka:6.2.2'
+        'loremipsumdolorsitamet' | 'confluentinc/cp-kafka:7.0.1'
     }
 
     @Unroll
