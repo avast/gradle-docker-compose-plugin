@@ -276,14 +276,7 @@ class DockerComposePluginTest extends Specification {
             f.project.tasks.composeDown.down()
             f.close()
         where:
-            // test it for both compose file version 1 and 2
             composeFileContent << ['''
-            web:
-                image: nginx:stable
-                ports:
-                  - 80
-                  - 81/udp
-        ''', '''
             version: '2'
             services:
                 web:
@@ -323,10 +316,12 @@ class DockerComposePluginTest extends Specification {
 
     def "docker-compose substitutes environment variables"() {
         def f = Fixture.custom('''
-            web:
-                image: nginx:stable
-                ports:
-                  - $MY_WEB_PORT
+            version: '2'
+            services:
+                web:
+                    image: nginx:stable
+                    ports:
+                      - $MY_WEB_PORT
         ''')
         def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             ContainerInfo webInfo = f.project.dockerCompose.servicesInfos.web.firstContainer
@@ -365,8 +360,8 @@ class DockerComposePluginTest extends Specification {
         def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
             def webInfos = project.dockerCompose.servicesInfos.web.containerInfos
             assert webInfos.size() == 2
-            assert webInfos.containsKey('web_1')
-            assert webInfos.containsKey('web_2')
+            assert webInfos.containsKey('web_1') || webInfos.containsKey('web-1')
+            assert webInfos.containsKey('web_2') || webInfos.containsKey('web-2')
         }
         when:
             f.project.tasks.composeUp.up()
@@ -405,13 +400,15 @@ class DockerComposePluginTest extends Specification {
     @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') != null && parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale to 0 does not cause exceptions because of missing first container"() {
         def f = Fixture.custom('''
-            web:
-                image: nginx:stable
-                ports:
-                  - 80
-            z:
-                image: nginx:stable
-                ports: []
+            version: '2'
+            services:
+                web:
+                    image: nginx:stable
+                    ports:
+                      - 80
+                z:
+                    image: nginx:stable
+                    ports: []
         ''')
         f.extension.scale = ['web': 0]
         def integrationTestTask = f.project.tasks.create('integrationTest').doLast {
@@ -449,12 +446,6 @@ class DockerComposePluginTest extends Specification {
         where:
         // test it for both compose file version 1 and 2
         composeFileContent << ['''
-            web:
-                container_name: custom_container_name
-                image: nginx:stable
-                ports:
-                  - 80
-        ''', '''
             version: '2'
             services:
                 web:
@@ -484,25 +475,7 @@ class DockerComposePluginTest extends Specification {
         cleanup:
         f.close()
         where:
-        // test it for both compose file version 1 and 2
         composeFileContent << ['''
-            web0:
-                image: nginx:stable
-                ports:
-                  - 80
-            web1:
-                image: nginx:stable
-                ports:
-                  - 80
-                links:
-                  - web0
-            webMaster:
-                image: nginx:stable
-                ports:
-                  - 80
-                links:
-                  - web1
-        ''', '''
             version: '2'
             services:
                 web0:

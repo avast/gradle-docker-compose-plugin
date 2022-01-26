@@ -10,18 +10,22 @@ class Fixture implements AutoCloseable {
 
     static withNginx() {
         new Fixture('''
-            web:
-                image: nginx:stable
-                command: bash -c "sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
+            version: '2'
+            services:
+                web:
+                    image: nginx:stable
+                    command: bash -c "sleep 5 && nginx -g 'daemon off;'"
+                    ports:
+                      - 80
         ''')
     }
 
     static withHelloWorld() {
         new Fixture('''
-            hello:
-                image: hello-world
+            version: '2'
+            services:
+                hello:
+                    image: hello-world
         ''')
     }
 

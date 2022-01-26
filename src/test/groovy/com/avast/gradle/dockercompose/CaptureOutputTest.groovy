@@ -10,11 +10,13 @@ import spock.lang.Specification
 class CaptureOutputTest extends Specification {
 
     private String composeFileContent = '''
-            web:
-                image: nginx:stable
-                command: bash -c "echo -e 'heres some output\\nand some more' && sleep 5 && nginx -g 'daemon off;'"
-                ports:
-                  - 80
+            version: '2'
+            services:
+                web:
+                    image: nginx:stable
+                    command: bash -c "echo -e 'here is some output' && echo -e 'and some more' && sleep 5 && nginx -g 'daemon off;'"
+                    ports:
+                      - 80
         '''
 
     def "captures container output to stdout"() {
@@ -34,7 +36,9 @@ class CaptureOutputTest extends Specification {
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
-        stdout.toString().contains("web_1  | heres some output\nweb_1  | and some more")
+        stdout.toString().contains("web_1  | here is some output\nweb_1  | and some more") ||
+                (stdout.toString().contains("web-1  | here is some output") &&
+                        stdout.toString().contains("web-1  | and some more"))
         cleanup:
         f.project.tasks.composeDown.down()
         f.close()
@@ -48,7 +52,9 @@ class CaptureOutputTest extends Specification {
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
-        logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
+        logFile.text.contains("web_1  | here is some output\nweb_1  | and some more") ||
+                (logFile.text.contains("web-1  | here is some output") &&
+                        logFile.text.contains("web-1  | and some more"))
         cleanup:
         f.project.tasks.composeDown.down()
         f.close()
@@ -62,7 +68,9 @@ class CaptureOutputTest extends Specification {
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
-        logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
+        logFile.text.contains("web_1  | here is some output\nweb_1  | and some more") ||
+                (logFile.text.contains("web-1  | here is some output") &&
+                        logFile.text.contains("web-1  | and some more"))
         cleanup:
         f.project.tasks.composeDown.down()
         f.close()
@@ -77,7 +85,9 @@ class CaptureOutputTest extends Specification {
         then:
         noExceptionThrown()
         def logFile = logDir.toPath().resolve('web.log').toFile()
-        logFile.text.contains("web_1  | heres some output\nweb_1  | and some more")
+        logFile.text.contains("web_1  | here is some output\nweb_1  | and some more") ||
+                (logFile.text.contains("web-1  | here is some output") &&
+                        logFile.text.contains("web-1  | and some more"))
         cleanup:
         f.project.tasks.composeDown.down()
         f.close()

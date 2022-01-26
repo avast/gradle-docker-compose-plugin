@@ -100,7 +100,14 @@ class ComposeExecutor {
     }
 
     Iterable<String> getContainerIds(String serviceName) {
-        execute('ps', '-q', serviceName).readLines()
+        // `docker-compose ps -q serviceName` returns an exit code of 1 when the service
+        // doesn't exist.  To guard against this, check the service list first.
+        def services = execute('ps', '--services').readLines()
+        if (services.contains(serviceName)) {
+            return execute('ps', '-q', serviceName).readLines()
+        }
+
+        return []
     }
 
     void captureContainersOutput(Closure<Void> logMethod, String... services) {
