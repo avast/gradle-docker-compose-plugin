@@ -23,7 +23,7 @@ dependencies {
     implementation gradleApi()
     implementation 'org.yaml:snakeyaml:1.30'
     testImplementation gradleTestKit()
-    testImplementation 'org.spockframework:spock-core:2.0-groovy-2.5'
+    testImplementation 'org.spockframework:spock-core:2.1-groovy-2.5'
 }
 
 test {
