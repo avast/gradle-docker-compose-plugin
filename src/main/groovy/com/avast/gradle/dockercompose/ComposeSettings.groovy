@@ -291,7 +291,7 @@ abstract class ComposeSettings {
     }
 
     protected Map<String, Object> createEnvironmentVariables(String variableName, ContainerInfo ci) {
-        def serviceName = variableName.replaceAll('-', '_')
+        def serviceName = replaceV2Separator(variableName)
         Map<String, Object> environmentVariables = [:]
         environmentVariables.put("${serviceName}_HOST".toString(), ci.host)
         environmentVariables.put("${serviceName}_CONTAINER_HOSTNAME".toString(), ci.containerHostname)
@@ -301,13 +301,17 @@ abstract class ComposeSettings {
     }
 
     protected Map<String, Object> createSystemProperties(String variableName, ContainerInfo ci) {
-        def serviceName = variableName.replaceAll('-', '_')
+        def serviceName = replaceV2Separator(variableName)
         Map<String, Object> systemProperties = [:]
         systemProperties.put("${serviceName}.host".toString(), ci.host)
         systemProperties.put("${serviceName}.containerHostname".toString(), ci.containerHostname)
         ci.tcpPorts.each { systemProperties.put("${serviceName}.tcp.${it.key}".toString(), it.value) }
         ci.udpPorts.each { systemProperties.put("${serviceName}.udp.${it.key}".toString(), it.value) }
         systemProperties
+    }
+
+    static String replaceV2Separator(String serviceName) {
+        serviceName.replaceAll('-(\\d+)$', '_$1')
     }
 
     boolean removeOrphans() {
