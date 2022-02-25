@@ -287,6 +287,38 @@ class DockerComposePluginTest extends Specification {
         ''']
     }
 
+    def "exposes environment variables and system properties for services having dash in service name"() {
+        def f = Fixture.custom(composeFileContent)
+        f.project.plugins.apply 'java'
+        f.project.tasks.composeUp.up()
+        Test test = f.project.tasks.test as Test
+        when:
+        f.project.dockerCompose.exposeAsEnvironment(test)
+        f.project.dockerCompose.exposeAsSystemProperties(test)
+        then:
+        test.environment.containsKey('WEB-SERVICE_HOST')
+        test.environment.containsKey('WEB-SERVICE_CONTAINER_HOSTNAME')
+        test.environment.containsKey('WEB-SERVICE_TCP_80')
+        test.environment.containsKey('WEB-SERVICE_UDP_81')
+        test.systemProperties.containsKey('web-service.host')
+        test.systemProperties.containsKey('web-service.containerHostname')
+        test.systemProperties.containsKey('web-service.tcp.80')
+        test.systemProperties.containsKey('web-service.udp.81')
+        cleanup:
+        f.project.tasks.composeDown.down()
+        f.close()
+        where:
+        composeFileContent << ['''
+            version: '2'
+            services:
+                web-service:
+                    image: nginx:stable
+                    ports:
+                      - 80
+                      - 81/udp
+        ''']
+    }
+
     private static boolean isRunningOnWindows() { System.properties['os.name'].toString().toLowerCase().startsWith('windows') }
     private static boolean isRunningOnMac() { System.properties['os.name'].toString().toLowerCase().startsWith('macos') || System.properties['os.name'].toString().toLowerCase().startsWith('mac os') }
 
