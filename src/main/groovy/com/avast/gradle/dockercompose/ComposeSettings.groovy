@@ -188,7 +188,7 @@ abstract class ComposeSettings {
 
     private static String generateSafeProjectNamePrefix(Project project) {
         def fullPathMd5 = MessageDigest.getInstance("MD5").digest(project.projectDir.absolutePath.toString().getBytes(StandardCharsets.UTF_8)).encodeHex().toString()
-        "${fullPathMd5}_${project.name}"
+        "${fullPathMd5}_${project.name.replace('.', '_')}"
     }
 
     protected ComposeSettings cloneAsNested(String name) {
