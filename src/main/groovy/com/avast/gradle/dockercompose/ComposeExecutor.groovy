@@ -47,7 +47,7 @@ class ComposeExecutor {
                 e.setWorkingDir(settings.dockerComposeWorkingDirectory.get().asFile)
             }
             e.environment = settings.environment.get()
-            def finalArgs = [settings.executable.get()]
+            List<String> finalArgs = new ArrayList<String>(Arrays.asList(settings.executable.get().split(" ")))
             finalArgs.addAll(settings.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {

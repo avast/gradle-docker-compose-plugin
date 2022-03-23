@@ -45,6 +45,7 @@ abstract class ComposeSettings {
     abstract ListProperty<String> getUseComposeFiles()
     abstract ListProperty<String> getStartedServices()
     abstract Property<Boolean> getIncludeDependencies()
+    abstract Property<Boolean> getDockerComposeV2()
     abstract MapProperty<String, Integer> getScale()
 
     abstract ListProperty<String> getBuildAdditionalArgs()
@@ -123,6 +124,7 @@ abstract class ComposeSettings {
         useComposeFiles.empty()
         startedServices.empty()
         includeDependencies.set(false)
+        dockerComposeV2.set(false)
         scale.empty()
 
         buildAdditionalArgs.empty()
@@ -162,10 +164,19 @@ abstract class ComposeSettings {
         if (OperatingSystem.current().isMacOsX()) {
             // Default installation is inaccessible from path, so set sensible
             // defaults for this platform.
-            executable.set('/usr/local/bin/docker-compose')
+
+            if (dockerComposeV2.get()) {
+                executable.set('/usr/local/bin/docker compose')
+            } else {
+                executable.set('/usr/local/bin/docker-compose')
+            }
             dockerExecutable.set('/usr/local/bin/docker')
         } else {
-            executable.set('docker-compose')
+            if (dockerComposeV2.get()) {
+                executable.set('docker compose')
+            } else {
+                executable.set('docker-compose')
+            }
             dockerExecutable.set('docker')
         }
         environment.set(System.getenv())
@@ -195,6 +206,7 @@ abstract class ComposeSettings {
         def r = project.objects.newInstance(ComposeSettings, project, name, this.nestedName)
 
         r.includeDependencies.set(includeDependencies.get())
+        r.dockerComposeV2.set(dockerComposeV2.get())
 
         r.buildAdditionalArgs.set(new ArrayList<String>(this.buildAdditionalArgs.get()))
         r.pullAdditionalArgs.set(new ArrayList<String>(this.pullAdditionalArgs.get()))
