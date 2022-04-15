@@ -1,10 +1,16 @@
 package com.avast.gradle.dockercompose
 
-import org.gradle.api.file.ProjectLayout
+import org.gradle.api.Project
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.internal.file.FileOperations
-import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.internal.UncheckedException
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
@@ -12,25 +18,49 @@ import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import javax.inject.Inject
+import java.lang.ref.WeakReference
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
-class ComposeExecutor {
-    private final ComposeSettings settings
-    private final ProjectLayout layout
-    private final ExecOperations exec
-    private final FileOperations fileOps
-    private final Gradle gradle
+abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseable {
+    static interface Parameters extends BuildServiceParameters {
+        abstract DirectoryProperty getProjectDirectory()
+        abstract ListProperty<String> getStartedServices()
+        abstract ListProperty<String> getUseComposeFiles()
+        abstract Property<Boolean> getIncludeDependencies()
+        abstract DirectoryProperty getDockerComposeWorkingDirectory()
+        abstract MapProperty<String, Object> getEnvironment()
+        abstract Property<String> getExecutable()
+        abstract Property<String> getProjectName()
+        abstract ListProperty<String> getComposeAdditionalArgs()
+        abstract Property<Boolean> getRemoveOrphans()
+        abstract MapProperty<String, Integer> getScale()
+    }
 
-    private static final Logger logger = Logging.getLogger(ComposeExecutor.class);
+    static Provider<ComposeExecutor> getInstance(Project project, ComposeSettings settings) {
+        String serviceId = "${ComposeExecutor.class.canonicalName} $project.path ${settings.hashCode()}"
+        return project.gradle.sharedServices.registerIfAbsent(serviceId, ComposeExecutor) {
+            it.parameters.projectDirectory.set(project.layout.projectDirectory)
+            it.parameters.startedServices.set(settings.startedServices)
+            it.parameters.useComposeFiles.set(settings.useComposeFiles)
+            it.parameters.includeDependencies.set(settings.includeDependencies)
+            it.parameters.dockerComposeWorkingDirectory.set(settings.dockerComposeWorkingDirectory)
+            it.parameters.environment.set(settings.environment)
+            it.parameters.executable.set(settings.executable)
+            it.parameters.projectName.set(settings.projectName)
+            it.parameters.composeAdditionalArgs.set(settings.composeAdditionalArgs)
+            it.parameters.removeOrphans.set(settings.removeOrphans)
+            it.parameters.scale.set(settings.scale)
+        }
+    }
 
     @Inject
-    ComposeExecutor(ComposeSettings settings, ProjectLayout layout, ExecOperations exec, FileOperations fileOps, Gradle gradle) {
-        this.settings = settings
-        this.layout = layout
-        this.exec = exec
-        this.fileOps = fileOps
-        this.gradle = gradle
-    }
+    abstract ExecOperations getExec()
+
+    @Inject
+    abstract FileOperations getFileOps()
+
+    private static final Logger logger = Logging.getLogger(ComposeExecutor.class);
 
     void executeWithCustomOutputWithExitValue(OutputStream os, String... args) {
         executeWithCustomOutput(os, false, true, true, args)
@@ -41,14 +71,15 @@ class ComposeExecutor {
     }
 
     void executeWithCustomOutput(OutputStream os, Boolean ignoreExitValue, Boolean noAnsi, Boolean captureStderr, String... args) {
-        def settings = this.settings
         def er = exec.exec { ExecSpec e ->
-            if (settings.dockerComposeWorkingDirectory.isPresent()) {
-                e.setWorkingDir(settings.dockerComposeWorkingDirectory.get().asFile)
+            if (parameters.dockerComposeWorkingDirectory.isPresent()) {
+                e.setWorkingDir(parameters.dockerComposeWorkingDirectory.get().asFile)
+            } else {
+                e.setWorkingDir(parameters.projectDirectory)
             }
-            e.environment = System.getenv() + settings.environment.get()
-            def finalArgs = [settings.executable.get()]
-            finalArgs.addAll(settings.composeAdditionalArgs.get())
+            e.environment = System.getenv() + parameters.environment.get()
+            def finalArgs = [parameters.executable.get()]
+            finalArgs.addAll(parameters.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
                     finalArgs.addAll(['--ansi', 'never'])
@@ -56,8 +87,8 @@ class ComposeExecutor {
                     finalArgs.add('--no-ansi')
                 }
             }
-            finalArgs.addAll(settings.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
-            String pn = settings.projectName
+            finalArgs.addAll(parameters.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
+            String pn = parameters.projectName.get()
             if (pn) {
                 finalArgs.addAll(['-p', pn])
             }
@@ -73,7 +104,7 @@ class ComposeExecutor {
         }
         if (!ignoreExitValue && er.exitValue != 0) {
             def stdout = os != null ? os.toString().trim() : "N/A"
-            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${settings.executable.get()}, stdout: $stdout")
+            throw new RuntimeException("Exit-code ${er.exitValue} when calling ${parameters.executable.get()}, stdout: $stdout")
         }
     }
 
@@ -109,6 +140,8 @@ class ComposeExecutor {
 
         return []
     }
+
+    private Set<WeakReference<Thread>> threadsToInterruptOnClose = ConcurrentHashMap.newKeySet()
 
     void captureContainersOutput(Closure<Void> logMethod, String... services) {
         // execute daemon thread that executes `docker-compose logs -f --no-color`
@@ -152,24 +185,34 @@ class ComposeExecutor {
         })
         t.daemon = true
         t.start()
-        gradle.buildFinished { t.interrupt() }
+        threadsToInterruptOnClose.add(new WeakReference<Thread>(t))
+    }
+
+    @Override
+    void close() throws Exception {
+        threadsToInterruptOnClose.forEach {threadRef ->
+            def thread = threadRef.get()
+            if (thread != null) {
+                thread.interrupt()
+            }
+        }
     }
 
     Iterable<String> getServiceNames() {
-        if (!settings.startedServices.get().empty) {
-            if(settings.includeDependencies.get())
+        if (!parameters.startedServices.get().empty) {
+            if(parameters.includeDependencies.get())
             {
-                def dependentServices = getDependentServices(settings.startedServices.get()).toList()
-                [*settings.startedServices.get(), *dependentServices].unique()
+                def dependentServices = getDependentServices(parameters.startedServices.get()).toList()
+                [*parameters.startedServices.get(), *dependentServices].unique()
             }
             else
             {
-                settings.startedServices.get()
+                parameters.startedServices.get()
             }
         } else if (version >= VersionNumber.parse('1.6.0')) {
             execute('config', '--services').readLines()
         } else {
-            def composeFiles = settings.useComposeFiles.get().empty ? getStandardComposeFiles() : getCustomComposeFiles()
+            def composeFiles = parameters.useComposeFiles.get().empty ? getStandardComposeFiles() : getCustomComposeFiles()
             composeFiles.collectMany { composeFile ->
                 def compose = (Map<String, Object>) (new Yaml().load(fileOps.file(composeFile).text))
                 // if there is 'version' on top-level then information about services is in 'services' sub-tree
@@ -190,7 +233,7 @@ class ComposeExecutor {
     }
 
     Iterable<File> getStandardComposeFiles() {
-        File searchDirectory = fileOps.file(settings.dockerComposeWorkingDirectory) ?: layout.projectDirectory.getAsFile()
+        File searchDirectory = fileOps.file(parameters.dockerComposeWorkingDirectory) ?: parameters.projectDirectory.getAsFile()
         def res = []
         def f = findInParentDirectories('docker-compose.yml', searchDirectory)
         if (f != null) res.add(f)
@@ -200,7 +243,7 @@ class ComposeExecutor {
     }
 
     Iterable<File> getCustomComposeFiles() {
-        settings.useComposeFiles.get().collect {
+        parameters.useComposeFiles.get().collect {
             def f = fileOps.file(it)
             if (!f.exists()) {
                 throw new IllegalArgumentException("Custom Docker Compose file not found: $f")
@@ -215,4 +258,15 @@ class ComposeExecutor {
         f.exists() ? f : findInParentDirectories(filename, directory.parentFile)
     }
 
+    boolean shouldRemoveOrphans() {
+        version >= VersionNumber.parse('1.7.0') && parameters.removeOrphans.get()
+    }
+
+    boolean isScaleSupported() {
+        def v = version
+        if (v < VersionNumber.parse('1.13.0') && parameters.scale) {
+            throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
+        }
+        !parameters.scale.get().isEmpty()
+    }
 }

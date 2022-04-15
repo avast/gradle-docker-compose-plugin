@@ -1,22 +1,93 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeSettings
+import com.avast.gradle.dockercompose.ComposeExecutor
 import com.avast.gradle.dockercompose.ContainerInfo
+import com.avast.gradle.dockercompose.DockerExecutor
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceInfo
+import com.avast.gradle.dockercompose.ServiceInfoCache
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.MapProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
+import java.time.Duration
 import java.time.Instant
 
-class ComposeUp extends DefaultTask {
+abstract class ComposeUp extends DefaultTask {
 
     @Internal
     Boolean wasReconnected = false // for tests
 
     @Internal
-    ComposeSettings settings
+    DockerExecutor dockerExecutor
+
+    @Internal
+    abstract Property<Boolean> getStopContainers()
+
+    @Internal
+    abstract Property<Boolean> getForceRecreate()
+
+    @Internal
+    abstract Property<Boolean> getNoRecreate()
+
+    @Internal
+    abstract MapProperty<String, Integer> getScale()
+
+    @Internal
+    abstract ListProperty<String> getUpAdditionalArgs()
+
+    @Internal
+    abstract ListProperty<String> getStartedServices()
+
+    @Internal
+    abstract RegularFileProperty getComposeLogToFile()
+
+    @Internal
+    abstract Property<Boolean> getWaitForTcpPorts()
+
+    @Internal
+    abstract Property<Boolean> getRetainContainersOnStartupFailure()
+
+    @Internal
+    abstract Property<Boolean> getCaptureContainersOutput()
+
+    @Internal
+    abstract RegularFileProperty getCaptureContainersOutputToFile()
+
+    @Internal
+    abstract DirectoryProperty getCaptureContainersOutputToFiles()
+
+    @Internal
+    abstract Property<Duration> getWaitAfterHealthyStateProbeFailure()
+
+    @Internal
+    abstract Property<Boolean> getCheckContainersRunning()
+
+    @Internal
+    abstract Property<Duration> getWaitForHealthyStateTimeout()
+
+    @Internal
+    abstract ListProperty<Integer> getTcpPortsToIgnoreWhenWaiting()
+
+    @Internal
+    abstract Property<Duration> getWaitForTcpPortsDisconnectionProbeTimeout()
+
+    @Internal
+    abstract Property<Duration> getWaitForTcpPortsTimeout()
+
+    @Internal
+    abstract Property<Duration> getWaitAfterTcpProbeFailure()
+
+    @Internal
+    abstract Property<ServiceInfoCache> getServiceInfoCache()
+
+    @Internal
+    abstract Property<ComposeExecutor> getComposeExecutor()
 
     private Map<String, ServiceInfo> servicesInfos = [:]
 
@@ -32,8 +103,8 @@ class ComposeUp extends DefaultTask {
 
     @TaskAction
     void up() {
-        if (!settings.stopContainers.get()) {
-            def cachedServicesInfos = settings.serviceInfoCache.get({ getStateForCache() })
+        if (!stopContainers.get()) {
+            def cachedServicesInfos = serviceInfoCache.get().get({ getStateForCache() })
             if (cachedServicesInfos) {
                 servicesInfos = cachedServicesInfos
                 logger.lifecycle('Cached services infos loaded while \'stopContainers\' is set to \'false\'.')
@@ -43,55 +114,52 @@ class ComposeUp extends DefaultTask {
                 return
             }
         }
-        settings.serviceInfoCache.clear()
+        serviceInfoCache.get().clear()
         wasReconnected = false
-        if (settings.buildBeforeUp.get()) {
-            settings.buildTask.get().build()
-        }
         String[] args = ['up', '-d']
-        if (settings.removeOrphans()) {
+        if (composeExecutor.get().shouldRemoveOrphans()) {
             args += '--remove-orphans'
         }
-        if (settings.forceRecreate.get()) {
+        if (forceRecreate.get()) {
             args += '--force-recreate'
             args += '--renew-anon-volumes'
-        } else if (settings.noRecreate.get()) {
+        } else if (noRecreate.get()) {
             args += '--no-recreate'
         }
-        if (settings.scale()) {
-            args += settings.scale.get().collect { service, value ->
+        if (composeExecutor.get().isScaleSupported()) {
+            args += scale.get().collect { service, value ->
                 ['--scale', "$service=$value"]
             }.flatten()
         }
-        args += settings.upAdditionalArgs.get()
-        args += settings.startedServices.get()
+        args += upAdditionalArgs.get()
+        args += startedServices.get()
         try {
             def composeLog = null
-            if(settings.composeLogToFile.isPresent()) {
-              File logFile = settings.composeLogToFile.get().asFile
+            if (composeLogToFile.isPresent()) {
+              File logFile = composeLogToFile.get().asFile
               logger.debug "Logging docker-compose up to: $logFile"
               logFile.parentFile.mkdirs()
               composeLog = new FileOutputStream(logFile)
             }
-            settings.composeExecutor.executeWithCustomOutputWithExitValue(composeLog, args)
-            def servicesToLoad = settings.composeExecutor.getServiceNames()
+            composeExecutor.get().executeWithCustomOutputWithExitValue(composeLog, args)
+            def servicesToLoad = composeExecutor.get().getServiceNames()
             servicesInfos = loadServicesInfo(servicesToLoad).collectEntries { [(it.name): (it)] }
             startCapturing()
             waitForHealthyContainers(servicesInfos.values())
-            if (settings.waitForTcpPorts.get()) {
+            if (waitForTcpPorts.get()) {
                 servicesInfos = waitForOpenTcpPorts(servicesInfos.values()).collectEntries { [(it.name): (it)] }
             }
             printExposedPorts()
-            if (!settings.stopContainers.get()) {
-                settings.serviceInfoCache.set(servicesInfos, getStateForCache())
+            if (!stopContainers.get()) {
+                serviceInfoCache.get().set(servicesInfos, getStateForCache())
             } else {
-                settings.serviceInfoCache.clear()
+                serviceInfoCache.get().clear()
             }
         }
         catch (Exception e) {
             logger.debug("Failed to start-up Docker containers", e)
-            if (!settings.retainContainersOnStartupFailure.get()) {
-                settings.downForcedTask.get().down()
+            if (!retainContainersOnStartupFailure.get()) {
+                serviceInfoCache.get().startupFailed = true
             }
             throw e
         }
@@ -121,44 +189,44 @@ class ComposeUp extends DefaultTask {
     }
 
     protected void startCapturing() {
-        if (settings.captureContainersOutput.get()) {
-            settings.composeExecutor.captureContainersOutput(logger.&lifecycle)
+        if (captureContainersOutput.get()) {
+            composeExecutor.get().captureContainersOutput(logger.&lifecycle)
         }
-        if (settings.captureContainersOutputToFile.isPresent()) {
-            def logFile = settings.captureContainersOutputToFile.get().asFile
+        if (captureContainersOutputToFile.isPresent()) {
+            def logFile = captureContainersOutputToFile.get().asFile
             logFile.parentFile.mkdirs()
-            settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') })
+            composeExecutor.get().captureContainersOutput({ logFile.append(it + '\n') })
         }
-        if (settings.captureContainersOutputToFiles.isPresent()) {
-            def logDir = settings.captureContainersOutputToFiles.get().asFile
+        if (captureContainersOutputToFiles.isPresent()) {
+            def logDir = captureContainersOutputToFiles.get().asFile
             logDir.mkdirs()
             logDir.listFiles().each { it.delete() }
             servicesInfos.keySet().each {
                 def logFile = logDir.toPath().resolve("${it}.log").toFile()
-                settings.composeExecutor.captureContainersOutput({ logFile.append(it + '\n') }, it)
+                composeExecutor.get().captureContainersOutput({ logFile.append(it + '\n') }, it)
             }
         }
     }
 
     @Internal
     protected def getStateForCache() {
-        settings.composeExecutor.execute('ps') + settings.composeExecutor.execute('config') + settings.startedServices.get().join(',')
+        composeExecutor.get().execute('ps') + composeExecutor.get().execute('config') + startedServices.get().join(',')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
         // this code is little bit complicated - the aim is to execute `docker inspect` just once (for all the containers)
-        Map<String, Iterable<String>> serviceToContainersIds = servicesNames.collectEntries { [(it) : settings.composeExecutor.getContainerIds(it)] }
-        Map<String, Map<String, Object>> inspections = settings.dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
+        Map<String, Iterable<String>> serviceToContainersIds = servicesNames.collectEntries { [(it) : composeExecutor.get().getContainerIds(it)] }
+        Map<String, Map<String, Object>> inspections = dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
         serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collect { createContainerInfo(inspections.get(it), pair.key) }.collectEntries { [(it.instanceName): it] } ) }
     }
 
     protected ContainerInfo createContainerInfo(Map<String, Object> inspection, String serviceName) {
         String containerId = inspection.Id
         logger.info("Container ID of service $serviceName is $containerId")
-        ServiceHost host = settings.dockerExecutor.getContainerHost(inspection, serviceName, logger)
+        ServiceHost host = dockerExecutor.getContainerHost(inspection, serviceName, logger)
         logger.info("Will use $host as host of service $serviceName")
-        def tcpPorts = settings.dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
-        def udpPorts = settings.dockerExecutor.getUdpPortsMapping(serviceName, inspection, host)
+        def tcpPorts = dockerExecutor.getTcpPortsMapping(serviceName, inspection, host)
+        def udpPorts = dockerExecutor.getUdpPortsMapping(serviceName, inspection, host)
         // docker-compose v1 uses an underscore as a separator.  v2 uses a hyphen.
         String instanceName = inspection.Name.find(/${serviceName}_\d+$/) ?:
                 inspection.Name.find(/${serviceName}-\d+$/) ?:
@@ -177,7 +245,7 @@ class ComposeUp extends DefaultTask {
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 def firstIteration = true
                 while (true) {
-                    def inspection = firstIteration ? containerInfo.inspection : settings.dockerExecutor.getInspection(containerInfo.containerId)
+                    def inspection = firstIteration ? containerInfo.inspection : dockerExecutor.getInspection(containerInfo.containerId)
                     Map<String, Object> inspectionState = inspection.State
                     String healthStatus
                     if (inspectionState.containsKey('Health')) {
@@ -187,16 +255,16 @@ class ComposeUp extends DefaultTask {
                             break
                         }
                         logger.lifecycle("Waiting for ${instanceName} to become healthy (it's $healthStatus)")
-                        if (!firstIteration) sleep(settings.waitAfterHealthyStateProbeFailure.get().toMillis())
+                        if (!firstIteration) sleep(waitAfterHealthyStateProbeFailure.get().toMillis())
                     } else {
                         logger.debug("Service ${instanceName} or this version of Docker doesn't support healthchecks")
                         break
                     }
-                    if (settings.checkContainersRunning.get() && !"running".equalsIgnoreCase(inspectionState.Status) && !"restarting".equalsIgnoreCase(inspectionState.Status)) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running nor restarting. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                    if (checkContainersRunning.get() && !"running".equalsIgnoreCase(inspectionState.Status) && !"restarting".equalsIgnoreCase(inspectionState.Status)) {
+                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running nor restarting. Logs:${System.lineSeparator()}${dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
-                    if (start.plus(settings.waitForHealthyStateTimeout.get()) < Instant.now()) {
-                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                    if (start.plus(waitForHealthyStateTimeout.get()) < Instant.now()) {
+                        throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is still reported as '${healthStatus}'. Logs:${System.lineSeparator()}${dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                     }
                     firstIteration = false
                 }
@@ -210,14 +278,14 @@ class ComposeUp extends DefaultTask {
         servicesInfos.forEach { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, containerInfo ->
                 containerInfo.tcpPorts
-                .findAll { ep, fp -> !settings.tcpPortsToIgnoreWhenWaiting.get().any { it == ep } }
+                .findAll { ep, fp -> !tcpPortsToIgnoreWhenWaiting.get().any { it == ep } }
                 .forEach { exposedPort, forwardedPort ->
                     logger.lifecycle("Probing TCP socket on ${containerInfo.host}:${forwardedPort} of '${instanceName}'")
                     Integer portToCheck = forwardedPort
                     while (true) {
                         try {
                             def s = new Socket(containerInfo.host, portToCheck)
-                            s.setSoTimeout(settings.waitForTcpPortsDisconnectionProbeTimeout.get().toMillis() as int)
+                            s.setSoTimeout(waitForTcpPortsDisconnectionProbeTimeout.get().toMillis() as int)
                             try {
                                 // in case of Windows and Mac, we must ensure that the socket is not disconnected immediately
                                 // if the socket is closed then it returns -1
@@ -239,14 +307,14 @@ class ComposeUp extends DefaultTask {
                             break
                         }
                         catch (Exception e) {
-                            if (start.plus(settings.waitForTcpPortsTimeout.get()) < Instant.now()) {
-                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' is still failing. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                            if (start.plus(waitForTcpPortsTimeout.get()) < Instant.now()) {
+                                throw new RuntimeException("TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' is still failing. Logs:${System.lineSeparator()}${dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                             }
                             logger.lifecycle("Waiting for TCP socket on ${containerInfo.host}:${portToCheck} of '${instanceName}' (${e.message})")
-                            sleep(settings.waitAfterTcpProbeFailure.get().toMillis())
-                            def inspection = settings.dockerExecutor.getInspection(containerInfo.containerId)
-                            if (settings.checkContainersRunning.get() && !"running".equalsIgnoreCase(inspection.State.Status) && !"restarting".equalsIgnoreCase(inspection.State.Status)) {
-                                throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running nor restarting. Logs:${System.lineSeparator()}${settings.dockerExecutor.getContainerLogs(containerInfo.containerId)}")
+                            sleep(waitAfterTcpProbeFailure.get().toMillis())
+                            def inspection = dockerExecutor.getInspection(containerInfo.containerId)
+                            if (checkContainersRunning.get() && !"running".equalsIgnoreCase(inspection.State.Status) && !"restarting".equalsIgnoreCase(inspection.State.Status)) {
+                                throw new RuntimeException("Container ${containerInfo.containerId} of ${instanceName} is not running nor restarting. Logs:${System.lineSeparator()}${dockerExecutor.getContainerLogs(containerInfo.containerId)}")
                             }
                             ContainerInfo newContainerInfo = createContainerInfo(inspection, serviceInfo.name)
                             Integer newForwardedPort = newContainerInfo.tcpPorts.get(exposedPort)

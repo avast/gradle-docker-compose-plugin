@@ -1,16 +1,28 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeSettings
+import com.avast.gradle.dockercompose.ComposeExecutor
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 @CompileStatic
-class ComposePull extends DefaultTask {
+abstract class ComposePull extends DefaultTask {
 
     @Internal
-    ComposeSettings settings
+    abstract Property<Boolean> getIgnorePullFailure()
+
+    @Internal
+    abstract ListProperty<String> getPullAdditionalArgs()
+
+    @Internal
+    abstract ListProperty<String> getStartedServices()
+
+    @Internal
+    abstract Property<ComposeExecutor> getComposeExecutor()
 
     ComposePull() {
         group = 'docker'
@@ -19,15 +31,12 @@ class ComposePull extends DefaultTask {
 
     @TaskAction
     void pull() {
-        if (settings.buildBeforePull.get()) {
-            settings.buildTask.get().build()
-        }
         String[] args = ['pull']
-        if (settings.ignorePullFailure.get()) {
+        if (ignorePullFailure.get()) {
             args += '--ignore-pull-failures'
         }
-        args += (List<String>)settings.pullAdditionalArgs.get()
-        args += (List<String>)settings.startedServices.get()
-        settings.composeExecutor.execute(args)
+        args += (List<String>) pullAdditionalArgs.get()
+        args += (List<String>) startedServices.get()
+        composeExecutor.get().execute(args)
     }
 }

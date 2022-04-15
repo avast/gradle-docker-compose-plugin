@@ -1,16 +1,25 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeSettings
+import com.avast.gradle.dockercompose.ComposeExecutor
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 @CompileStatic
-class ComposePush extends DefaultTask {
+abstract class ComposePush extends DefaultTask {
 
     @Internal
-    ComposeSettings settings
+    abstract Property<Boolean> getIgnorePushFailure()
+
+    @Internal
+    abstract ListProperty<String> getPushServices()
+
+    @Internal
+    abstract Property<ComposeExecutor> getComposeExecutor()
 
     ComposePush() {
         group = 'docker'
@@ -20,10 +29,10 @@ class ComposePush extends DefaultTask {
     @TaskAction
     void push() {
         String[] args = ['push']
-        if (settings.ignorePushFailure.get()) {
+        if (ignorePushFailure.get()) {
             args += '--ignore-push-failures'
         }
-        args += (List<String>)settings.pushServices.get()
-        settings.composeExecutor.execute(args)
+        args += (List<String>) pushServices.get()
+        composeExecutor.get().execute(args)
     }
 }
