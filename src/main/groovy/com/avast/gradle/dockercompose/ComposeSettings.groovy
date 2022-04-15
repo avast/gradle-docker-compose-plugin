@@ -168,7 +168,6 @@ abstract class ComposeSettings {
             executable.set('docker-compose')
             dockerExecutable.set('docker')
         }
-        environment.set(System.getenv())
         dockerComposeStopTimeout.set(Duration.ofSeconds(10))
 
         this.containerLogToDir.set(project.buildDir.toPath().resolve('containers-logs').toFile())

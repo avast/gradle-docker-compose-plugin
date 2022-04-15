@@ -25,7 +25,7 @@ class DockerExecutor {
         def settings = this.settings
         new ByteArrayOutputStream().withStream { os ->
             def er = exec.exec { ExecSpec e ->
-                e.environment = settings.environment.get()
+                e.environment = System.getenv() + settings.environment.get()
                 def finalArgs = [settings.dockerExecutable.get()]
                 finalArgs.addAll(args)
                 e.commandLine finalArgs
