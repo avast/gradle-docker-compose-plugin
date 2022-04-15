@@ -1,24 +1,42 @@
-package com.avast.gradle.dockercompose.tasks
+package com.avast.gradle.dockercompose
 
-import com.avast.gradle.dockercompose.ComposeSettings
-import com.avast.gradle.dockercompose.ContainerInfo
-import com.avast.gradle.dockercompose.ServiceHost
-import com.avast.gradle.dockercompose.ServiceInfo
+
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import org.gradle.api.Project
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+import org.gradle.api.provider.Provider
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 
 import java.nio.file.Files
 import java.util.function.Supplier
 
-class ServiceInfoCache {
-    private final ComposeSettings settings
-    private final File servicesInfosFile
-    private final File stateFile
+abstract class ServiceInfoCache implements BuildService<Parameters> {
+    static interface Parameters extends BuildServiceParameters {
+        abstract RegularFileProperty getServicesInfosFile()
+        abstract RegularFileProperty getStateFile()
+    }
 
-    ServiceInfoCache(ComposeSettings settings) {
-        this.settings = settings
-        this.servicesInfosFile = new File(settings.project.buildDir, "dockerCompose/${settings.nestedName}servicesInfos.json")
-        this.stateFile = new File(settings.project.buildDir, "dockerCompose/${settings.nestedName}state.txt")
+    static Provider<ServiceInfoCache> getInstance(Project project, String nestedName) {
+        String serviceId = "${ServiceInfoCache.class.canonicalName} $project.path $nestedName"
+        return project.gradle.sharedServices.registerIfAbsent(serviceId, ServiceInfoCache) {
+            def buildDirectory = project.layout.buildDirectory
+            it.parameters.servicesInfosFile = buildDirectory.file("dockerCompose/${nestedName}servicesInfos.json")
+            it.parameters.stateFile = buildDirectory.file("dockerCompose/${nestedName}state.txt")
+        }
+    }
+
+    private static final Logger logger = Logging.getLogger(ServiceInfoCache.class)
+
+    private File getServicesInfosFile() {
+        return parameters.servicesInfosFile.asFile.get()
+    }
+
+    private File getStateFile() {
+        parameters.stateFile.asFile.get()
     }
 
     Map<String, ServiceInfo> get(Supplier<String> stateSupplier) {
@@ -29,7 +47,7 @@ class ServiceInfoCache {
             if (cachedState == currentState) {
                 return deserialized.collectEntries { k, v -> [k, deserializeServiceInfo(v)] }
             } else {
-                settings.project.logger.lifecycle("Current and cached states differs, cannot use the cached service infos.\nCached state:\n$cachedState\nCurrent state:\n$currentState")
+                logger.lifecycle("Current and cached states differs, cannot use the cached service infos.\nCached state:\n$cachedState\nCurrent state:\n$currentState")
             }
         }
         return null
@@ -58,4 +76,6 @@ class ServiceInfoCache {
         Map<Integer, Integer> udpPorts = m.udpPorts.collectEntries { k, v -> [(Integer.parseInt(k)): v] }
         new ContainerInfo(instanceName: m.instanceName, serviceHost: new ServiceHost(m.serviceHost as HashMap), tcpPorts: tcpPorts, udpPorts: udpPorts, inspection: m.inspection)
     }
+
+    boolean startupFailed = false
 }

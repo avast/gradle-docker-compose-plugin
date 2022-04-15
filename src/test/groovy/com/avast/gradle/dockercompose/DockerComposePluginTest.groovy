@@ -67,7 +67,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.nestedComposeBuild instanceof ComposeBuild
         project.tasks.nestedComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.nestedComposeUp
-        up.settings.useComposeFiles.get() == ['test.yml']
+        up.composeExecutor.get().parameters.useComposeFiles.get() == ['test.yml']
     }
 
     def "is possible to access servicesInfos of nested setting"() {
@@ -175,7 +175,7 @@ class DockerComposePluginTest extends Specification {
         project.tasks.integrationTestComposeBuild instanceof ComposeBuild
         project.tasks.integrationTestComposeLogs instanceof ComposeLogs
         ComposeUp up = project.tasks.integrationTestComposeUp
-        up.settings.useComposeFiles.get() == ['test.yml']
+        up.composeExecutor.get().parameters.useComposeFiles.get() == ['test.yml']
         task.dependsOn.find { it instanceof TaskProvider && ((TaskProvider)it).get() == project.tasks.integrationTestComposeUp }
         task.getFinalizedBy().getDependencies(task).any { it == project.tasks.integrationTestComposeDown }
     }
@@ -201,6 +201,7 @@ class DockerComposePluginTest extends Specification {
             assert webInfo.inspection.size() > 0
         }
         when:
+            f.project.tasks.composeBuild.build()
             f.project.tasks.composeUp.up()
             integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
@@ -215,9 +216,11 @@ class DockerComposePluginTest extends Specification {
         when:
         f.project.dockerCompose.stopContainers = false
         def t = System.nanoTime()
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         def firstDuration = System.nanoTime() - t
         t = System.nanoTime()
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         def secondDuration = System.nanoTime() - t
         then:
@@ -233,8 +236,10 @@ class DockerComposePluginTest extends Specification {
         def f = Fixture.withNginx()
         when:
         f.project.dockerCompose.stopContainers = false
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         f.project.dockerCompose.dockerExecutor.execute('kill', f.project.dockerCompose.servicesInfos.values().find().firstContainer.containerId)
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -258,6 +263,7 @@ class DockerComposePluginTest extends Specification {
     def "exposes environment variables and system properties"() {
         def f = Fixture.custom(composeFileContent)
         f.project.plugins.apply 'java'
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
@@ -290,6 +296,7 @@ class DockerComposePluginTest extends Specification {
     def "exposes environment variables and system properties for services having dash in service name"() {
         def f = Fixture.custom(composeFileContent)
         f.project.plugins.apply 'java'
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
@@ -333,6 +340,7 @@ class DockerComposePluginTest extends Specification {
         ''')
         f.project.plugins.apply 'java'
         f.extension.projectName = 'test'
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
@@ -363,6 +371,7 @@ class DockerComposePluginTest extends Specification {
             f.extension.useComposeFiles = ['docker-compose.yml']
             f.extension.environment.put 'MY_WEB_PORT', 80
             f.extension.waitForTcpPorts = false  // checked in assert
+            f.project.tasks.composeBuild.build()
             f.project.tasks.composeUp.up()
             integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
@@ -377,6 +386,7 @@ class DockerComposePluginTest extends Specification {
         def f = Fixture.withNginx()
         f.extension.scale = ['web': 2]
         when:
+            f.project.tasks.composeBuild.build()
             f.project.tasks.composeUp.up()
         then:
             thrown(UnsupportedOperationException)
@@ -396,6 +406,7 @@ class DockerComposePluginTest extends Specification {
             assert webInfos.containsKey('web_2') || webInfos.containsKey('web-2')
         }
         when:
+            f.project.tasks.composeBuild.build()
             f.project.tasks.composeUp.up()
             integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
@@ -410,6 +421,7 @@ class DockerComposePluginTest extends Specification {
         def f = Fixture.withNginx()
         f.project.plugins.apply 'java'
         f.extension.scale = ['web': 2]
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
@@ -448,6 +460,7 @@ class DockerComposePluginTest extends Specification {
             assert webInfos.size() == 0
         }
         when:
+            f.project.tasks.composeBuild.build()
             f.project.tasks.composeUp.up()
             integrationTestTask.actions.forEach { it.execute(integrationTestTask) }
         then:
@@ -460,6 +473,7 @@ class DockerComposePluginTest extends Specification {
     def "exposes environment variables and system properties for container with custom name"() {
         def f = Fixture.custom(composeFileContent)
         f.project.plugins.apply 'java'
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
@@ -494,12 +508,13 @@ class DockerComposePluginTest extends Specification {
         f.project.dockerCompose.includeDependencies = true
         f.project.dockerCompose.startedServices = ['webMaster']
         f.project.plugins.apply 'docker-compose'
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
         when:
         f.project.tasks.composeDown.down()
         then:
-        def runningServices = f.project.dockerCompose.composeExecutor.execute('ps')
+        def runningServices = ComposeExecutor.getInstance(f.project, f.project.dockerCompose).get().execute('ps')
         !runningServices.contains("webMaster")
         !runningServices.contains("web0")
         !runningServices.contains("web1")
@@ -534,6 +549,7 @@ class DockerComposePluginTest extends Specification {
         f.project.plugins.apply 'java'
         f.project.plugins.apply 'docker-compose'
         when:
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         f.project.dockerCompose.servicesInfos.nginx.host == f.project.dockerCompose.servicesInfos.gw.host

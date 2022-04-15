@@ -33,6 +33,7 @@ class CaptureOutputTest extends Specification {
 
         when:
         f.extension.captureContainersOutput = true
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -49,6 +50,7 @@ class CaptureOutputTest extends Specification {
         def logFile = new File(f.project.projectDir, "web.log")
         when:
         f.extension.captureContainersOutputToFile = logFile
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -65,6 +67,7 @@ class CaptureOutputTest extends Specification {
         def logFile = new File(f.project.projectDir, "web.log")
         when:
         f.extension.captureContainersOutputToFile = f.project.file("${logFile.absolutePath}")
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -81,6 +84,7 @@ class CaptureOutputTest extends Specification {
         def logDir = new File(f.project.projectDir, "logDir")
         when:
         f.extension.captureContainersOutputToFiles = logDir
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         noExceptionThrown()
@@ -98,6 +102,7 @@ class CaptureOutputTest extends Specification {
         def logFile = new File(f.project.projectDir, "compose.log")
         when:
         f.extension.composeLogToFile = f.project.file("${logFile.absolutePath}")
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         then:
         f.project.tasks.composeDown.down()

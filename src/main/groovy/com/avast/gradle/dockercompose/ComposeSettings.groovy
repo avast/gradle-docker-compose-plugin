@@ -1,15 +1,7 @@
 package com.avast.gradle.dockercompose
 
-import com.avast.gradle.dockercompose.tasks.ComposeBuild
-import com.avast.gradle.dockercompose.tasks.ComposeDown
-import com.avast.gradle.dockercompose.tasks.ComposeDownForced
-import com.avast.gradle.dockercompose.tasks.ComposeLogs
-import com.avast.gradle.dockercompose.tasks.ComposePull
-import com.avast.gradle.dockercompose.tasks.ComposePush
-import com.avast.gradle.dockercompose.tasks.ComposeUp
-import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
+
 import groovy.transform.CompileStatic
-import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
@@ -21,7 +13,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
-import org.gradle.util.VersionNumber
 
 import javax.inject.Inject
 import java.nio.charset.StandardCharsets
@@ -30,17 +21,8 @@ import java.time.Duration
 
 @CompileStatic
 abstract class ComposeSettings {
-    final TaskProvider<ComposeUp> upTask
-    final TaskProvider<ComposeDown> downTask
-    final TaskProvider<ComposeDownForced> downForcedTask
-    final TaskProvider<ComposeBuild> buildTask
-    final TaskProvider<ComposePull> pullTask
-    final TaskProvider<ComposeLogs> logsTask
-    final TaskProvider<ComposePush> pushTask
-    final Project project
+    transient final TasksConfigurator tasksConfigurator
     final DockerExecutor dockerExecutor
-    final ComposeExecutor composeExecutor
-    final ServiceInfoCache serviceInfoCache
 
     abstract ListProperty<String> getUseComposeFiles()
     abstract ListProperty<String> getStartedServices()
@@ -116,7 +98,6 @@ abstract class ComposeSettings {
 
     @Inject
     ComposeSettings(Project project, String name = '', String parentName = '') {
-        this.project = project
         this.nestedName = parentName + name
         this.safeProjectNamePrefix = generateSafeProjectNamePrefix(project)
 
@@ -172,17 +153,9 @@ abstract class ComposeSettings {
 
         this.containerLogToDir.set(project.buildDir.toPath().resolve('containers-logs').toFile())
 
-        upTask = project.tasks.register(name ? "${name}ComposeUp".toString() : 'composeUp', ComposeUp, { it.settings = this })
-        buildTask = project.tasks.register(name ? "${name}ComposeBuild".toString() : 'composeBuild', ComposeBuild, { it.settings = this })
-        pullTask = project.tasks.register(name ? "${name}ComposePull".toString() : 'composePull', ComposePull, { it.settings = this })
-        downTask = project.tasks.register(name ? "${name}ComposeDown".toString() : 'composeDown', ComposeDown, { it.settings = this })
-        downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced".toString() : 'composeDownForced', ComposeDownForced, { it.settings = this })
-        logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs, { it.settings = this })
-        pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush, { it.settings = this })
+        this.tasksConfigurator = new TasksConfigurator(this, project, name)
 
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
-        this.composeExecutor = project.objects.newInstance(ComposeExecutor, this)
-        this.serviceInfoCache = new ServiceInfoCache(this)
     }
 
     private static String generateSafeProjectNamePrefix(Project project) {
@@ -191,7 +164,7 @@ abstract class ComposeSettings {
     }
 
     protected ComposeSettings cloneAsNested(String name) {
-        def r = project.objects.newInstance(ComposeSettings, project, name, this.nestedName)
+        def r = tasksConfigurator.newComposeSettings(name, this.nestedName)
 
         r.includeDependencies.set(includeDependencies.get())
 
@@ -239,32 +212,16 @@ abstract class ComposeSettings {
         r
     }
 
-    @PackageScope
-    void isRequiredByCore(Task task, boolean fromConfigure) {
-        task.dependsOn upTask
-        task.finalizedBy downTask
-        project.tasks.findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
-                .each { classesTask ->
-                    if (fromConfigure) {
-                        upTask.get().shouldRunAfter classesTask
-                    } else {
-                        upTask.configure { it.shouldRunAfter classesTask }
-                    }
-                }
-        if (task instanceof ProcessForkOptions) task.doFirst { exposeAsEnvironment(task as ProcessForkOptions) }
-        if (task instanceof JavaForkOptions) task.doFirst { exposeAsSystemProperties(task as JavaForkOptions) }
-    }
-
     void isRequiredBy(Task task) {
-        isRequiredByCore(task, false)
+        tasksConfigurator.isRequiredByCore(task, false)
     }
 
     void isRequiredBy(TaskProvider<? extends Task> taskProvider) {
-        taskProvider.configure { isRequiredByCore(it, true) }
+        taskProvider.configure { tasksConfigurator.isRequiredByCore(it, true) }
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
-        upTask.get().servicesInfos
+        tasksConfigurator.getServicesInfos()
     }
 
     void exposeAsEnvironment(ProcessForkOptions task) {
@@ -311,18 +268,6 @@ abstract class ComposeSettings {
 
     static String replaceV2Separator(String serviceName) {
         serviceName.replaceAll('-(\\d+)$', '_$1')
-    }
-
-    boolean removeOrphans() {
-        composeExecutor.version >= VersionNumber.parse('1.7.0') && this.removeOrphans.get()
-    }
-
-    boolean scale() {
-        def v = composeExecutor.version
-        if (v < VersionNumber.parse('1.13.0') && this.scale) {
-            throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
-        }
-        !this.scale.get().isEmpty()
     }
 }
 

@@ -44,7 +44,7 @@ abstract class ComposeExtension extends ComposeSettings {
             taskName = taskName[0].toLowerCase() + taskName.substring(1)
             ComposeSettings s = getOrCreateNested(taskName)
             s.useComposeFiles = [args[0].toString()]
-            project.tasks.findAll { it.name.equalsIgnoreCase(taskName) }.forEach { s.isRequiredBy(it) }
+            tasksConfigurator.setupMissingRequiredBy(taskName, s)
             s
         } else if (args.length == 1 && args[0] instanceof Closure) {
             ComposeSettings s = getOrCreateNested(name)

@@ -1,16 +1,22 @@
 package com.avast.gradle.dockercompose.tasks
 
-import com.avast.gradle.dockercompose.ComposeSettings
+import com.avast.gradle.dockercompose.ComposeExecutor
 import groovy.transform.CompileStatic
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 @CompileStatic
-class ComposeLogs extends DefaultTask {
+abstract class ComposeLogs extends DefaultTask {
 
   @Internal
-  ComposeSettings settings
+  abstract DirectoryProperty getContainerLogToDir()
+
+  @Internal
+  abstract Property<ComposeExecutor> getComposeExecutor()
 
   ComposeLogs() {
     group = 'docker'
@@ -19,13 +25,13 @@ class ComposeLogs extends DefaultTask {
 
   @TaskAction
   void logs() {
-    settings.composeExecutor.serviceNames.each { service ->
+    composeExecutor.get().serviceNames.each { service ->
       println "Extracting container log from service '${service}'"
-      File logFile = settings.containerLogToDir.get().asFile
+      File logFile = containerLogToDir.get().asFile
       logFile.mkdirs()
       def logStream = new FileOutputStream("${logFile.absolutePath}/${service}.log")
       String[] args = ['logs', '-t', service]
-      settings.composeExecutor.executeWithCustomOutputWithExitValue(logStream, args)
+      composeExecutor.get().executeWithCustomOutputWithExitValue(logStream, args)
     }
   }
 }

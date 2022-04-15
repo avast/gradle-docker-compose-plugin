@@ -1,14 +1,15 @@
 package com.avast.gradle.dockercompose
 
-import com.avast.gradle.dockercompose.tasks.ServiceInfoCache
+
 import spock.lang.Specification
 
 class ServiceInfoCacheTest extends Specification {
 
     def "gets what was set"() {
         def f = Fixture.withNginx()
-        def target = new ServiceInfoCache(f.project.tasks.composeUp.settings)
+        def target = ServiceInfoCache.getInstance(f.project, f.project.tasks.composeDown.nestedName.get()).get()
         when:
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         def original = f.project.tasks.composeUp.servicesInfos
         target.set(original, 'state')

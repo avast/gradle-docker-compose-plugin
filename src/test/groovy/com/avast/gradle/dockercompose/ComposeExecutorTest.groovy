@@ -37,7 +37,7 @@ class ComposeExecutorTest extends Specification {
         f.project.plugins.apply 'docker-compose'
 
         when:
-        def configuredServices = f.project.dockerCompose.composeExecutor.getServiceNames()
+        def configuredServices = ComposeExecutor.getInstance(f.project, f.project.dockerCompose).get().getServiceNames()
 
         then:
         configuredServices.containsAll(expectedServices)

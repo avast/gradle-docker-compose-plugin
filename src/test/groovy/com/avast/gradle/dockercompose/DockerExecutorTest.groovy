@@ -16,6 +16,7 @@ class DockerExecutorTest extends Specification {
     def "reads network gateway"() {
         def f = Fixture.withNginx()
         when:
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         ServiceInfo serviceInfo = f.project.tasks.composeUp.servicesInfos.find().value
         String networkName = serviceInfo.firstContainer.inspection.NetworkSettings.Networks.find().key
@@ -30,6 +31,7 @@ class DockerExecutorTest extends Specification {
 
     def "reads container logs"() {
         def f = Fixture.withHelloWorld()
+        f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         String containerId = f.extension.servicesInfos.hello.firstContainer.containerId
         when:
