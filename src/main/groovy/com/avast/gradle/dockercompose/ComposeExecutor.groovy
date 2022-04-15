@@ -46,7 +46,7 @@ class ComposeExecutor {
             if (settings.dockerComposeWorkingDirectory.isPresent()) {
                 e.setWorkingDir(settings.dockerComposeWorkingDirectory.get().asFile)
             }
-            e.environment = settings.environment.get()
+            e.environment = System.getenv() + settings.environment.get()
             def finalArgs = [settings.executable.get()]
             finalArgs.addAll(settings.composeAdditionalArgs.get())
             if (noAnsi) {
