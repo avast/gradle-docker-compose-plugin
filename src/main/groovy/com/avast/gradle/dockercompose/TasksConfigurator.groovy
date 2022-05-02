@@ -28,6 +28,18 @@ class TasksConfigurator {
         this.project = project
         Provider<ComposeExecutor> composeExecutor = ComposeExecutor.getInstance(project, composeSettings)
         Provider<ServiceInfoCache> serviceInfoCache = ServiceInfoCache.getInstance(project, composeSettings.nestedName)
+        this.downTask = project.tasks.register(name ? "${name}ComposeDown".toString() : 'composeDown', ComposeDown) {task ->
+            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
+            task.stopContainers.set(composeSettings.stopContainers)
+        }
+        this.downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced".toString() : 'composeDownForced', ComposeDownForced) {task ->
+            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
+        }
+        def downForcedOnFailureTask = project.tasks.register(name ? "${name}ComposeDownForcedOnFailure".toString() : 'composeDownForcedOnFailure', ComposeDownForced) {task ->
+            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
+            task.onlyIf { task.serviceInfoCache.get().startupFailed }
+        }
+        this.downForcedOnFailureTask = downForcedOnFailureTask
         this.upTask = project.tasks.register(name ? "${name}ComposeUp".toString() : 'composeUp', ComposeUp) {task ->
             task.stopContainers.set(composeSettings.stopContainers)
             task.forceRecreate.set(composeSettings.forceRecreate)
@@ -69,17 +81,6 @@ class TasksConfigurator {
             task.dependsOn(composeSettings.buildBeforePull.map { buildBeforePull ->
                 buildBeforePull ? [buildTask] : []
             })
-        }
-        this.downTask = project.tasks.register(name ? "${name}ComposeDown".toString() : 'composeDown', ComposeDown) {task ->
-            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
-            task.stopContainers.set(composeSettings.stopContainers)
-        }
-        this.downForcedTask = project.tasks.register(name ? "${name}ComposeDownForced".toString() : 'composeDownForced', ComposeDownForced) {task ->
-            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
-        }
-        this.downForcedOnFailureTask = project.tasks.register(name ? "${name}ComposeDownForcedOnFailure".toString() : 'composeDownForcedOnFailure', ComposeDownForced) {task ->
-            configureDownForcedTask(task, composeExecutor, serviceInfoCache)
-            task.onlyIf { task.serviceInfoCache.get().startupFailed }
         }
         this.logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs) {task ->
             task.containerLogToDir.set(composeSettings.containerLogToDir)
