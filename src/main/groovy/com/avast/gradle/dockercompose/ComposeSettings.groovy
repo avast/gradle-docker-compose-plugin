@@ -153,9 +153,8 @@ abstract class ComposeSettings {
 
         this.containerLogToDir.set(project.buildDir.toPath().resolve('containers-logs').toFile())
 
-        this.tasksConfigurator = new TasksConfigurator(this, project, name)
-
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
+        this.tasksConfigurator = new TasksConfigurator(this, project, name)
     }
 
     private static String generateSafeProjectNamePrefix(Project project) {
