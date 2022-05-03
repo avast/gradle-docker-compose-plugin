@@ -9,6 +9,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
@@ -70,21 +71,13 @@ abstract class ComposeSettings {
     protected String customProjectName
     protected Boolean customProjectNameSet
     protected String safeProjectNamePrefix
-    void setProjectName(String customProjectName)
-    {
+    void setProjectName(String customProjectName) {
         this.customProjectName = customProjectName
         this.customProjectNameSet = true
     }
-    String getProjectName() {
-        if (customProjectNameSet) {
-            return customProjectName
-        }
-        else if (projectNamePrefix) {
-            return "${projectNamePrefix}_${nestedName}"
-        }
-        else {
-            return "${safeProjectNamePrefix}_${nestedName}"
-        }
+    private Provider<String> projectNameProvider
+    Provider<String> getProjectName() {
+        this.projectNameProvider
     }
     String projectNamePrefix
     String nestedName
@@ -100,6 +93,17 @@ abstract class ComposeSettings {
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.nestedName = parentName + name
         this.safeProjectNamePrefix = generateSafeProjectNamePrefix(project)
+        this.projectNameProvider = project.<String>provider({
+            if (customProjectNameSet) {
+                return customProjectName
+            }
+            else if (projectNamePrefix) {
+                return "${projectNamePrefix}_${nestedName}"
+            }
+            else {
+                return "${safeProjectNamePrefix}_${nestedName}"
+            }
+        })
 
         useComposeFiles.empty()
         startedServices.empty()

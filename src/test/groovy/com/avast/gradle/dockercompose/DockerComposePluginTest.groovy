@@ -32,6 +32,17 @@ class DockerComposePluginTest extends Specification {
             project.extensions.findByName('dockerCompose') instanceof ComposeExtension
     }
 
+    def "propagate custom project name to ComposeExecutor"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            projectName = 'custom-project-name'
+        }
+        then:
+        ComposeExecutor.getInstance(project, project.dockerCompose).get().parameters.projectName.get() == 'custom-project-name'
+    }
+
     def "allows to define extra properties"() {
         def project = ProjectBuilder.builder().build()
         when:
