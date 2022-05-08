@@ -198,7 +198,7 @@ class DockerComposePluginTest extends Specification {
         when:
             project.dockerCompose.isRequiredBy(project.tasks.test)
         then:
-            project.tasks.composeUp.shouldRunAfter.mutableValues.any { it == project.tasks.testClasses }
+            project.tasks.composeUp.shouldRunAfter.getDependencies(null).any { it == project.tasks.testClasses }
             noExceptionThrown()
     }
 

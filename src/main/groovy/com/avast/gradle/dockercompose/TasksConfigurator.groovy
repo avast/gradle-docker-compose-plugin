@@ -114,14 +114,11 @@ class TasksConfigurator {
     void isRequiredByCore(Task task, boolean fromConfigure) {
         task.dependsOn upTask
         task.finalizedBy downTask
-        project.tasks.findAll { Task.class.isAssignableFrom(it.class) && ((Task) it).name.toLowerCase().contains('classes') }
-                .each { classesTask ->
-                    if (fromConfigure) {
-                        upTask.get().shouldRunAfter classesTask
-                    } else {
-                        upTask.configure { it.shouldRunAfter classesTask }
-                    }
-                }
+        if (fromConfigure) {
+            upTask.get().shouldRunAfter task.taskDependencies
+        } else {
+            upTask.configure { it.shouldRunAfter task.taskDependencies }
+        }
         if (task instanceof ProcessForkOptions) task.doFirst { composeSettings.exposeAsEnvironment(task as ProcessForkOptions) }
         if (task instanceof JavaForkOptions) task.doFirst { composeSettings.exposeAsSystemProperties(task as JavaForkOptions) }
     }
