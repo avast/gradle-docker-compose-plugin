@@ -1,6 +1,5 @@
 package com.avast.gradle.dockercompose
 
-
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -11,7 +10,6 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.internal.os.OperatingSystem
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
 
@@ -144,15 +142,9 @@ abstract class ComposeSettings {
 
         captureContainersOutput.set(false)
 
-        if (OperatingSystem.current().isMacOsX()) {
-            // Default installation is inaccessible from path, so set sensible
-            // defaults for this platform.
-            executable.set('/usr/local/bin/docker-compose')
-            dockerExecutable.set('/usr/local/bin/docker')
-        } else {
-            executable.set('docker-compose')
-            dockerExecutable.set('docker')
-        }
+        executable.set('docker-compose')
+        dockerExecutable.set('docker')
+
         dockerComposeStopTimeout.set(Duration.ofSeconds(10))
 
         this.containerLogToDir.set(project.buildDir.toPath().resolve('containers-logs').toFile())
