@@ -1,7 +1,7 @@
 plugins {
     id 'signing'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
-    id 'com.gradle.plugin-publish' version '0.21.0'
+    id 'com.gradle.plugin-publish' version '1.0.0'
 }
 
 apply plugin: 'groovy'
@@ -94,12 +94,16 @@ project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
 pluginBundle {
     website = 'https://github.com/avast/gradle-docker-compose-plugin'
     vcsUrl = 'https://github.com/avast/gradle-docker-compose-plugin'
-    description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
     tags = ['docker', 'docker-compose']
+}
+
+gradlePlugin {
     plugins {
         dockerComposePlugin {
             id = 'com.avast.gradle.docker-compose'
             displayName = 'Gradle Docker Compose plugin'
+            description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
+            implementationClass = 'com.avast.gradle.dockercompose.DockerComposePlugin'
         }
     }
 }
