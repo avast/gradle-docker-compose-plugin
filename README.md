@@ -204,7 +204,7 @@ apply(plugin = "docker-compose")
 configure<ComposeExtension> {
     includeDependencies.set(true)
     createNested("local").apply {
-        projectName.set("foo")
+        setProjectName("foo")
         environment.putAll(mapOf("TAGS" to "feature-test,local"))
         startedServices.set(listOf("foo-api", "foo-integration"))
         upAdditionalArgs.set(listOf("--no-deps"))
