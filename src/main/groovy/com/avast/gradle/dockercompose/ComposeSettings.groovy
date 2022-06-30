@@ -70,8 +70,13 @@ abstract class ComposeSettings {
     protected Boolean customProjectNameSet
     protected String safeProjectNamePrefix
     void setProjectName(String customProjectName) {
-        this.customProjectName = customProjectName
-        this.customProjectNameSet = true
+        if (customProjectName == null || customProjectName.isEmpty()) {
+            this.customProjectName = null
+            this.customProjectNameSet = false
+        } else {
+            this.customProjectName = customProjectName
+            this.customProjectNameSet = true
+        }
     }
     private Provider<String> projectNameProvider
     Provider<String> getProjectName() {
