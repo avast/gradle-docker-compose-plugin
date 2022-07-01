@@ -88,7 +88,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
                 }
             }
             finalArgs.addAll(parameters.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
-            String pn = parameters.projectName.get()
+            String pn = parameters.projectName.getOrNull()
             if (pn) {
                 finalArgs.addAll(['-p', pn])
             }
