@@ -141,11 +141,14 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
         def retryCount = 0
         def services = listComposeServices()
         while (!services.contains(serviceName)) {
-            sleep(1000)
-            retryCount += 1
             if (retryCount > 10) {
+                log.info("Retried 10 times, giving up")
                 return []
             }
+            log.info("Wait for 5s until service is available")
+            sleep(5000)
+            retryCount += 1
+            log.info("Retry getting service list")
             services = listComposeServices()
         }
 
