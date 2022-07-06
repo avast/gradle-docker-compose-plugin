@@ -130,15 +130,26 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
         cachedVersion = VersionNumber.parse(rawVersion.startsWith('v') ? rawVersion.substring(1) : rawVersion)
     }
 
+    private List<String> listComposeServices() {
+        return execute('ps', '--services').readLines()
+    }
+
     Iterable<String> getContainerIds(String serviceName) {
         // `docker-compose ps -q serviceName` returns an exit code of 1 when the service
         // doesn't exist.  To guard against this, check the service list first.
-        def services = execute('ps', '--services').readLines()
-        if (services.contains(serviceName)) {
-            return execute('ps', '-q', serviceName).readLines()
+
+        def retryCount = 0
+        def services = listComposeServices()
+        while (!services.contains(serviceName)) {
+            sleep(1000)
+            retryCount += 1
+            if (retryCount > 10) {
+                return []
+            }
+            services = listComposeServices()
         }
 
-        return []
+        return execute('ps', '-q', serviceName).readLines()
     }
 
     private Set<WeakReference<Thread>> threadsToInterruptOnClose = ConcurrentHashMap.newKeySet()
