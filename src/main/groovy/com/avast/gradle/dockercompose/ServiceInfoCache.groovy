@@ -47,7 +47,8 @@ abstract class ServiceInfoCache implements BuildService<Parameters> {
             if (cachedState == currentState) {
                 return deserialized.collectEntries { k, v -> [k, deserializeServiceInfo(v)] }
             } else {
-                logger.lifecycle("Current and cached states differs, cannot use the cached service infos.\nCached state:\n$cachedState\nCurrent state:\n$currentState")
+                logger.lifecycle("Current and cached states differs, cannot use the cached service infos.")
+                logger.info("Cached state:\n$cachedState\nCurrent state:\n$currentState")
             }
         }
         return null
