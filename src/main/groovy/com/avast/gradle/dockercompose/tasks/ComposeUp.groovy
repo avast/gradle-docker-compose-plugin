@@ -215,7 +215,7 @@ abstract class ComposeUp extends DefaultTask {
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
         // this code is little bit complicated - the aim is to execute `docker inspect` just once (for all the containers)
-        Map<String, Iterable<String>> serviceToContainersIds = servicesNames.collectEntries { [(it) : composeExecutor.get().getContainerIds(it)] }
+        Map<String, Iterable<String>> serviceToContainersIds = composeExecutor.get().getContainerIds(servicesNames)
         Map<String, Map<String, Object>> inspections = dockerExecutor.getInspections(*serviceToContainersIds.values().flatten().unique())
         serviceToContainersIds.collect { pair -> new ServiceInfo(name: pair.key, containerInfos: pair.value.collect { createContainerInfo(inspections.get(it), pair.key) }.collectEntries { [(it.instanceName): it] } ) }
     }
