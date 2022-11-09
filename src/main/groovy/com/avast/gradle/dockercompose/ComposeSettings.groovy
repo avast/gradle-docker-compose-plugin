@@ -194,7 +194,11 @@ abstract class ComposeSettings {
         r.waitForHealthyStateTimeout.set(waitForHealthyStateTimeout.get())
         r.checkContainersRunning.set(checkContainersRunning.get())
 
-        r.captureContainersOutput.set(captureContainersOutput.get())
+        r.captureContainersOutput.set(this.captureContainersOutput.get())
+        r.captureContainersOutputToFile.set(this.captureContainersOutputToFile.getOrNull())
+        r.captureContainersOutputToFiles.set(this.captureContainersOutputToFiles.getOrNull())
+        r.composeLogToFile.set(this.composeLogToFile.getOrNull())
+        r.containerLogToDir.set(this.containerLogToDir.getOrNull())
 
         r.projectNamePrefix = this.projectNamePrefix
 
