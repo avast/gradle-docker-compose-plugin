@@ -101,7 +101,10 @@ abstract class ComposeSettings {
             else {
                 return "${safeProjectNamePrefix}_${nestedName}"
             }
-        })
+        }).map{ String projectName ->
+            // docker-compose project names must be lowercase
+            projectName.toLowerCase()
+        }
 
         useComposeFiles.empty()
         startedServices.empty()
