@@ -81,6 +81,32 @@ class DockerComposePluginTest extends Specification {
         up.composeExecutor.get().parameters.useComposeFiles.get() == ['test.yml']
     }
 
+    def "project name should always be lowercase"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            nestedUppercaseTask {
+                useComposeFiles = ['docker-compose.yml']
+            }
+			nestedUppercaseProjectName {
+                projectNamePrefix = "UPPERCASE"
+			}
+            nestedUppercaseProjectNamePrefix {
+                projectNamePrefix = "UPPERCASE"
+            }
+        }
+
+        then:
+
+		['nestedUppercaseTask', 'nestedUppercaseProjectName'].forEach{ String config ->
+			def projectName = project.dockerCompose."$config".projectName.get()
+			assert projectName.toLowerCase() == projectName
+		}
+
+
+    }
+
     def "is possible to access servicesInfos of nested setting"() {
         def project = ProjectBuilder.builder().build()
         when:
