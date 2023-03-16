@@ -21,7 +21,7 @@ repositories {
 
 dependencies {
     implementation gradleApi()
-    implementation 'org.yaml:snakeyaml:1.33'
+    implementation 'org.yaml:snakeyaml:2.0'
     testImplementation gradleTestKit()
     testImplementation 'org.spockframework:spock-core:2.1-groovy-2.5'
 }
