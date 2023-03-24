@@ -14,13 +14,14 @@ import org.gradle.api.services.BuildServiceParameters
 import org.gradle.internal.UncheckedException
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecSpec
-import org.gradle.util.VersionNumber
 import org.yaml.snakeyaml.Yaml
 
 import javax.inject.Inject
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+
+import com.avast.gradle.dockercompose.util.VersionNumber
 
 abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseable {
     static interface Parameters extends BuildServiceParameters {
