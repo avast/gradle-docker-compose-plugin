@@ -3,13 +3,13 @@ package com.avast.gradle.dockercompose.tasks
 import com.avast.gradle.dockercompose.ComposeExecutor
 import com.avast.gradle.dockercompose.RemoveImages
 import com.avast.gradle.dockercompose.ServiceInfoCache
+import com.avast.gradle.dockercompose.util.VersionNumber
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.util.VersionNumber
 
 import java.time.Duration
 
