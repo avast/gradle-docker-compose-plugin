@@ -1,7 +1,6 @@
 package com.avast.gradle.dockercompose
 
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
 
 import javax.inject.Inject
 
@@ -48,8 +47,10 @@ abstract class ComposeExtension extends ComposeSettings {
             s
         } else if (args.length == 1 && args[0] instanceof Closure) {
             ComposeSettings s = getOrCreateNested(name)
-            ConfigureUtil.configure(args[0] as Closure, s)
-            s
+            Closure<?> closure = (Closure<?>) args[0]
+            closure.setResolveStrategy(Closure.DELEGATE_FIRST)
+            closure.setDelegate(s)
+            closure.call(s)
         } else {
             getOrCreateNested(name)
         }
