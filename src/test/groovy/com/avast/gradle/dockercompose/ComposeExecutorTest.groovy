@@ -77,6 +77,6 @@ class ComposeExecutorTest extends Specification {
         useDockerComposeV2 | expectedDockerComposeBinaryArgs
         true               | ["docker", "compose"]
         false              | ["docker-compose"]
-        null               | ["docker-compose"]
+        null               | ["docker", "compose"]
     }
 }
