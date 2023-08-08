@@ -138,7 +138,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
     }
 
     Map<String,Iterable<String>> getContainerIds(List<String> serviceNames) {
-        // `docker-compose ps -q serviceName` returns an exit code of 1 when the service
+        // `docker compose ps -q serviceName` returns an exit code of 1 when the service
         // doesn't exist.  To guard against this, check the service list first.
         def services = execute('ps', '--services').readLines()
         def result = [:]

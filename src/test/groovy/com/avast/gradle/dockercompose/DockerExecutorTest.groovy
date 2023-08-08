@@ -30,14 +30,14 @@ class DockerExecutorTest extends Specification {
     }
 
     def "reads container logs"() {
-        def f = Fixture.withHelloWorld()
+        def f = Fixture.withNginx()
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
-        String containerId = f.extension.servicesInfos.hello.firstContainer.containerId
+        String containerId = f.extension.servicesInfos.web.firstContainer.containerId
         when:
         String output = f.extension.dockerExecutor.getContainerLogs(containerId)
         then:
-        output.contains('Hello from Docker')
+        output.contains('nginx')
         cleanup:
         f.project.tasks.composeDown.down()
         f.close()
