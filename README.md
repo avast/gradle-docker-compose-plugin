@@ -1,6 +1,6 @@
 # gradle-docker-compose-plugin [![Build](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml) [![Version](https://badgen.net/maven/v/maven-central/com.avast.gradle/gradle-docker-compose-plugin/)](https://repo1.maven.org/maven2/com/avast/gradle/gradle-docker-compose-plugin/)
 
-Simplifies usage of [Docker Compose](https://www.docker.com/docker-compose) for local development and integration testing in [Gradle](https://gradle.org/) environment.
+Simplifies usage of [Docker Compose](https://docs.docker.com/compose/) for local development and integration testing in [Gradle](https://gradle.org/) environment.
 
 `composeUp` task starts the application and waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exposed TCP ports are open (so till the application is ready). It reads assigned host and ports of particular containers and stores them into `dockerCompose.servicesInfos` property.
 
@@ -44,19 +44,21 @@ dockerCompose.isRequiredBy(test)
     * Please note that in Docker Compose v2, the suffix contains `-` instead of `_`
 
 ## Why to use Docker Compose?
-1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker-compose up` and I'm done - e.g. the database is running. 
-2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker-compose up` before these tests.
+1. I want to be able to run my application on my computer, and it must work for my colleagues as well. Just execute `docker compose up` and I'm done - e.g. the database is running. 
+2. I want to be able to test my application on my computer - I don't wanna wait till my application is deployed into dev/testing environment and acceptance/end2end tests get executed. I want to execute these tests on my computer - it means execute `docker compose up` before these tests.
 
 ## Why this plugin?
-You could easily ensure that `docker-compose up` is called before your tests but there are few gotchas that this plugin solves:
+You could easily ensure that `docker compose up` is called before your tests but there are few gotchas that this plugin solves:
 
-1. If you execute `docker-compose up -d` (_detached_) then this command returns immediately and your application is probably not able to serve requests at this time. This plugin waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exported TCP ports of all services are open.
+1. If you execute `docker compose up -d` (_detached_) then this command returns immediately and your application is probably not able to serve requests at this time. This plugin waits till all containers become [healthy](https://docs.docker.com/engine/reference/builder/#healthcheck) and all exported TCP ports of all services are open.
    - If waiting for healthy state or open TCP ports timeouts (default is 15 minutes) then it prints log of related service. 
 2. It's recommended not to assign fixed values of exposed ports in `docker-compose.yml` (i.e. `8888:80`) because it can cause ports collision on integration servers. If you don't assign a fixed value for exposed port (use just `80`) then the port is exposed as a random free port. This plugin reads assigned ports (and even IP addresses of containers) and stores them into `dockerCompose.servicesInfo` map.
 3. There are minor differences when using Linux containers on Linux, Windows and Mac, and when using Windows Containers. This plugin handles these differences for you so you have the same experience in all environments.
 
 # Usage
-The plugin must be applied on project that contains `docker-compose.yml` file. It supposes that [Docker Engine](https://www.docker.com/docker-engine) and [Docker Compose](https://www.docker.com/docker-compose) are installed and available in `PATH`.
+The plugin must be applied on project that contains `docker-compose.yml` file. It supposes that [Docker Engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/) are installed and available in `PATH`.
+
+> Starting from plugin version _0.17.0_, _useDockerComposeV2_ property defaults to _true_, so the new `docker compose` (instead of deprecated `docker-compose` is used).
 
 > Starting from plugin version _0.10.0_, Gradle 4.9 or newer is required (because it uses [Task Configuration Avoidance API](https://docs.gradle.org/current/userguide/task_configuration_avoidance.html)).
 
@@ -115,9 +117,9 @@ dockerCompose {
     
     projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project and nested settings name), set to null to Docker Compose default (directory name)
     projectNamePrefix = 'my_prefix_' // allow to set custom prefix of docker-compose project name, the final project name has nested configuration name appended
-    executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH). Not used if useDockerComposeV2 is set to true.
+    executable = '/path/to/docker-compose' // allow to set the base Docker Compose command (useful if not present in PATH). Defaults to `docker-compose`. Ignored if useDockerComposeV2 is set to true.
+    useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1, default is true. If set to true, `dockerExecutable compose` is used for execution, so executable property is ignored.
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
-    useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1. All invocations will be done using `docker compose` instead of `docker-compose`. Default is false.
     dockerComposeWorkingDirectory = project.file('/path/where/docker-compose/is/invoked/from')
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
