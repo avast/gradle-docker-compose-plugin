@@ -32,6 +32,8 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
         abstract DirectoryProperty getDockerComposeWorkingDirectory()
         abstract MapProperty<String, Object> getEnvironment()
         abstract Property<String> getExecutable()
+        abstract Property<String> getDockerExecutable()
+        abstract Property<Boolean> getUseDockerComposeV2()
         abstract Property<String> getProjectName()
         abstract ListProperty<String> getComposeAdditionalArgs()
         abstract Property<Boolean> getRemoveOrphans()
@@ -48,6 +50,8 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
             it.parameters.dockerComposeWorkingDirectory.set(settings.dockerComposeWorkingDirectory)
             it.parameters.environment.set(settings.environment)
             it.parameters.executable.set(settings.executable)
+            it.parameters.dockerExecutable.set(settings.dockerExecutable)
+            it.parameters.useDockerComposeV2.set(settings.useDockerComposeV2)
             it.parameters.projectName.set(settings.projectName)
             it.parameters.composeAdditionalArgs.set(settings.composeAdditionalArgs)
             it.parameters.removeOrphans.set(settings.removeOrphans)
@@ -79,7 +83,9 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
                 e.setWorkingDir(parameters.projectDirectory)
             }
             e.environment = System.getenv() + parameters.environment.get()
-            def finalArgs = [parameters.executable.get()]
+
+            def finalArgs = []
+            finalArgs.addAll(getDockerComposeBinaryArgs())
             finalArgs.addAll(parameters.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
@@ -274,5 +280,12 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
             throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
         }
         !parameters.scale.get().isEmpty()
+    }
+
+    // Determines whether to use docker-compose (V1) or docker compose (V2)
+    List<String> getDockerComposeBinaryArgs() {
+        parameters.useDockerComposeV2.get()
+                ? [parameters.dockerExecutable.get(), "compose"]
+                : [parameters.executable.get()]
     }
 }
