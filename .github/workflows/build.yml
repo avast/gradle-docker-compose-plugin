@@ -7,11 +7,11 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK 1.8
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: 8
-          distribution: 'adopt'
+          java-version: 11
+          distribution: 'temurin'
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Check with Gradle
