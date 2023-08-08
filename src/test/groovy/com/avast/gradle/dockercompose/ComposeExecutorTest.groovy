@@ -53,7 +53,7 @@ class ComposeExecutorTest extends Specification {
     }
 
     @Unroll
-    def "getDockerComposeBinaryArgs returns correct values when useDockerComposeV2 is #useDockerComposeV2" () {
+    def "getDockerComposeBaseCommand returns correct values when useDockerComposeV2 is #useDockerComposeV2" () {
         def f = Fixture.withHelloWorld()
         f.project.plugins.apply 'java'
 
@@ -64,7 +64,7 @@ class ComposeExecutorTest extends Specification {
         f.project.plugins.apply 'docker-compose'
 
         when:
-        def actual = ComposeExecutor.getInstance(f.project, f.project.dockerCompose).get().getDockerComposeBinaryArgs()
+        def actual = ComposeExecutor.getInstance(f.project, f.project.dockerCompose).get().getDockerComposeBaseCommand()
 
         then:
         expectedDockerComposeBinaryArgs.size() == actual.size()
