@@ -51,4 +51,32 @@ class ComposeExecutorTest extends Specification {
         true                | ["webMaster", "web0", "web1"]
         false               | ["webMaster"]
     }
+
+    @Unroll
+    def "getDockerComposeBinaryArgs returns correct values when useDockerComposeV2 is #useDockerComposeV2" () {
+        def f = Fixture.withHelloWorld()
+        f.project.plugins.apply 'java'
+
+        if(useDockerComposeV2 != null) {
+            f.project.dockerCompose.useDockerComposeV2 = useDockerComposeV2
+        }
+
+        f.project.plugins.apply 'docker-compose'
+
+        when:
+        def actual = ComposeExecutor.getInstance(f.project, f.project.dockerCompose).get().getDockerComposeBinaryArgs()
+
+        then:
+        expectedDockerComposeBinaryArgs.size() == actual.size()
+        actual.containsAll(expectedDockerComposeBinaryArgs)
+
+        cleanup:
+        f.close()
+
+        where:
+        useDockerComposeV2 | expectedDockerComposeBinaryArgs
+        true               | ["docker", "compose"]
+        false              | ["docker-compose"]
+        null               | ["docker-compose"]
+    }
 }

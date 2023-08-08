@@ -82,6 +82,7 @@ abstract class ComposeSettings {
 
     abstract Property<String> getExecutable()
     abstract Property<String> getDockerExecutable()
+    abstract Property<Boolean> getUseDockerComposeV2()
     abstract MapProperty<String, Object> getEnvironment()
 
     abstract DirectoryProperty getDockerComposeWorkingDirectory()
@@ -147,6 +148,7 @@ abstract class ComposeSettings {
 
         executable.set('docker-compose')
         dockerExecutable.set('docker')
+        useDockerComposeV2.set(false)
 
         dockerComposeStopTimeout.set(Duration.ofSeconds(10))
 
@@ -203,6 +205,7 @@ abstract class ComposeSettings {
 
         r.executable.set(this.executable.get())
         r.dockerExecutable.set(this.dockerExecutable.get())
+        r.useDockerComposeV2.set(this.useDockerComposeV2.get())
         r.environment.set(new HashMap<String, Object>(this.environment.get()))
 
         r.dockerComposeWorkingDirectory.set(this.dockerComposeWorkingDirectory.getOrNull())
