@@ -115,9 +115,9 @@ dockerCompose {
     
     projectName = 'my-project' // allow to set custom docker-compose project name (defaults to a stable name derived from absolute path of the project and nested settings name), set to null to Docker Compose default (directory name)
     projectNamePrefix = 'my_prefix_' // allow to set custom prefix of docker-compose project name, the final project name has nested configuration name appended
-    executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH)
+    executable = '/path/to/docker-compose' // allow to set the path of the docker-compose executable (useful if not present in PATH). Not used if useDockerComposeV2 is set to true.
     dockerExecutable = '/path/to/docker' // allow to set the path of the docker executable (useful if not present in PATH)
-    useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1. All invocations will be done using `docker compose` instead of `docker-compose`.
+    useDockerComposeV2 = true // Use Docker Compose V2 instead of Docker Compose V1. All invocations will be done using `docker compose` instead of `docker-compose`. Default is false.
     dockerComposeWorkingDirectory = project.file('/path/where/docker-compose/is/invoked/from')
     dockerComposeStopTimeout = java.time.Duration.ofSeconds(20) // time before docker-compose sends SIGTERM to the running containers after the composeDown task has been started
     environment.put 'BACKEND_ADDRESS', '192.168.1.100' // environment variables to be used when calling 'docker-compose', e.g. for substitution in compose file
