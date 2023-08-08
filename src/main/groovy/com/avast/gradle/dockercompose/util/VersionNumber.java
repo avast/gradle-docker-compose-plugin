@@ -73,7 +73,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
             }
         }
 
-        if (scanner.isEnd()) {
+        if (scanner.isEnd() || scanner.hasSpecifierSeparator()) {
             return new VersionNumber(major, minor, micro);
         }
 
@@ -90,6 +90,10 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
         boolean hasDigit() {
             return pos < str.length() && Character.isDigit(str.charAt(pos));
+        }
+
+        boolean hasSpecifierSeparator() {
+            return pos < str.length() && str.charAt(pos) == '-';
         }
 
         boolean isSeparatorAndDigit() {
