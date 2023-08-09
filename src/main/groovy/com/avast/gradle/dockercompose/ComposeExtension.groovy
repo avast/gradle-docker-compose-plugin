@@ -50,7 +50,11 @@ abstract class ComposeExtension extends ComposeSettings {
             Closure closure = (Closure)args[0].clone()
             closure.setResolveStrategy(Closure.DELEGATE_FIRST)
             closure.setDelegate(s)
-            closure.call(s)
+            if (closure.getMaximumNumberOfParameters() == 0) {
+                closure.call()
+            } else {
+                closure.call(s)
+            }
             s
         } else {
             getOrCreateNested(name)
