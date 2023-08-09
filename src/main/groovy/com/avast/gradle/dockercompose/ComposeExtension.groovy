@@ -1,7 +1,6 @@
 package com.avast.gradle.dockercompose
 
 import org.gradle.api.Project
-import org.gradle.util.ConfigureUtil
 
 import javax.inject.Inject
 
