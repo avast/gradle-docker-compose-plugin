@@ -86,6 +86,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
 
             def finalArgs = []
             finalArgs.addAll(getDockerComposeBaseCommand())
+            finalArgs.addAll(parameters.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
             finalArgs.addAll(parameters.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
@@ -94,7 +95,6 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
                     finalArgs.add('--no-ansi')
                 }
             }
-            finalArgs.addAll(parameters.useComposeFiles.get().collectMany { ['-f', it].asCollection() })
             String pn = parameters.projectName.getOrNull()
             if (pn) {
                 finalArgs.addAll(['-p', pn])
