@@ -14,7 +14,7 @@ class Fixture implements AutoCloseable {
             services:
                 web:
                     image: nginx:stable
-                    command: bash -c "sleep 5 && nginx -g 'daemon off;'"
+                    command: bash -c " echo 'starting nginx' && sleep 5 && nginx -g 'daemon off;'"
                     ports:
                       - 80
         ''')
