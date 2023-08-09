@@ -48,7 +48,10 @@ abstract class ComposeExtension extends ComposeSettings {
             s
         } else if (args.length == 1 && args[0] instanceof Closure) {
             ComposeSettings s = getOrCreateNested(name)
-            ConfigureUtil.configure(args[0] as Closure, s)
+            Closure closure = (Closure)args[0].clone()
+            closure.setResolveStrategy(Closure.DELEGATE_FIRST)
+            closure.setDelegate(s)
+            closure.call(s)
             s
         } else {
             getOrCreateNested(name)
