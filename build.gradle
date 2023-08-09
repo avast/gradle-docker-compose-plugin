@@ -9,11 +9,14 @@ apply plugin: 'java'
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-
 group = 'com.avast.gradle'
-archivesBaseName = 'gradle-docker-compose-plugin'
 version = version == 'unspecified' ? 'DEVELOPER-SNAPSHOT' : version
+base {
+    archivesName = 'gradle-docker-compose-plugin'
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
     mavenCentral()
