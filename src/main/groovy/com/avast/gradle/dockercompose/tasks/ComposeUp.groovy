@@ -6,6 +6,7 @@ import com.avast.gradle.dockercompose.DockerExecutor
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceInfo
 import com.avast.gradle.dockercompose.ServiceInfoCache
+import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -14,7 +15,6 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.yaml.snakeyaml.Yaml
 
 import java.time.Duration
 import java.time.Instant
@@ -212,13 +212,19 @@ abstract class ComposeUp extends DefaultTask {
     @Internal
     protected def getStateForCache() {
         String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
-        // Status field contains something like "Up 8 seconds", so we have to strip the duration.
-        Object[] processes = new Yaml().load(processesAsString)
-        List<Object> transformed = processes.collect {
-            if (it.Status.startsWith('Up ')) it.Status = 'Up'
-            it
+        String processesState = processesAsString
+        try {
+            // Status field contains something like "Up 8 seconds", so we have to strip the duration.
+            Object[] processes = new JsonSlurper().parseText(processesAsString)
+            List<Object> transformed = processes.collect {
+                if (it.Status.startsWith('Up ')) it.Status = 'Up'
+                it
+            }
+            processesState = transformed.join('\t')
+        } catch (Exception e) {
+            logger.warn("Cannot process JSON returned from 'docker compose ps --format json'", e)
         }
-        transformed.join('\t') + composeExecutor.get().execute('config') + startedServices.get().join(',')
+        processesState + composeExecutor.get().execute('config') + startedServices.get().join(',')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
