@@ -14,6 +14,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.yaml.snakeyaml.Yaml
 
 import java.time.Duration
 import java.time.Instant
@@ -210,7 +211,14 @@ abstract class ComposeUp extends DefaultTask {
 
     @Internal
     protected def getStateForCache() {
-        composeExecutor.get().execute('ps') + composeExecutor.get().execute('config') + startedServices.get().join(',')
+        String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
+        // Status field contains something like "Up 8 seconds", so we have to strip the duration.
+        Object[] processes = new Yaml().load(processesAsString)
+        List<Object> transformed = processes.collect {
+            if (it.Status.startsWith('Up ')) it.Status = 'Up'
+            it
+        }
+        transformed.join('\t') + composeExecutor.get().execute('config') + startedServices.get().join(',')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {

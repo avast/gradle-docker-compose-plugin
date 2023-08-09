@@ -29,6 +29,7 @@ class DockerExecutor {
                 def finalArgs = [settings.dockerExecutable.get()]
                 finalArgs.addAll(args)
                 e.commandLine finalArgs
+                e.errorOutput = os
                 e.standardOutput = os
                 e.ignoreExitValue = true
             }

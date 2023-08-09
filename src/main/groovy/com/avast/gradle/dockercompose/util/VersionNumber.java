@@ -93,7 +93,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
         }
 
         boolean hasSpecifierSeparator() {
-            return pos < str.length() && str.charAt(pos) == '-';
+            return pos < str.length() && (str.charAt(pos) == '-' || str.charAt(pos) == '+');
         }
 
         boolean isSeparatorAndDigit() {

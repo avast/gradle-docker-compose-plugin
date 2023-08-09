@@ -85,7 +85,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
             e.environment = System.getenv() + parameters.environment.get()
 
             def finalArgs = []
-            finalArgs.addAll(getDockerComposeBinaryArgs())
+            finalArgs.addAll(getDockerComposeBaseCommand())
             finalArgs.addAll(parameters.composeAdditionalArgs.get())
             if (noAnsi) {
                 if (version >= VersionNumber.parse('1.28.0')) {
@@ -138,7 +138,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
     }
 
     Map<String,Iterable<String>> getContainerIds(List<String> serviceNames) {
-        // `docker-compose ps -q serviceName` returns an exit code of 1 when the service
+        // `docker compose ps -q serviceName` returns an exit code of 1 when the service
         // doesn't exist.  To guard against this, check the service list first.
         def services = execute('ps', '--services').readLines()
         def result = [:]
@@ -277,15 +277,15 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
     boolean isScaleSupported() {
         def v = version
         if (v < VersionNumber.parse('1.13.0') && parameters.scale) {
-            throw new UnsupportedOperationException("docker-compose version $v doesn't support --scale option")
+            throw new UnsupportedOperationException("Docker Compose version $v doesn't support --scale option")
         }
         !parameters.scale.get().isEmpty()
     }
 
     // Determines whether to use docker-compose (V1) or docker compose (V2)
-    List<String> getDockerComposeBinaryArgs() {
+    List<String> getDockerComposeBaseCommand() {
         parameters.useDockerComposeV2.get()
                 ? [parameters.dockerExecutable.get(), "compose"]
-                : [parameters.executable.get()]
+                : Arrays.asList(parameters.executable.get().split("\\s+")) // split on spaces
     }
 }
