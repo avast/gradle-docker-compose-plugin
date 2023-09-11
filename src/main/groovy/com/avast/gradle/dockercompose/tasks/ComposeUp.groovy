@@ -214,8 +214,14 @@ abstract class ComposeUp extends DefaultTask {
         String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
         String processesState = processesAsString
         try {
+            // Since Docker Compose 2.21.0, the output is not one JSON array but newline-separated JSONs.
+            Object[] processes
+            if (processesAsString.startsWith('[')) {
+                processes = new JsonSlurper().parseText(processesAsString)
+            } else {
+                processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
+            }
             // Status field contains something like "Up 8 seconds", so we have to strip the duration.
-            Object[] processes = new JsonSlurper().parseText(processesAsString)
             List<Object> transformed = processes.collect {
                 if (it.Status.startsWith('Up ')) it.Status = 'Up'
                 it
