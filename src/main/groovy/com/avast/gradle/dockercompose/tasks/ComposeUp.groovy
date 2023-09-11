@@ -230,6 +230,7 @@ abstract class ComposeUp extends DefaultTask {
             }
             processesState = transformed.join('\t')
         } catch (Exception e) {
+            System.err.println(e)
             logger.warn("Cannot process JSON returned from 'docker compose ps --format json'", e)
         }
         processesState + composeExecutor.get().execute('config') + startedServices.get().join(',')
