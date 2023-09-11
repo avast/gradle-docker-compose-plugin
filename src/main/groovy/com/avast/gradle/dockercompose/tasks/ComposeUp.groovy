@@ -216,16 +216,17 @@ abstract class ComposeUp extends DefaultTask {
         System.err.println(processesAsString)
         try {
             // Since Docker Compose 2.21.0, the output is not one JSON array but newline-separated JSONs.
-            Object[] processes
+            Map<String, Object>[] processes
             if (processesAsString.startsWith('[')) {
                 processes = new JsonSlurper().parseText(processesAsString)
             } else {
                 System.err.println("Splitted: ${processesAsString.split('\\R')}")
                 processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
             }
-            // Status field contains something like "Up 8 seconds", so we have to strip the duration.
+            // Status and RunningFor fields contains something like "Up 8 seconds", so we have to strip the duration.
             List<Object> transformed = processes.collect {
-                if (it.Status.startsWith('Up ')) it.Status = 'Up'
+                if (it.containsKey('Status') && it.Status.startsWith('Up ')) it.Status = 'Up'
+                it.remove('RunningFor')
                 it
             }
             processesState = transformed.join('\t')
