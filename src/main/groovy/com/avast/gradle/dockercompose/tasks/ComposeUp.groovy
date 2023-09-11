@@ -213,14 +213,14 @@ abstract class ComposeUp extends DefaultTask {
     protected def getStateForCache() {
         String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
         String processesState = processesAsString
-        logger.error(processesAsString)
+        System.err.println(processesAsString)
         try {
             // Since Docker Compose 2.21.0, the output is not one JSON array but newline-separated JSONs.
             Object[] processes
             if (processesAsString.startsWith('[')) {
                 processes = new JsonSlurper().parseText(processesAsString)
             } else {
-                logger.error("Splitted: ${processesAsString.split('\\R')}")
+                System.err.println("Splitted: ${processesAsString.split('\\R')}")
                 processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
             }
             // Status field contains something like "Up 8 seconds", so we have to strip the duration.
