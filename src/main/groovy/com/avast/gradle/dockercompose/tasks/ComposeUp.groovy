@@ -213,14 +213,12 @@ abstract class ComposeUp extends DefaultTask {
     protected def getStateForCache() {
         String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
         String processesState = processesAsString
-        System.err.println(processesAsString)
         try {
             // Since Docker Compose 2.21.0, the output is not one JSON array but newline-separated JSONs.
             Map<String, Object>[] processes
             if (processesAsString.startsWith('[')) {
                 processes = new JsonSlurper().parseText(processesAsString)
             } else {
-                System.err.println("Splitted: ${processesAsString.split('\\R')}")
                 processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
             }
             List<Object> transformed = processes.collect {
@@ -232,8 +230,6 @@ abstract class ComposeUp extends DefaultTask {
             }
             processesState = transformed.join('\t')
         } catch (Exception e) {
-            System.err.println(e)
-            e.printStackTrace(System.err)
             logger.warn("Cannot process JSON returned from 'docker compose ps --format json'", e)
         }
         processesState + composeExecutor.get().execute('config') + startedServices.get().join(',')
