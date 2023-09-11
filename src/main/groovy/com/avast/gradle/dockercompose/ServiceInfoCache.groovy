@@ -49,6 +49,7 @@ abstract class ServiceInfoCache implements BuildService<Parameters> {
             } else {
                 logger.lifecycle("Current and cached states are different, cannot use the cached service infos.")
                 logger.info("Cached state:\n$cachedState\nCurrent state:\n$currentState")
+                System.err.println("Cached state:\n$cachedState\nCurrent state:\n$currentState")
             }
         }
         return null
