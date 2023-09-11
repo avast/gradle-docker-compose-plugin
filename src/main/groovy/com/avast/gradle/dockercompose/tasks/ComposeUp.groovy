@@ -223,10 +223,11 @@ abstract class ComposeUp extends DefaultTask {
                 System.err.println("Splitted: ${processesAsString.split('\\R')}")
                 processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
             }
-            // Status and RunningFor fields contains something like "Up 8 seconds", so we have to strip the duration.
             List<Object> transformed = processes.collect {
+                // Status field contains something like "Up 8 seconds", so we have to strip the duration.
                 if (it.containsKey('Status') && it.Status.startsWith('Up ')) it.Status = 'Up'
-                it.remove('RunningFor')
+                it.remove('RunningFor') // It also contains a duration information.
+                it.remove('Labels') // The order of labels is not stable.
                 it
             }
             processesState = transformed.join('\t')
