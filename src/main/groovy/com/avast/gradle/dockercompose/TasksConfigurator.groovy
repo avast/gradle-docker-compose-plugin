@@ -67,11 +67,14 @@ class TasksConfigurator {
             })
             task.dockerExecutor = composeSettings.dockerExecutor
             task.finalizedBy(downForcedOnFailureTask)
+            task.usesService(composeExecutor)
+            task.usesService(serviceInfoCache)
         }
         this.buildTask = project.tasks.register(name ? "${name}ComposeBuild".toString() : 'composeBuild', ComposeBuild) {task ->
             task.buildAdditionalArgs.set(composeSettings.buildAdditionalArgs)
             task.startedServices.set(composeSettings.startedServices)
             task.composeExecutor.set(composeExecutor)
+            task.usesService(composeExecutor)
         }
         this.pullTask = project.tasks.register(name ? "${name}ComposePull".toString() : 'composePull', ComposePull) {task ->
             task.ignorePullFailure.set(composeSettings.ignorePullFailure)
@@ -81,15 +84,18 @@ class TasksConfigurator {
             task.dependsOn(composeSettings.buildBeforePull.map { buildBeforePull ->
                 buildBeforePull ? [buildTask] : []
             })
+            task.usesService(composeExecutor)
         }
         this.logsTask = project.tasks.register(name ? "${name}ComposeLogs".toString() : 'composeLogs', ComposeLogs) {task ->
             task.containerLogToDir.set(composeSettings.containerLogToDir)
             task.composeExecutor.set(composeExecutor)
+            task.usesService(composeExecutor)
         }
         this.pushTask = project.tasks.register(name ? "${name}ComposePush".toString() : 'composePush', ComposePush) {task ->
             task.ignorePushFailure.set(composeSettings.ignorePushFailure)
             task.pushServices.set(composeSettings.pushServices)
             task.composeExecutor.set(composeExecutor)
+            task.usesService(composeExecutor)
         }
     }
 
@@ -108,6 +114,8 @@ class TasksConfigurator {
         task.nestedName.set(composeSettings.nestedName)
         task.composeExecutor.set(composeExecutor)
         task.serviceInfoCache.set(serviceInfoCache)
+        task.usesService(composeExecutor)
+        task.usesService(serviceInfoCache)
     }
 
     @PackageScope
