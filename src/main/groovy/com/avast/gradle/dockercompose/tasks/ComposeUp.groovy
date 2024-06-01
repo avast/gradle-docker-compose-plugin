@@ -129,7 +129,7 @@ abstract class ComposeUp extends DefaultTask {
         }
         if (composeExecutor.get().isScaleSupported()) {
             args += scale.get().collect { service, value ->
-                ['--scale', "$service=$value"]
+                ['--scale', "$service=$value".toString()]
             }.flatten()
         }
         args += upAdditionalArgs.get()
