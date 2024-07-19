@@ -17,6 +17,16 @@ Simplifies usage of [Docker Compose](https://docs.docker.com/compose/) for local
 `composeLogs` task stores logs from all containers to files in `containerLogToDir` directory.
 
 ## Quick start
+The plugin is published to [Gradle Plugin Portal](https://plugins.gradle.org/plugin/com.avast.gradle.docker-compose), so the import is easy as
+
+```gradle
+plugins {
+  id "com.avast.gradle.docker-compose" version "$versionHere"
+}
+```
+
+Since the version `0.14.2`, the plugin is also published to Maven Central, so if your prefer this way:
+
 ```gradle
 buildscript {
     repositories {
@@ -28,14 +38,14 @@ buildscript {
 }
 
 apply plugin: 'docker-compose'
+```
 
-// Or use the new Gradle Portal plugins (then you don't have to add the dependency as above):
-// plugins {
-//  id 'com.avast.gradle.docker-compose' version "$versionHere"
-// }
-
+After importing the plugin, the basic usage is typically just:
+```gradle
 dockerCompose.isRequiredBy(test)
 ```
+
+It ensures:
 * `docker-compose up` is executed in the project directory, so it uses the `docker-compose.yml` file.
 * If the provided task (`test` in the example above) executes a new process then environment variables and Java system properties are provided.
   * The name of environment variable is `${serviceName}_HOST` and `${serviceName}_TCP_${exposedPort}` (e.g. `WEB_HOST` and `WEB_TCP_80`).
