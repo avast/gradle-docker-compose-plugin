@@ -40,6 +40,8 @@ buildscript {
 apply plugin: 'docker-compose'
 ```
 
+> Versions prior to `0.14.2` were published to JCenter, and it is decommisioned now, so these old versions are not available.
+
 After importing the plugin, the basic usage is typically just:
 ```gradle
 dockerCompose.isRequiredBy(test)
