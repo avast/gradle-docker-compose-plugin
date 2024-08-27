@@ -219,7 +219,7 @@ abstract class ComposeUp extends DefaultTask {
             if (processesAsString.startsWith('[')) {
                 processes = new JsonSlurper().parseText(processesAsString)
             } else {
-                processes = processesAsString.split('\\R').collect { new JsonSlurper().parseText(it) }
+                processes = processesAsString.split('\\R').findAll { it.trim() }.collect { new JsonSlurper().parseText(it) }
             }
             List<Object> transformed = processes.collect {
                 // Status field contains something like "Up 8 seconds", so we have to strip the duration.
