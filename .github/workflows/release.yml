@@ -17,7 +17,7 @@ jobs:
       - name: Check with Gradle
         run: ./gradlew check --info -Pversion=${{ github.event.release.tag_name }}
       - name: Publish with Gradle to Sonatype
-        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository publishPlugins --info -Pversion=${{ github.event.release.tag_name }}
+        run: ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository publishPlugins --debug -Pversion=${{ github.event.release.tag_name }}
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
