@@ -6,6 +6,7 @@ import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.TaskDependency
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.process.JavaForkOptions
 import org.gradle.process.ProcessForkOptions
@@ -122,13 +123,33 @@ class TasksConfigurator {
     void isRequiredByCore(Task task, boolean fromConfigure) {
         task.dependsOn upTask
         task.finalizedBy downTask
+        def taskDependencies = getTaskDependencies(task)
         if (fromConfigure) {
-            upTask.get().shouldRunAfter task.taskDependencies
+            upTask.get().shouldRunAfter taskDependencies
         } else {
-            upTask.configure { it.shouldRunAfter task.taskDependencies }
+            upTask.configure { it.shouldRunAfter taskDependencies }
         }
         if (task instanceof ProcessForkOptions) task.doFirst { composeSettings.exposeAsEnvironment(task as ProcessForkOptions) }
         if (task instanceof JavaForkOptions) task.doFirst { composeSettings.exposeAsSystemProperties(task as JavaForkOptions) }
+    }
+
+    private TaskDependency getTaskDependencies(Task task) {
+        def includedBuilds = task.project.gradle.includedBuilds
+        if (includedBuilds.isEmpty()) {
+            return task.taskDependencies
+        } else {
+            // Ignore any task dependencies from a composite/included build by delegating to a lazily filtered TaskDependency implementation
+            // to avoid the "Cannot use shouldRunAfter to reference tasks from another build" error introduced in Gradle 8
+            def includedBuildProjectNames = includedBuilds.collect { it.name }.toSet()
+            return new TaskDependency() {
+                Set<? extends Task> getDependencies(Task t) {
+                    task.taskDependencies.getDependencies(t).findAll { dependency ->
+                        // use rootProject.name in case the task is from a multi-module composite build
+                        !includedBuildProjectNames.contains(dependency.project.rootProject.name)
+                    }
+                }
+            }
+        }
     }
 
     @PackageScope
