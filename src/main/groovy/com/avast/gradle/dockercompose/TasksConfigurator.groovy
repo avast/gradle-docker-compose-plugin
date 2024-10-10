@@ -123,12 +123,27 @@ class TasksConfigurator {
         task.dependsOn upTask
         task.finalizedBy downTask
         if (fromConfigure) {
-            upTask.get().shouldRunAfter task.taskDependencies
+            upTask.get().shouldRunAfter getTaskDependencies(task)
         } else {
-            upTask.configure { it.shouldRunAfter task.taskDependencies }
+            upTask.configure { it.shouldRunAfter getTaskDependencies(task) }
         }
         if (task instanceof ProcessForkOptions) task.doFirst { composeSettings.exposeAsEnvironment(task as ProcessForkOptions) }
         if (task instanceof JavaForkOptions) task.doFirst { composeSettings.exposeAsSystemProperties(task as JavaForkOptions) }
+    }
+
+    private Object getTaskDependencies(Task task) {
+        def includedBuilds = task.project.gradle.includedBuilds
+        if (includedBuilds.isEmpty()) {
+            return task.taskDependencies
+        } else {
+            // Ignore any task dependencies from a composite/included build to avoid the
+            // "Cannot use shouldRunAfter to reference tasks from another build" error introduced in Gradle 8
+            def includedBuildProjectNames = includedBuilds.collect { it.name }.toSet()
+            return task.taskDependencies.getDependencies(null).findAll { dependency ->
+                // use rootProject.name in case the task is from a multi-module composite build
+                !includedBuildProjectNames.contains(dependency.project.rootProject.name)
+            }
+        }
     }
 
     @PackageScope
