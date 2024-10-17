@@ -97,10 +97,10 @@ abstract class ComposeSettings {
                 return customProjectName
             }
             else if (projectNamePrefix) {
-                return "${projectNamePrefix}_${nestedName}"
+                return nestedName ? "${projectNamePrefix}_${nestedName}" : projectNamePrefix
             }
             else {
-                return "${safeProjectNamePrefix}_${nestedName}"
+                return nestedName ? "${safeProjectNamePrefix}_${nestedName}" : safeProjectNamePrefix
             }
         }).map{ String projectName ->
             // docker-compose project names must be lowercase
