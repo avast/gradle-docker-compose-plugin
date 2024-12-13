@@ -209,6 +209,9 @@ abstract class ComposeUp extends DefaultTask {
         }
     }
 
+    private static final VOLATILE_STATE_KEYS = ['RunningFor']
+    private static final UNSTABLE_ARRAY_STATE_KEYS = ['Mounts', 'Ports', 'Networks', 'Labels', 'Publishers']
+
     @Internal
     protected def getStateForCache() {
         String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
@@ -224,8 +227,8 @@ abstract class ComposeUp extends DefaultTask {
             List<Object> transformed = processes.collect {
                 // Status field contains something like "Up 8 seconds", so we have to strip the duration.
                 if (it.containsKey('Status') && it.Status.startsWith('Up ')) it.Status = 'Up'
-                it.remove('RunningFor') // It also contains a duration information.
-                it.remove('Labels') // The order of labels is not stable.
+                VOLATILE_STATE_KEYS.each { key -> it.remove(key) }
+                UNSTABLE_ARRAY_STATE_KEYS.each { key -> it[key] = parseAndSortStateArray(it[key]) }
                 it
             }
             processesState = transformed.join('\t')
@@ -233,6 +236,18 @@ abstract class ComposeUp extends DefaultTask {
             logger.warn("Cannot process JSON returned from 'docker compose ps --format json'", e)
         }
         processesState + composeExecutor.get().execute('config') + startedServices.get().join(',')
+    }
+
+    protected Object parseAndSortStateArray(Object list) {
+        if (list instanceof List) {
+            //Already provided as a List, no pre-parsing needed
+            return list.sort { (first, second) -> first.toString() <=> second.toString() }
+        } else if (list instanceof String && list.contains(",")) {
+            //Not already a list, but a comma separated string
+            return list.split(',').collect { it.trim() }.sort()
+        } else {
+            return list
+        }
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
