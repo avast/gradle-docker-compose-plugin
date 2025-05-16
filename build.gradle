@@ -1,6 +1,6 @@
 plugins {
     id 'signing'
-    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+    id 'org.jreleaser' version '1.18.0'
     id 'com.gradle.plugin-publish' version '1.3.1'
 }
 
@@ -43,50 +43,70 @@ java {
 }
 
 afterEvaluate {
-    publishing.publications.forEach {
-        it.pom {
-            name = 'Gradle Docker Compose plugin'
-            description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
-            url = 'https://github.com/avast/gradle-docker-compose-plugin'
-            licenses {
-                license {
-                    name = 'The MIT License'
-                    url = 'http://www.opensource.org/licenses/mit-license.php'
-                }
-            }
-            developers {
-                developer {
-                    id = 'augi'
-                    name = 'Michal Augustýn'
-                    email = 'augustyn.michal@gmail.com'
-                }
-            }
-            scm {
-                connection = 'scm:git:git://github.com/avast/gradle-docker-compose-plugin.git'
-                developerConnection = 'scm:git:ssh://github.com/avast/gradle-docker-compose-plugin.git'
+    publishing {
+        publications.forEach {
+            it.pom {
+                name = 'Gradle Docker Compose plugin'
+                description = 'Simplifies usage of Docker Compose for integration testing in Gradle environment.'
                 url = 'https://github.com/avast/gradle-docker-compose-plugin'
+                licenses {
+                    license {
+                        name = 'The MIT License'
+                        url = 'http://www.opensource.org/licenses/mit-license.php'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'augi'
+                        name = 'Michal Augustýn'
+                        email = 'augustyn.michal@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/avast/gradle-docker-compose-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com/avast/gradle-docker-compose-plugin.git'
+                    url = 'https://github.com/avast/gradle-docker-compose-plugin'
+                }
+            }
+        }
+        repositories {
+            maven {
+                url = layout.buildDirectory.dir('staging-deploy')
             }
         }
     }
 }
 
-signing {
-    String base64Key = System.getenv('SIGNING_KEY')
-    if (base64Key) {
-        useInMemoryPgpKeys(new String(Base64.decoder.decode(base64Key)), System.getenv('SIGNING_PASSWORD'))
-        sign publishing.publications
+jreleaser {
+    signing {
+        active = 'ALWAYS'
+        armored = true
+        String base64Key = System.getenv('SIGNING_KEY')
+        if (base64Key) {
+            secretKey = new String(Base64.decoder.decode(base64Key))
+        }
+        String base64PublicKey = System.getenv('SIGNING_PUBLIC_KEY')
+        if (base64PublicKey) {
+            publicKey = new String(Base64.decoder.decode(base64PublicKey))
+        }
+    }
+    deploy {
+        maven {
+            mavenCentral {
+                sonatype {
+                    active = 'ALWAYS'
+                    url = 'https://central.sonatype.com/api/v1/publisher'
+                    stagingRepository('build/staging-deploy')
+                }
+            }
+        }
+    }
+    release {
+        github {
+            enabled = false
+        }
     }
 }
-
-nexusPublishing {
-    repositories {
-        sonatype()
-    }
-    transitionCheckOptions {
-        maxRetries.set(256)
-    }
-}
-
 
 project.ext.set('gradle.publish.key', System.getenv('GRADLE_PORTAL_KEY'))
 project.ext.set('gradle.publish.secret', System.getenv('GRADLE_PORTAL_SECRET'))
