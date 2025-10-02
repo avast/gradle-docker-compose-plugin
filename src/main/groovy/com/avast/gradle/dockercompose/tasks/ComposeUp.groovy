@@ -6,6 +6,8 @@ import com.avast.gradle.dockercompose.DockerExecutor
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceInfo
 import com.avast.gradle.dockercompose.ServiceInfoCache
+import groovy.json.JsonGenerator
+import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -209,45 +211,44 @@ abstract class ComposeUp extends DefaultTask {
         }
     }
 
-    private static final VOLATILE_STATE_KEYS = ['RunningFor']
-    private static final UNSTABLE_ARRAY_STATE_KEYS = ['Mounts', 'Ports', 'Networks', 'Labels', 'Publishers']
-
     @Internal
     protected def getStateForCache() {
-        String processesAsString = composeExecutor.get().execute('ps', '--format', 'json')
-        String processesState = processesAsString
-        try {
-            // Since Docker Compose 2.21.0, the output is not one JSON array but newline-separated JSONs.
-            Map<String, Object>[] processes
-            if (processesAsString.startsWith('[')) {
-                processes = new JsonSlurper().parseText(processesAsString)
-            } else {
-                processes = processesAsString.split('\\R').findAll { it.trim() }.collect { new JsonSlurper().parseText(it) }
-            }
-            List<Object> transformed = processes.collect {
-                // Status field contains something like "Up 8 seconds", so we have to strip the duration.
-                if (it.containsKey('Status') && it.Status.startsWith('Up ')) it.Status = 'Up'
-                VOLATILE_STATE_KEYS.each { key -> it.remove(key) }
-                UNSTABLE_ARRAY_STATE_KEYS.each { key -> it[key] = parseAndSortStateArray(it[key]) }
-                it
-            }
-            processesState = transformed.join('\t')
-        } catch (Exception e) {
-            logger.warn("Cannot process JSON returned from 'docker compose ps --format json'", e)
-        }
-        processesState + composeExecutor.get().execute('config') + startedServices.get().join(',')
-    }
+        def state = []
 
-    protected Object parseAndSortStateArray(Object list) {
-        if (list instanceof List) {
-            //Already provided as a List, no pre-parsing needed
-            return list.sort { (first, second) -> first.toString() <=> second.toString() }
-        } else if (list instanceof String && list.contains(",")) {
-            //Not already a list, but a comma separated string
-            return list.split(',').collect { it.trim() }.sort()
-        } else {
-            return list
+        try {
+            def containersIds = composeExecutor.get()
+                .execute('ps', '--quiet', '--all')
+                .readLines()
+            def containersInfos = new JsonSlurper().parseText(
+                dockerExecutor.execute(['inspect', *containersIds] as String[])
+            )
+            def jsonGenerator = new JsonGenerator.Options()
+                .excludeFieldsByName('Log')
+                .addConverter(List) { items, key ->
+                    // Prevent sorting of objects in the root list and list
+                    // items in the "Args" key (usually command arguments)
+                    if (key in [null, 'Args']) {
+                        return items
+                    }
+
+                    // Sort the elements of all other lists
+                    return items.sort()
+                }
+                .build()
+
+            state += JsonOutput.prettyPrint(
+                jsonGenerator.toJson(containersInfos)
+            )
+        } catch (Throwable t) {
+            logger.warn(
+                'Cannot generate inspections for containers, for this reason the state will be incomplete', t
+            )
         }
+
+        state += composeExecutor.get().execute('config')
+        state += startedServices.get().join(',')
+
+        return state.join('\n')
     }
 
     protected Iterable<ServiceInfo> loadServicesInfo(Iterable<String> servicesNames) {
