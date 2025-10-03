@@ -70,6 +70,8 @@ You could easily ensure that `docker compose up` is called before your tests but
 # Usage
 The plugin must be applied on project that contains `docker-compose.yml` file. It supposes that [Docker Engine](https://docs.docker.com/engine/) and [Docker Compose](https://docs.docker.com/compose/) are installed and available in `PATH`.
 
+> Starting from plugin version _0.17.13_, Gradle 9.0 is required. Otherwise, you can experience issues related to missing `org/apache/groovy/runtime/ObjectUtil.`.
+
 > Starting from plugin version _0.17.6_, Gradle 6.1 is required, because _Task.usesService()_ is used.
 
 > Starting from plugin version _0.17.0_, _useDockerComposeV2_ property defaults to _true_, so the new `docker compose` (instead of deprecated `docker-compose` is used).
