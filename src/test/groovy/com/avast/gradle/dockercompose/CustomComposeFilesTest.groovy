@@ -7,7 +7,6 @@ class CustomComposeFilesTest extends Specification {
     def "can specify compose files to use"() {
         def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'original.yml') << '''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -15,7 +14,6 @@ class CustomComposeFilesTest extends Specification {
                       - 80
         '''
         new File(projectDir, 'override.yml') << '''
-            version: '2'
             services:
                 web:
                     ports:
@@ -49,13 +47,11 @@ class CustomComposeFilesTest extends Specification {
     def "docker-compose.override.yml file honoured when no files specified"() {
         def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
         '''
         new File(projectDir, 'docker-compose.override.yml') << '''
-            version: '2'
             services:
                 web:
                     ports:
@@ -88,13 +84,11 @@ class CustomComposeFilesTest extends Specification {
     def "docker-compose.override.yml file ignored when files are specified"() {
         def projectDir = File.createTempDir("gradle", "projectDir")
         new File(projectDir, 'docker-compose.yml') << '''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
         '''
         new File(projectDir, 'docker-compose.override.yml') << '''
-            version: '2'
             services:
                 web:
                     ports:
@@ -105,7 +99,6 @@ class CustomComposeFilesTest extends Specification {
                       - 80
         '''
         new File(projectDir, 'docker-compose.prod.yml') << '''
-            version: '2'
             services:
                 web:
                     ports:

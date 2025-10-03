@@ -8,7 +8,6 @@ class ComposeExecutorTest extends Specification {
     @Shared
     def composeV2_webMasterWithDeps =
             '''
-            version: '2'
             services:
                 web0:
                     image: nginx:stable

@@ -22,7 +22,6 @@ class ComposeConfigParserTest extends Specification
               slave1:
                 expose:
                   - '23'
-            version: '3.0'
         """
 
         when: "findServiceDependencies is called"
@@ -96,7 +95,6 @@ class ComposeConfigParserTest extends Specification
                     condition: service_healthy
                 expose:
                   - '23'
-            version: '3.0'
         """
 
         when: "findServiceDependencies is called"

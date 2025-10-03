@@ -10,7 +10,6 @@ class Fixture implements AutoCloseable {
 
     static withNginx() {
         new Fixture('''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -22,7 +21,6 @@ class Fixture implements AutoCloseable {
 
     static withHelloWorld() {
         new Fixture('''
-            version: '2'
             services:
                 hello:
                     image: hello-world

@@ -10,7 +10,6 @@ import spock.lang.Specification
 class CaptureOutputTest extends Specification {
 
     private String composeFileContent = '''
-            version: '2'
             services:
                 web:
                     image: nginx:stable

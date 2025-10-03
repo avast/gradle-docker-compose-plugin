@@ -320,7 +320,6 @@ class DockerComposePluginTest extends Specification {
             f.close()
         where:
             composeFileContent << ['''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -353,7 +352,6 @@ class DockerComposePluginTest extends Specification {
         f.close()
         where:
         composeFileContent << ['''
-            version: '2'
             services:
                 web-service:
                     image: nginx:stable
@@ -369,7 +367,6 @@ class DockerComposePluginTest extends Specification {
     @IgnoreIf({ DockerComposePluginTest.isRunningOnWindows() || DockerComposePluginTest.isRunningOnMac() })
     def "expose localhost as a host for container with HOST networking"() {
         def f = Fixture.custom('''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -393,7 +390,6 @@ class DockerComposePluginTest extends Specification {
 
     def "docker-compose substitutes environment variables"() {
         def f = Fixture.custom('''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -481,7 +477,6 @@ class DockerComposePluginTest extends Specification {
     @IgnoreIf({ System.getenv('DOCKER_COMPOSE_VERSION') != null && parse(System.getenv('DOCKER_COMPOSE_VERSION')) < parse('1.13.0') })
     def "docker-compose scale to 0 does not cause exceptions because of missing first container"() {
         def f = Fixture.custom('''
-            version: '2'
             services:
                 web:
                     image: nginx:stable
@@ -529,7 +524,6 @@ class DockerComposePluginTest extends Specification {
         where:
         // test it for both compose file version 1 and 2
         composeFileContent << ['''
-            version: '2'
             services:
                 web:
                     container_name: custom_container_name
@@ -560,7 +554,6 @@ class DockerComposePluginTest extends Specification {
         f.close()
         where:
         composeFileContent << ['''
-            version: '2'
             services:
                 web0:
                     image: nginx:stable
@@ -597,7 +590,6 @@ class DockerComposePluginTest extends Specification {
         f.close()
         where:
         composeFileContent << ['''
-            version: '2.0'
             services:
               gw:
                 image: alpine:3.9.6
