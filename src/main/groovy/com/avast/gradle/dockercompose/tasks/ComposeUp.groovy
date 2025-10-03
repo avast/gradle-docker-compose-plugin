@@ -209,8 +209,8 @@ abstract class ComposeUp extends DefaultTask {
         }
     }
 
-    private static final VOLATILE_STATE_KEYS = ['RunningFor']
-    private static final UNSTABLE_ARRAY_STATE_KEYS = ['Mounts', 'Ports', 'Networks', 'Labels', 'Publishers']
+    private static final VOLATILE_STATE_KEYS = ['RunningFor', 'Publishers']
+    private static final UNSTABLE_ARRAY_STATE_KEYS = ['Mounts', 'Ports', 'Networks', 'Labels']
 
     @Internal
     protected def getStateForCache() {
@@ -240,10 +240,9 @@ abstract class ComposeUp extends DefaultTask {
 
     protected Object parseAndSortStateArray(Object list) {
         if (list instanceof List) {
-            //Already provided as a List, no pre-parsing needed
-            return list.sort { (first, second) -> first.toString() <=> second.toString() }.toArray()
+            return list.sort { (first, second) -> first.toString() <=> second.toString() }
         } else if (list instanceof String && list.contains(",")) {
-            //Not already a list, but a comma separated string
+            // Actually not a list, but a comma separated string
             return list.split(',').collect { it.trim() }.sort().toArray()
         } else {
             return list
