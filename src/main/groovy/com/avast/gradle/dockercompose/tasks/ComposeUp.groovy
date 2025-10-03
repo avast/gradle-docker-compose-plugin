@@ -241,10 +241,10 @@ abstract class ComposeUp extends DefaultTask {
     protected Object parseAndSortStateArray(Object list) {
         if (list instanceof List) {
             //Already provided as a List, no pre-parsing needed
-            return list.sort { (first, second) -> first.toString() <=> second.toString() }
+            return list.sort { (first, second) -> first.toString() <=> second.toString() }.toArray()
         } else if (list instanceof String && list.contains(",")) {
             //Not already a list, but a comma separated string
-            return list.split(',').collect { it.trim() }.sort()
+            return list.split(',').collect { it.trim() }.sort().toArray()
         } else {
             return list
         }
