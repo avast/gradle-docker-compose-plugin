@@ -19,8 +19,8 @@ jobs:
       - name: Publish with Gradle to Maven Central
         run: ./gradlew publish jreleaserDeploy publishPlugins --info -Pversion=${{ github.event.release.tag_name }}
         env:
-          GRADLE_PORTAL_KEY: ${{ secrets.GRADLE_PORTAL_KEY }}
-          GRADLE_PORTAL_SECRET: ${{ secrets.GRADLE_PORTAL_SECRET }}
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PORTAL_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PORTAL_SECRET }}
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
           SIGNING_PUBLIC_KEY: ${{ secrets.SIGNING_PUBLIC_KEY }}
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.SIGNING_PASSWORD }}
