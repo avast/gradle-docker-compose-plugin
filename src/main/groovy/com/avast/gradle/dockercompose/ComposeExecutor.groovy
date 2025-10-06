@@ -122,7 +122,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
         }
     }
 
-    private String executeWithAnsi(String... args) {
+    String executeWithAnsi(String... args) {
         new ByteArrayOutputStream().withStream { os ->
             executeWithCustomOutput(os, false, false, false, args)
             os.toString().trim()
@@ -134,7 +134,7 @@ abstract class ComposeExecutor implements BuildService<Parameters>, AutoCloseabl
     VersionNumber getVersion() {
         if (cachedVersion) return cachedVersion
         String rawVersion = executeWithAnsi('version', '--short')
-        cachedVersion = VersionNumber.parse(rawVersion.startsWith('v') ? rawVersion.substring(1) : rawVersion)
+        return cachedVersion = VersionNumber.parse(rawVersion.startsWith('v') ? rawVersion.substring(1) : rawVersion)
     }
 
     Map<String,Iterable<String>> getContainerIds(List<String> serviceNames) {
