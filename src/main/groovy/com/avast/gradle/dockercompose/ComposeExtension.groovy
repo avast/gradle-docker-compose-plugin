@@ -12,7 +12,7 @@ abstract class ComposeExtension extends ComposeSettings {
 
     private HashMap<String, ComposeSettings> settings = [:]
 
-    private ComposeSettings getOrCreateNested(String name) {
+    ComposeSettings getOrCreateNested(String name) {
         settings.computeIfAbsent(name, { cloneAsNested(name) })
     }
 
