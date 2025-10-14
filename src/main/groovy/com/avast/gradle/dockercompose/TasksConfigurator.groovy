@@ -127,8 +127,16 @@ class TasksConfigurator {
         } else {
             upTask.configure { it.shouldRunAfter getTaskDependencies(task) }
         }
-        if (task instanceof ProcessForkOptions) task.doFirst { composeSettings.exposeAsEnvironment(task as ProcessForkOptions) }
-        if (task instanceof JavaForkOptions) task.doFirst { composeSettings.exposeAsSystemProperties(task as JavaForkOptions) }
+
+        // composeSettings.tasksConfigurator is null when the doFirst actions run with the configuration cache enabled.
+        def composeSettings = this.composeSettings
+        def servicesInfos = upTask.map { it.servicesInfos }
+        if (task instanceof ProcessForkOptions) task.doFirst {
+            composeSettings.exposeAsEnvironmentInternal(task as ProcessForkOptions, servicesInfos.get())
+        }
+        if (task instanceof JavaForkOptions) task.doFirst {
+            composeSettings.exposeAsSystemPropertiesInternal(task as JavaForkOptions, servicesInfos.get())
+        }
     }
 
     private Object getTaskDependencies(Task task) {

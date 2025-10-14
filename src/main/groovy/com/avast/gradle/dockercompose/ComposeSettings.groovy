@@ -1,6 +1,7 @@
 package com.avast.gradle.dockercompose
 
 import groovy.transform.CompileStatic
+import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
@@ -226,6 +227,11 @@ abstract class ComposeSettings {
     }
 
     void exposeAsEnvironment(ProcessForkOptions task) {
+        exposeAsEnvironmentInternal(task, servicesInfos)
+    }
+
+    @PackageScope
+    void exposeAsEnvironmentInternal(ProcessForkOptions task, Map<String, ServiceInfo> servicesInfos) {
         servicesInfos.values().each { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, si ->
                 if (instanceName.endsWith('_1') || instanceName.endsWith('-1')) {
@@ -237,6 +243,11 @@ abstract class ComposeSettings {
     }
 
     void exposeAsSystemProperties(JavaForkOptions task) {
+        exposeAsSystemPropertiesInternal(task, servicesInfos)
+    }
+
+    @PackageScope
+    void exposeAsSystemPropertiesInternal(JavaForkOptions task, Map<String, ServiceInfo> servicesInfos) {
         servicesInfos.values().each { serviceInfo ->
             serviceInfo.containerInfos.each { instanceName, si ->
                 if(instanceName.endsWith('_1') || instanceName.endsWith('-1')) {
