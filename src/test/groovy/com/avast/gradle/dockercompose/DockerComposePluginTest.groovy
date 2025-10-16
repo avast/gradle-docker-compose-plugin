@@ -16,6 +16,8 @@ import org.gradle.testfixtures.ProjectBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import java.nio.file.Paths
+
 import static com.avast.gradle.dockercompose.util.VersionNumber.parse
 
 class DockerComposePluginTest extends Specification {
@@ -626,9 +628,9 @@ class DockerComposePluginTest extends Specification {
         when:
         project.plugins.apply 'docker-compose'
         project.dockerCompose {}
-        def file = project.tasks.composeUp.servicesInfosFile.get().asFile
+        File file = project.tasks.composeUp.servicesInfosFile.get().asFile
         then:
-        file.path.endsWith('/build/tmp/com.avast.gradle.docker-compose/services-infos.json')
+        file.toPath().endsWith(Paths.get('build', 'tmp', 'com.avast.gradle.docker-compose', 'services-infos.json'))
     }
 
     def "verify servicesInfosFile path for nested configuration"() {
@@ -639,7 +641,6 @@ class DockerComposePluginTest extends Specification {
             nested {}
         }
         def file = project.tasks.nestedComposeUp.servicesInfosFile.get().asFile
-        then:
-        file.path.endsWith('/build/tmp/com.avast.gradle.docker-compose/services-infos-nested.json')
+        then:file.toPath().endsWith(Paths.get('build', 'tmp', 'com.avast.gradle.docker-compose', 'services-infos-nested.json'))
     }
 }

@@ -18,6 +18,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
 
@@ -376,9 +377,10 @@ abstract class ComposeUp extends DefaultTask {
     }
 
     void setServicesInfosFile() {
-        def suffix = (name == 'composeUp') ? '' : "-${name.take(name.size() - 9)}"
-        def path = "tmp/com.avast.gradle.docker-compose/services-infos${suffix}.json"
-        servicesInfosFile.set(project.layout.buildDirectory.file(path))
+        def normalName = 'composeUp'
+        def suffix = (name == normalName) ? '' : "-${name.take(name.size() - normalName.size())}"
+        def path = Paths.get('tmp', 'com.avast.gradle.docker-compose', "services-infos${suffix}.json")
+        servicesInfosFile.set(project.layout.buildDirectory.file(path.toString()))
     }
 
     void writeServicesInfosFile() {

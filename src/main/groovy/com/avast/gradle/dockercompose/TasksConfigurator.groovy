@@ -132,7 +132,7 @@ class TasksConfigurator {
 
         // composeSettings.tasksConfigurator is null when the doFirst actions run with the configuration cache enabled.
         def composeSettings = this.composeSettings
-        def servicesInfos = upTask.get().servicesInfosFile.map {
+        def servicesInfos = upTask.flatMap { it.servicesInfosFile }.map{
             new ObjectMapper().readValue(it.asFile, new TypeReference<Map<String, ServiceInfo>>() {})
         }
         if (task instanceof ProcessForkOptions) task.doFirst {
