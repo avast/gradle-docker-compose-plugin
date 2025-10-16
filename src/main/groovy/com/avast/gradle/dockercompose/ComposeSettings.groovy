@@ -1,10 +1,13 @@
 package com.avast.gradle.dockercompose
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFile
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
@@ -89,6 +92,8 @@ abstract class ComposeSettings {
     abstract DirectoryProperty getDockerComposeWorkingDirectory()
     abstract Property<Duration> getDockerComposeStopTimeout()
 
+    private final Provider<RegularFile> servicesInfosFile
+
     @Inject
     ComposeSettings(Project project, String name = '', String parentName = '') {
         this.nestedName = parentName + name
@@ -157,6 +162,7 @@ abstract class ComposeSettings {
 
         this.dockerExecutor = project.objects.newInstance(DockerExecutor, this)
         this.tasksConfigurator = new TasksConfigurator(this, project, name)
+        servicesInfosFile = tasksConfigurator.upTask.flatMap { it.servicesInfosFile }
     }
 
     private static String generateSafeProjectNamePrefix(Project project) {
@@ -223,7 +229,11 @@ abstract class ComposeSettings {
     }
 
     Map<String, ServiceInfo> getServicesInfos() {
-        tasksConfigurator.getServicesInfos()
+        // Preserve the legacy behavior of returning an empty map if this is called before composeUp succeeds.
+        // composeUp.servicesInfosFile.map { ... }.get() will fail if called before composeUp completes.
+        // composeUp.servicesInfosFile.get() will work if called before composeUp completes.
+        def f = servicesInfosFile.get().asFile
+        f.exists() ? new ObjectMapper().readValue(f, new TypeReference<Map<String, ServiceInfo>>() {}) : [:]
     }
 
     void exposeAsEnvironment(ProcessForkOptions task) {
