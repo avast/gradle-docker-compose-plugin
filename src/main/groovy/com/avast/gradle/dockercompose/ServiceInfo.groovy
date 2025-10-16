@@ -1,5 +1,6 @@
 package com.avast.gradle.dockercompose
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.Immutable
 
 @Immutable(knownImmutableClasses = [ContainerInfo], copyWith = true)
@@ -8,15 +9,15 @@ class ServiceInfo {
     /* Key is instance name, for example service_1 */
     Map<String, ContainerInfo> containerInfos = [:]
 
-    String getHost() { firstContainer?.serviceHost.host }
-    Map<Integer, Integer> getPorts() { tcpPorts }
-    Map<Integer, Integer> getTcpPorts() { firstContainer?.tcpPorts ?: [:] }
-    Map<Integer, Integer> getUdpPorts() { firstContainer?.udpPorts ?: [:] }
-    Integer getPort() { firstContainer?.port }
-    Integer getTcpPort() { firstContainer?.tcpPort }
-    Integer getUdpPort() { firstContainer?.udpPort }
+    @JsonIgnore String getHost() { firstContainer?.serviceHost.host }
+    @JsonIgnore Map<Integer, Integer> getPorts() { tcpPorts }
+    @JsonIgnore Map<Integer, Integer> getTcpPorts() { firstContainer?.tcpPorts ?: [:] }
+    @JsonIgnore Map<Integer, Integer> getUdpPorts() { firstContainer?.udpPorts ?: [:] }
+    @JsonIgnore Integer getPort() { firstContainer?.port }
+    @JsonIgnore Integer getTcpPort() { firstContainer?.tcpPort }
+    @JsonIgnore Integer getUdpPort() { firstContainer?.udpPort }
 
-    ContainerInfo getFirstContainer() {
+    @JsonIgnore ContainerInfo getFirstContainer() {
         containerInfos.values()?.find()
     }
 

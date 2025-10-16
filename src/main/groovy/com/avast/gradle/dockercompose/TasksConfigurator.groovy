@@ -1,6 +1,8 @@
 package com.avast.gradle.dockercompose
 
 import com.avast.gradle.dockercompose.tasks.*
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.CompileStatic
 import groovy.transform.PackageScope
 import org.gradle.api.Project
@@ -130,7 +132,9 @@ class TasksConfigurator {
 
         // composeSettings.tasksConfigurator is null when the doFirst actions run with the configuration cache enabled.
         def composeSettings = this.composeSettings
-        def servicesInfos = upTask.map { it.servicesInfos }
+        def servicesInfos = upTask.flatMap { it.servicesInfosFile }.map {
+            new ObjectMapper().readValue(it.asFile, new TypeReference<Map<String, ServiceInfo>>() {})
+        }
         if (task instanceof ProcessForkOptions) task.doFirst {
             composeSettings.exposeAsEnvironmentInternal(task as ProcessForkOptions, servicesInfos.get())
         }

@@ -6,6 +6,7 @@ import com.avast.gradle.dockercompose.DockerExecutor
 import com.avast.gradle.dockercompose.ServiceHost
 import com.avast.gradle.dockercompose.ServiceInfo
 import com.avast.gradle.dockercompose.ServiceInfoCache
+import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.json.JsonSlurper
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
@@ -14,12 +15,17 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+import java.nio.file.Paths
 import java.time.Duration
 import java.time.Instant
 
 abstract class ComposeUp extends DefaultTask {
+
+    @OutputFile
+    abstract RegularFileProperty getServicesInfosFile()
 
     @Internal
     Boolean wasReconnected = false // for tests
@@ -100,6 +106,8 @@ abstract class ComposeUp extends DefaultTask {
     ComposeUp() {
         group = 'docker'
         description = 'Builds and starts containers of docker-compose project'
+        setServicesInfosFile()
+        outputs.upToDateWhen { false }
     }
 
     @TaskAction
@@ -156,6 +164,7 @@ abstract class ComposeUp extends DefaultTask {
             } else {
                 serviceInfoCache.get().clear()
             }
+            writeServicesInfosFile()
         }
         catch (Exception e) {
             logger.debug("Failed to start-up Docker containers", e)
@@ -365,5 +374,18 @@ abstract class ComposeUp extends DefaultTask {
             }
         }
         servicesInfos.collect { it -> it.copyWith(containerInfos: it.containerInfos.values().collect { newContainerInfos.getOrDefault(it.instanceName, it) }.collectEntries { [(it.instanceName): it] }) }
+    }
+
+    void setServicesInfosFile() {
+        def normalName = 'composeUp'
+        def suffix = (name == normalName) ? '' : "-${name.take(name.size() - normalName.size())}"
+        def path = Paths.get('tmp', 'com.avast.gradle.docker-compose', "services-infos${suffix}.json")
+        servicesInfosFile.set(project.layout.buildDirectory.file(path.toString()))
+    }
+
+    void writeServicesInfosFile() {
+        def f = servicesInfosFile.get().asFile
+        f.parentFile.mkdirs()
+        new ObjectMapper().writeValue(f, servicesInfos)
     }
 }
