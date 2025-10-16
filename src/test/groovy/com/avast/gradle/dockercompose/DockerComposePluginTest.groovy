@@ -7,6 +7,8 @@ import com.avast.gradle.dockercompose.tasks.ComposeLogs
 import com.avast.gradle.dockercompose.tasks.ComposePull
 import com.avast.gradle.dockercompose.tasks.ComposePush
 import com.avast.gradle.dockercompose.tasks.ComposeUp
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.gradle.api.Task
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.testing.Test
@@ -601,5 +603,43 @@ class DockerComposePluginTest extends Specification {
                 image: nginx:stable
                 network_mode: service:gw
         ''']
+    }
+
+    def "deserialize servicesInfosFile and compare to original"() {
+        def f = Fixture.withNginx()
+        when:
+        f.project.tasks.composeBuild.build()
+        f.project.tasks.composeUp.up()
+        def mapper = new ObjectMapper()
+        def file = f.project.tasks.composeUp.servicesInfosFile.get().asFile
+        def deserializedServicesInfos = mapper.readValue(file, new TypeReference<Map<String, ServiceInfo>>() {})
+        then:
+        noExceptionThrown()
+        deserializedServicesInfos == f.project.tasks.composeUp.servicesInfos
+        cleanup:
+        f.project.tasks.composeDown.down()
+        f.close()
+    }
+
+    def "verify servicesInfosFile path"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {}
+        def file = project.tasks.composeUp.servicesInfosFile.get().asFile
+        then:
+        file.path.endsWith('/build/tmp/com.avast.gradle.docker-compose/services-infos.json')
+    }
+
+    def "verify servicesInfosFile path for nested configuration"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            nested {}
+        }
+        def file = project.tasks.nestedComposeUp.servicesInfosFile.get().asFile
+        then:
+        file.path.endsWith('/build/tmp/com.avast.gradle.docker-compose/services-infos-nested.json')
     }
 }
