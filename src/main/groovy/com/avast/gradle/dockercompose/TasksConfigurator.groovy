@@ -159,11 +159,6 @@ class TasksConfigurator {
     }
 
     @PackageScope
-    Map<String, ServiceInfo> getServicesInfos() {
-        upTask.get().servicesInfos
-    }
-
-    @PackageScope
     void setupMissingRequiredBy(String taskName, ComposeSettings settings) {
         project.tasks
                 .findAll { Task task -> task.name.equalsIgnoreCase(taskName) }
