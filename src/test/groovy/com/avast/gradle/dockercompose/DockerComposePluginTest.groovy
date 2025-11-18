@@ -307,8 +307,10 @@ class DockerComposePluginTest extends Specification {
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
+        File file = new File("test.env")
         when:
             f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsEnvironmentFile(file)
             f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             test.environment.containsKey('WEB_HOST')
@@ -319,8 +321,14 @@ class DockerComposePluginTest extends Specification {
             test.systemProperties.containsKey('web.containerHostname')
             test.systemProperties.containsKey('web.tcp.80')
             test.systemProperties.containsKey('web.udp.81')
+            file.text.contains('WEB_HOST')
+            file.text.contains('WEB_CONTAINER_HOSTNAME')
+            file.text.contains('WEB_TCP_80')
+            file.text.contains('WEB_UDP_81')
+
         cleanup:
             f.project.tasks.composeDown.down()
+            file.delete()
             f.close()
         where:
             composeFileContent << ['''
@@ -339,8 +347,10 @@ class DockerComposePluginTest extends Specification {
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
+        File file = new File("test.env")
         when:
         f.project.dockerCompose.exposeAsEnvironment(test)
+        f.project.dockerCompose.exposeAsEnvironmentFile(file)
         f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
         test.environment.containsKey('WEB-SERVICE_HOST')
@@ -351,8 +361,13 @@ class DockerComposePluginTest extends Specification {
         test.systemProperties.containsKey('web-service.containerHostname')
         test.systemProperties.containsKey('web-service.tcp.80')
         test.systemProperties.containsKey('web-service.udp.81')
+        file.text.contains('WEB-SERVICE_HOST')
+        file.text.contains('WEB-SERVICE_CONTAINER_HOSTNAME')
+        file.text.contains('WEB-SERVICE_TCP_80')
+        file.text.contains('WEB-SERVICE_UDP_81')
         cleanup:
         f.project.tasks.composeDown.down()
+        file.delete()
         f.close()
         where:
         composeFileContent << ['''
@@ -381,14 +396,17 @@ class DockerComposePluginTest extends Specification {
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
+        File file = new File("test.env")
         when:
             f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsEnvironmentFile(file)
             f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             test.environment.get('WEB_HOST') == 'localhost'
             test.systemProperties.get('web.host') == 'localhost'
         cleanup:
             f.project.tasks.composeDown.down()
+            file.delete()
             f.close()
     }
 
@@ -461,8 +479,10 @@ class DockerComposePluginTest extends Specification {
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
+        File file = new File("test.env")
         when:
             f.project.dockerCompose.exposeAsEnvironment(test)
+            f.project.dockerCompose.exposeAsEnvironmentFile(file)
             f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
             [1, 2].each { containerInstance ->
@@ -472,9 +492,13 @@ class DockerComposePluginTest extends Specification {
                 assert test.systemProperties.containsKey("web_${containerInstance}.host".toString())
                 assert test.systemProperties.containsKey("web_${containerInstance}.containerHostname".toString())
                 assert test.systemProperties.containsKey("web_${containerInstance}.tcp.80".toString())
+                assert file.text.contains("WEB_${containerInstance}_HOST".toString())
+                assert file.text.contains("WEB_${containerInstance}_CONTAINER_HOSTNAME".toString())
+                assert file.text.contains("WEB_${containerInstance}_TCP_80".toString())
             }
         cleanup:
             f.project.tasks.composeDown.down()
+            file.delete()
             f.close()
     }
 
@@ -512,8 +536,10 @@ class DockerComposePluginTest extends Specification {
         f.project.tasks.composeBuild.build()
         f.project.tasks.composeUp.up()
         Test test = f.project.tasks.test as Test
+        File file = new File("test.env")
         when:
         f.project.dockerCompose.exposeAsEnvironment(test)
+        f.project.dockerCompose.exposeAsEnvironmentFile(file)
         f.project.dockerCompose.exposeAsSystemProperties(test)
         then:
         test.environment.containsKey('CUSTOM_CONTAINER_NAME_HOST')
@@ -522,8 +548,12 @@ class DockerComposePluginTest extends Specification {
         test.systemProperties.containsKey('custom_container_name.host')
         test.systemProperties.containsKey('custom_container_name.containerHostname')
         test.systemProperties.containsKey('custom_container_name.tcp.80')
+        file.text.contains('CUSTOM_CONTAINER_NAME_HOST')
+        file.text.contains('CUSTOM_CONTAINER_NAME_CONTAINER_HOSTNAME')
+        file.text.contains('CUSTOM_CONTAINER_NAME_TCP_80')
         cleanup:
         f.project.tasks.composeDown.down()
+        file.delete()
         f.close()
         where:
         // test it for both compose file version 1 and 2

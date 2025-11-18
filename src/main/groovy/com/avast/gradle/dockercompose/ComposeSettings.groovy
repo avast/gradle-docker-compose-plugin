@@ -240,6 +240,10 @@ abstract class ComposeSettings {
         exposeAsEnvironmentInternal(task, servicesInfos)
     }
 
+    void exposeAsEnvironmentFile(File file) {
+        exposeAsEnvironmentFileInternal(file, servicesInfos)
+    }
+
     @PackageScope
     void exposeAsEnvironmentInternal(ProcessForkOptions task, Map<String, ServiceInfo> servicesInfos) {
         servicesInfos.values().each { serviceInfo ->
@@ -250,6 +254,26 @@ abstract class ComposeSettings {
                 task.environment << createEnvironmentVariables(instanceName.toUpperCase(), si)
             }
         }
+    }
+
+    @PackageScope
+    void exposeAsEnvironmentFileInternal(File envFile, Map<String, ServiceInfo> servicesInfos) {
+        String envString = ""
+
+        servicesInfos.values().each { serviceInfo ->
+            serviceInfo.containerInfos.each { instanceName, si ->
+                if (instanceName.endsWith('_1') || instanceName.endsWith('-1')) {
+                     createEnvironmentVariables(serviceInfo.name.toUpperCase(), si).each {
+                         envString = envString + it.key + "=" + it.value + "\n"
+                     }
+                }
+                createEnvironmentVariables(instanceName.toUpperCase(), si).each {
+                    envString = envString + it.key + "=" + it.value + "\n"
+                }
+            }
+        }
+
+        envFile.write envString
     }
 
     void exposeAsSystemProperties(JavaForkOptions task) {
