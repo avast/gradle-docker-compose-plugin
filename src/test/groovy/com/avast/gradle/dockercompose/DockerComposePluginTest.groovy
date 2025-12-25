@@ -146,6 +146,22 @@ class DockerComposePluginTest extends Specification {
         project.dockerCompose.nested.ignorePushFailure.get() == true
     }
 
+    def "configuration of log capturing is propagated to nested settings"() {
+        def project = ProjectBuilder.builder().build()
+        when:
+        project.plugins.apply 'docker-compose'
+        project.dockerCompose {
+            captureContainersOutput = true
+            captureContainersOutputToFiles = project.file('/path/to/directory')
+            nested {
+                useComposeFiles = ['test.yml']
+            }
+        }
+        then:
+        project.dockerCompose.nested.captureContainersOutput.get() == true
+        project.dockerCompose.nested.captureContainersOutputToFiles.get().getAsFile() == project.file('/path/to/directory')
+    }
+
     def "isRequiredBy() adds dependencies"() {
         def project = ProjectBuilder.builder().build()
         project.plugins.apply 'docker-compose'
