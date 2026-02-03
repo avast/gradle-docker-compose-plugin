@@ -9,7 +9,7 @@ class ServiceInfo {
     /* Key is instance name, for example service_1 */
     Map<String, ContainerInfo> containerInfos = [:]
 
-    @JsonIgnore String getHost() { firstContainer?.serviceHost.host }
+    @JsonIgnore String getHost() { firstContainer?.serviceHost?.host }
     @JsonIgnore Map<Integer, Integer> getPorts() { tcpPorts }
     @JsonIgnore Map<Integer, Integer> getTcpPorts() { firstContainer?.tcpPorts ?: [:] }
     @JsonIgnore Map<Integer, Integer> getUdpPorts() { firstContainer?.udpPorts ?: [:] }
