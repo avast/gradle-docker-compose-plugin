@@ -27,7 +27,7 @@ dependencies {
     implementation 'org.yaml:snakeyaml:2.6'
     testImplementation gradleTestKit()
     testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
-    testImplementation 'org.junit.platform:junit-platform-launcher:1.14.3'
+    testImplementation 'org.junit.platform:junit-platform-launcher:6.0.3'
 }
 
 test {
