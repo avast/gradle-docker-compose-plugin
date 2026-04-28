@@ -23,7 +23,7 @@ repositories {
 
 dependencies {
     implementation gradleApi()
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.2'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.21.3'
     implementation 'org.yaml:snakeyaml:2.6'
     testImplementation gradleTestKit()
     testImplementation 'org.spockframework:spock-core:2.3-groovy-4.0'
