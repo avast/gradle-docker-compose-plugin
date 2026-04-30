@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jreleaser' version '1.23.0'
+    id 'org.jreleaser' version '1.24.0'
     id 'com.gradle.plugin-publish' version '2.1.1'
 }
 
