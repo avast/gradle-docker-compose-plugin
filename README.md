@@ -1,3 +1,5 @@
+# This project is no longer maintained.
+
 # gradle-docker-compose-plugin [![Build](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/avast/gradle-docker-compose-plugin/actions/workflows/build.yml) [![Version](https://badgen.net/maven/v/maven-central/com.avast.gradle/gradle-docker-compose-plugin/)](https://repo1.maven.org/maven2/com/avast/gradle/gradle-docker-compose-plugin/)
 
 Simplifies usage of [Docker Compose](https://docs.docker.com/compose/) for local development and integration testing in [Gradle](https://gradle.org/) environment.
